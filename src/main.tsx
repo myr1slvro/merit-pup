@@ -1,10 +1,24 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./globals.css";
-import App from "./App";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+import App from './App';
+
+import './globals.css';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import AuthProvider from './components/AuthProvider';
+import ProtectedRoute from './components/ProtectedRoute';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </React.StrictMode>,
 );
