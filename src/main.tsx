@@ -5,8 +5,7 @@ import App from './App';
 
 import './globals.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import AuthProvider from './components/AuthProvider';
-import ProtectedRoute from './components/ProtectedRoute';
+import AuthProvider from './components/navigation/AuthProvider'
 
 const router = createBrowserRouter([
   {

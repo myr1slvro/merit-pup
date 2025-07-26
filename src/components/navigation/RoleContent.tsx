@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import ProtectedRoute from "./ProtectedRoute";
 import { useMemo } from "react";
+import FacultyRoleContent from "../faculty/facultyRoleContent";
 
 export default function RoleContent() {
   const { role } = useAuth();
@@ -11,7 +12,7 @@ export default function RoleContent() {
       case "Faculty":
         return (
           <ProtectedRoute allowedRoles={["Faculty"]}>
-            <div>Faculty</div>
+            <FacultyRoleContent />
           </ProtectedRoute>
         );
       case "Evaluator":

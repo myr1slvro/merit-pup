@@ -2,13 +2,16 @@ import { Link } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 
 const NAV_TABS: Record<string, { label: string; to: string }[]> = {
-  Faculty: [{ label: "Directory", to: "/directory" }],
-  Evaluator: [{ label: "Directory", to: "/directory" }],
+  Faculty: [{ label: "", to: "/" }],
+  Evaluator: [{ label: "", to: "/" }],
   "UTLDO Admin": [
     { label: "Analytics", to: "/analytics" },
     { label: "Directory", to: "/directory" },
   ],
-  "Technical Admin": [{ label: "User Management", to: "/user-management" }],
+  "Technical Admin": [
+    { label: "Analytics", to: "/analytics" },
+    { label: "User Management", to: "/user-management" },
+  ],
 };
 
 export default function Navbar() {
@@ -21,9 +24,7 @@ export default function Navbar() {
         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
           <span>M</span>
         </div>
-        <h1 className="text-3xl font-semibold text-white">
-          MERIT PUP
-        </h1>
+        <h1 className="text-3xl font-semibold text-white">MERIT PUP</h1>
       </div>
 
       <div className="flex items-center gap-6 space-x-2">
