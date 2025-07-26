@@ -12,7 +12,7 @@ type AuthContext = {
   authToken?: string | null;
   currentUser?: User | null;
   role?: User["role"] | null;
-  handleLogin: () => Promise<void>;
+  handleLogin: (id: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 };
 
@@ -40,15 +40,24 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     fetchUser();
   }, []);
 
-  async function handleLogin() {
+  async function handleLogin(id: string, password: string) {
     try {
-      const response = await login();
-      const { authToken, user } = response[1];
-      setAuthToken(authToken);
-      setCurrentUser(user);
-    } catch {
+      const response = await login(id, password);
+      if (Array.isArray(response)) {
+        const { authToken, user } = response[1];
+        setAuthToken(authToken);
+        setCurrentUser(user);
+      } else if (
+        response &&
+        typeof response === "object" &&
+        "error" in response
+      ) {
+        throw new Error((response as any).error);
+      }
+    } catch (err) {
       setAuthToken(null);
       setCurrentUser(null);
+      throw err;
     }
   }
 

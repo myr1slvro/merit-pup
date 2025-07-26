@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
-import ProtectedRoute from "./ProtectedRoute";
+import { useAuth } from "../auth/AuthProvider";
+import ProtectedRoute from "../auth/ProtectedRoute";
 import { useMemo } from "react";
 import FacultyRoleContent from "../faculty/facultyRoleContent";
 

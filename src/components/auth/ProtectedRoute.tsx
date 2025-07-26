@@ -1,9 +1,9 @@
-import { User } from '../../types/user';
-import { PropsWithChildren } from 'react';
-import { useAuth } from './AuthProvider';
+import { User } from "../../types/user";
+import { PropsWithChildren } from "react";
+import { useAuth } from "./AuthProvider";
 
 type ProtectedRouteProps = PropsWithChildren & {
-  allowedRoles?: User['role'][];
+  allowedRoles?: User["role"][];
 };
 
 export default function ProtectedRoute({

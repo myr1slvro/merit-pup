@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "../auth/AuthProvider";
 
 const NAV_TABS: Record<string, { label: string; to: string }[]> = {
   Faculty: [{ label: "", to: "/" }],
@@ -37,19 +37,12 @@ export default function Navbar() {
             {tab.label}
           </Link>
         ))}
-        {authToken ? (
+        {authToken && (
           <button
             onClick={handleLogout}
             className="ml-2 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition text-sm font-semibold"
           >
             Logout
-          </button>
-        ) : (
-          <button
-            onClick={handleLogin}
-            className="ml-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition text-sm font-semibold"
-          >
-            Login
           </button>
         )}
       </div>

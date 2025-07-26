@@ -1,11 +1,13 @@
-import { useAuth } from "./components/navigation/AuthProvider";
+import { useAuth } from "./components/auth/AuthProvider";
 import Navbar from "./components/navigation/Navbar";
 import RoleContent from "./components/navigation/RoleContent";
+import LoginForm from "./components/navigation/LoginForm";
+import "./globals.css";
 
-import './globals.css';
+import "./globals.css";
 
 export default function App() {
-  const { authToken, handleLogin, } = useAuth();
+  const { authToken, handleLogin } = useAuth();
 
   return (
     <div className="relative flex flex-col min-h-screen">
@@ -16,13 +18,7 @@ export default function App() {
       />
       {authToken && <Navbar />}
       <main className="flex-1 flex flex-col items-center justify-center gap-6">
-        {authToken ? (
-          <>
-            <RoleContent />
-          </>
-        ) : (
-          <button onClick={handleLogin} className="rounded-lg px-4 py-2 bg-meritRed text-white">Login</button>
-        )}
+        {authToken ? <RoleContent /> : <LoginForm />}
       </main>
     </div>
   );

@@ -1,23 +1,23 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-import App from './App';
+import App from "./App";
 
-import './globals.css';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import AuthProvider from './components/navigation/AuthProvider'
+import "./globals.css";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import AuthProvider from "./components/auth/AuthProvider";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <App />,
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <RouterProvider router={router} />
     </AuthProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

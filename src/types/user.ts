@@ -5,7 +5,8 @@ export type UserRole =
   | "Technical Admin";
 
 export type User = {
-  id: number;
+  id: string;
   email: string;
+  password: string;
   role: UserRole;
 };
