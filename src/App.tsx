@@ -1,6 +1,6 @@
-import { useAuth } from "./components/AuthProvider";
-import Navbar from "./components/Navbar";
-import RoleContent from "./components/RoleContent";
+import { useAuth } from "./components/navigation/AuthProvider";
+import Navbar from "./components/navigation/Navbar";
+import RoleContent from "./components/navigation/RoleContent";
 
 import './globals.css';
 
