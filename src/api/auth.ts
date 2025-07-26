@@ -3,7 +3,7 @@ import { User } from "../types/user";
 const testUser: User = {
   id: 1,
   email: "test@email.com",
-  role: "Evaluator",
+  role: "Faculty",
 };
 
 export async function getUser() {

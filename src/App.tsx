@@ -5,13 +5,17 @@ import RoleContent from "./components/navigation/RoleContent";
 import './globals.css';
 
 export default function App() {
-  const { authToken, handleLogin, handleLogout } = useAuth();
+  const { authToken, handleLogin, } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen">
+      {/* Blurred background image */}
+      <div
+        className="fixed inset-0 -z-10 bg-[url(/pup.jpg)] bg-cover bg-center filter grayscale opacity-35"
+        aria-hidden="true"
+      />
       {authToken && <Navbar />}
       <main className="flex-1 flex flex-col items-center justify-center gap-6">
-        <h1 className="text-2xl font-bold">{}</h1>
         {authToken ? (
           <>
             <RoleContent />
