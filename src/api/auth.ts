@@ -36,7 +36,7 @@ export async function login(id?: string | number, password?: string) {
   }
   const userById = users.find((u) => String(u.id) === String(id));
   if (!userById || userById.password !== password) {
-    return { error: "Wrong ID or password." };
+    return { error: "Incorrect User ID or password entered." };
   }
   if (!userById.role) {
     return { error: "No role found for this user." };

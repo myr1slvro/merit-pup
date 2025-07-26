@@ -16,8 +16,8 @@ export default function App() {
         className="fixed inset-0 -z-10 bg-[url(/pup.jpg)] bg-cover bg-center filter grayscale opacity-35"
         aria-hidden="true"
       />
-      {authToken && <Navbar />}
-      <main className="flex-1 flex flex-col items-center justify-center gap-6">
+      <Navbar />
+      <main className="flex-1 flex flex-col items-center justify-center">
         {authToken ? <RoleContent /> : <LoginForm />}
       </main>
     </div>

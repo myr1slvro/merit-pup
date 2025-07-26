@@ -4,6 +4,8 @@
 @theme {
   --color-meritRed: #901212;
   --color-meritDarkRed: #501818;
+  --color-meritYellow: #FFDF00;
+  --color-meritGray: #727272;
 }
 
 :root {
