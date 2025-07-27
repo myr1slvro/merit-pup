@@ -1,42 +1,51 @@
-import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import ProtectedRoute from "../auth/ProtectedRoute";
 import { useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import FacultyRoleContent from "../faculty/facultyRoleContent";
+import UserManagement from "../technical-admin/userManagement";
 
 export default function RoleContent() {
-  const { role } = useAuth();
+  const { roles } = useAuth();
+  const location = useLocation();
 
   const content = useMemo(() => {
-    switch (role) {
-      case "Faculty":
+    if (!roles || roles.length === 0) return null;
+    // Use the current route to determine which content to show
+    switch (location.pathname) {
+      case "/faculty":
         return (
           <ProtectedRoute allowedRoles={["Faculty"]}>
             <FacultyRoleContent />
           </ProtectedRoute>
         );
-      case "Evaluator":
+      case "/evaluator":
         return (
           <ProtectedRoute allowedRoles={["Evaluator"]}>
             <div>Evaluator</div>
           </ProtectedRoute>
         );
-      case "UTLDO Admin":
+      case "/utldo-admin":
         return (
           <ProtectedRoute allowedRoles={["UTLDO Admin"]}>
             <div>UTLDO Admin</div>
           </ProtectedRoute>
         );
-      case "Technical Admin":
+      case "/technical-admin":
         return (
           <ProtectedRoute allowedRoles={["Technical Admin"]}>
-            <div>Technical Admin</div>
+            <UserManagement />
           </ProtectedRoute>
         );
       default:
-        return null;
+        // If multiple roles, show a selector or dashboard (customize as needed)
+        return (
+          <div className="p-8 text-xl">
+            Select a role from the navigation above.
+          </div>
+        );
     }
-  }, [role]);
+  }, [roles, location.pathname]);
 
   return content;
 }

@@ -1,31 +1,9 @@
-import { User } from "../types/user";
-
-const users: User[] = [
-  {
-    id: "CCIS-1001-MN",
-    email: "test@email.com",
-    password: "password",
-    role: "Faculty",
-  },
-  {
-    id: "UTLDO-3001-MN",
-    email: "admin@email.com",
-    password: "adminpass",
-    role: "UTLDO Admin",
-  },
-  {
-    id: "CCIS-2001-MN",
-    email: "evaluator@email.com",
-    password: "evalpass",
-    role: "Evaluator",
-  },
-];
+import { users } from "./mockUsers";
 
 export async function getUser() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   // No-op for mock
 }
-
 export async function login(id?: string | number, password?: string) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   if (!id) {
@@ -38,11 +16,8 @@ export async function login(id?: string | number, password?: string) {
   if (!userById || userById.password !== password) {
     return { error: "Incorrect User ID or password entered." };
   }
-  if (!userById.role) {
-    return { error: "No role found for this user." };
-  }
-  if (!userById.id) {
-    return { error: "No id found for this user." };
+  if (!userById.roles || userById.roles.length === 0) {
+    return { error: "No roles found for this user." };
   }
   const authToken = generateAuthToken();
   return [200, { authToken, user: userById }] as const;

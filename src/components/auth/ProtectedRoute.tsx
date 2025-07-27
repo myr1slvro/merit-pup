@@ -1,27 +1,28 @@
-import { User } from "../../types/user";
+import { UserRole } from "../../types/user";
 import { PropsWithChildren } from "react";
 import { useAuth } from "./AuthProvider";
 
 type ProtectedRouteProps = PropsWithChildren & {
-  allowedRoles?: User["role"][];
+  allowedRoles?: UserRole[];
 };
 
 export default function ProtectedRoute({
   allowedRoles,
   children,
 }: ProtectedRouteProps) {
-  const { currentUser } = useAuth();
+  const { user, roles } = useAuth();
 
-  if (currentUser === undefined) {
+  if (user === undefined) {
     return <div>Loading...</div>;
   }
 
   if (
-    currentUser === null ||
-    (allowedRoles && !allowedRoles.includes(currentUser.role))
+    user === null ||
+    (allowedRoles &&
+      (!roles || !roles.some((role) => allowedRoles.includes(role))))
   ) {
     return <div>Permission denied</div>;
   }
 
-  return children;
+  return <>{children}</>;
 }
