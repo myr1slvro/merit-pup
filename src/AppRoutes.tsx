@@ -1,0 +1,90 @@
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "./components/auth/AuthProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import FacultyRoleContent from "./components/faculty/facultyRoleContent";
+import UserManagement from "./components/technical-admin/userManagement";
+import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
+import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
+import { UserRole } from "./types/user";
+
+// Placeholder for UTLDO Admin role content
+function UtldoAdminRoleContent() {
+  return (
+    <div className="flex-1 flex w-full px-8 py-16">
+      <UtldoUserAnalytics />
+    </div>
+  );
+}
+
+export default function AppRoutes() {
+  const { roles } = useAuth();
+  // Define hierarchy from highest to lowest
+  const roleHierarchy: UserRole[] = [
+    "Technical Admin",
+    "UTLDO Admin",
+    "Evaluator",
+    "Faculty",
+  ];
+  // Find the highest role the user has
+  const highestRole = roleHierarchy.find((role) => roles?.includes(role));
+  const roleToRoute: Record<UserRole, string> = {
+    "Technical Admin": "/technical-admin",
+    "UTLDO Admin": "/utldo-admin",
+    "Evaluator": "/evaluator",
+    "Faculty": "/faculty",
+  };
+  return (
+    <Routes>
+      {/* Redirect / to highest authority role route */}
+      <Route
+        path="/"
+        element={
+          highestRole ? (
+            <Navigate to={roleToRoute[highestRole]} replace />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full p-8">
+              <h1 className="text-3xl font-bold mb-4">No roles assigned</h1>
+              <p className="text-lg text-gray-700">
+                Contact your administrator.
+              </p>
+            </div>
+          )
+        }
+      />
+      <Route
+        path="/faculty"
+        element={
+          <ProtectedRoute allowedRoles={["Faculty"]}>
+            <FacultyRoleContent />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/evaluator"
+        element={
+          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin"]}>
+            <EvaluatorRoleContent />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo-admin"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin"]}>
+            <UtldoAdminRoleContent />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical-admin"
+        element={
+          <ProtectedRoute allowedRoles={["Technical Admin"]}>
+            <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      {/* Add more routes as needed */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

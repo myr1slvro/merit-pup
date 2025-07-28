@@ -1,6 +1,6 @@
 import { useAuth } from "./components/auth/AuthProvider";
 import Navbar from "./components/navigation/Navbar";
-import RoleContent from "./components/navigation/RoleContent";
+import AppRoutes from "./AppRoutes";
 import LoginForm from "./components/navigation/LoginForm";
 import "./globals.css";
 
@@ -18,7 +18,7 @@ export default function App() {
       />
       <Navbar />
       <main className="flex-1 flex flex-col items-center justify-center">
-        {authToken ? <RoleContent /> : <LoginForm />}
+        {authToken ? <AppRoutes /> : <LoginForm />}
       </main>
     </div>
   );

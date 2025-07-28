@@ -10,8 +10,8 @@ import {
 
 type AuthContext = {
   authToken?: string | null;
-  currentUser?: User | null;
-  role?: User["role"] | null;
+  user?: User | null;
+  roles?: User["roles"] | null;
   handleLogin: (id: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 };
@@ -22,8 +22,8 @@ type AuthProviderProps = PropsWithChildren;
 
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [authToken, setAuthToken] = useState<string | null>();
-  const [currentUser, setCurrentUser] = useState<User | null>();
-  const role = currentUser?.role ?? null;
+  const [user, setUser] = useState<User | null>();
+  const roles = user?.roles ?? null;
 
   useEffect(() => {
     async function fetchUser() {
@@ -31,10 +31,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         const response = await getUser();
         const { authToken, user } = response[1];
         setAuthToken(authToken);
-        setCurrentUser(user);
+        setUser(user);
       } catch {
         setAuthToken(null);
-        setCurrentUser(null);
+        setUser(null);
       }
     }
     fetchUser();
@@ -46,7 +46,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       if (Array.isArray(response)) {
         const { authToken, user } = response[1];
         setAuthToken(authToken);
-        setCurrentUser(user);
+        setUser(user);
       } else if (
         response &&
         typeof response === "object" &&
@@ -56,22 +56,22 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (err) {
       setAuthToken(null);
-      setCurrentUser(null);
+      setUser(null);
       throw err;
     }
   }
 
   async function handleLogout() {
     setAuthToken(null);
-    setCurrentUser(null);
+    setUser(null);
   }
 
   return (
     <AuthContext.Provider
       value={{
         authToken,
-        currentUser,
-        role,
+        user,
+        roles,
         handleLogin,
         handleLogout,
       }}
