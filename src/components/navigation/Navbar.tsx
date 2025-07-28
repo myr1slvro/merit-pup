@@ -1,15 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
 const NAV_TABS: Record<string, { label: string; to: string }[]> = {
   Faculty: [{ label: "Faculty Directory", to: "/faculty" }],
   Evaluator: [{ label: "Directory", to: "/evaluator" }],
-  "UTLDO Admin": [{ label: "User Analytics", to: "/utldo-admin" }],
+  "UTLDO Admin": [
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "Evaluation", to: "/evaluator" },
+  ],
   "Technical Admin": [{ label: "User Management", to: "/technical-admin" }],
 };
 
 export default function Navbar() {
   const { roles, authToken, handleLogout } = useAuth();
+  const location = useLocation();
   let tabs: { label: string; to: string }[] = [];
   if (roles && roles.length > 1) {
     const allTabs = roles.flatMap((role) => NAV_TABS[role] || []);
@@ -19,6 +23,8 @@ export default function Navbar() {
       seen.add(tab.to);
       return true;
     });
+  } else if (roles && roles.length === 1) {
+    tabs = NAV_TABS[roles[0]] || [];
   }
 
   return (
@@ -47,7 +53,11 @@ export default function Navbar() {
             <Link
               key={tab.to}
               to={tab.to}
-              className="text-lg font-medium text-white hover:text-meritGray transition px-2"
+              className={`text-lg font-medium transition px-2 ${
+                location.pathname === tab.to
+                  ? "text-meritYellow"
+                  : "text-white hover:text-meritGray"
+              }`}
             >
               {tab.label}
             </Link>

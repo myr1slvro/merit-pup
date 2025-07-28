@@ -1,19 +1,11 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "./components/auth/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FacultyRoleContent from "./components/faculty/facultyRoleContent";
 import UserManagement from "./components/technical-admin/userManagement";
-import EvaluatorDirectory from "./components/evaluator/evaluatorDirectory";
+import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
 import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
-import React from "react";
-
-// Placeholder for Evaluator role content
-function EvaluatorRoleContent() {
-  return (
-    <div className="flex-1 flex w-full px-8 py-16">
-      <EvaluatorDirectory />
-    </div>
-  );
-}
+import { UserRole } from "./types/user";
 
 // Placeholder for UTLDO Admin role content
 function UtldoAdminRoleContent() {
@@ -25,23 +17,38 @@ function UtldoAdminRoleContent() {
 }
 
 export default function AppRoutes() {
+  const { roles } = useAuth();
+  // Define hierarchy from highest to lowest
+  const roleHierarchy: UserRole[] = [
+    "Technical Admin",
+    "UTLDO Admin",
+    "Evaluator",
+    "Faculty",
+  ];
+  // Find the highest role the user has
+  const highestRole = roleHierarchy.find((role) => roles?.includes(role));
+  const roleToRoute: Record<UserRole, string> = {
+    "Technical Admin": "/technical-admin",
+    "UTLDO Admin": "/utldo-admin",
+    "Evaluator": "/evaluator",
+    "Faculty": "/faculty",
+  };
   return (
     <Routes>
-      {/* Default dashboard for each role */}
+      {/* Redirect / to highest authority role route */}
       <Route
         path="/"
         element={
-          <ProtectedRoute
-            allowedRoles={[
-              "Faculty",
-              "Evaluator",
-              "UTLDO Admin",
-              "Technical Admin",
-            ]}
-          >
-            {/* You can redirect to a role-specific dashboard here if needed */}
-            <Navigate to="/dashboard" replace />
-          </ProtectedRoute>
+          highestRole ? (
+            <Navigate to={roleToRoute[highestRole]} replace />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full p-8">
+              <h1 className="text-3xl font-bold mb-4">No roles assigned</h1>
+              <p className="text-lg text-gray-700">
+                Contact your administrator.
+              </p>
+            </div>
+          )
         }
       />
       <Route
@@ -55,7 +62,7 @@ export default function AppRoutes() {
       <Route
         path="/evaluator"
         element={
-          <ProtectedRoute allowedRoles={["Evaluator"]}>
+          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin"]}>
             <EvaluatorRoleContent />
           </ProtectedRoute>
         }

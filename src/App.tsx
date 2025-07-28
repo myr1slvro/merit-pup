@@ -16,18 +16,10 @@ export default function App() {
         className="fixed inset-0 -z-10 bg-[url(/pup.jpg)] bg-cover bg-center filter grayscale opacity-35"
         aria-hidden="true"
       />
-      {authToken ? (
-        <>
-          <Navbar />
-          <main className="flex-1 flex flex-col items-center justify-center">
-            <AppRoutes />
-          </main>
-        </>
-      ) : (
-        <main className="flex-1 flex flex-col items-center justify-center">
-          <LoginForm />
-        </main>
-      )}
+      <Navbar />
+      <main className="flex-1 flex flex-col items-center justify-center">
+        {authToken ? <AppRoutes /> : <LoginForm />}
+      </main>
     </div>
   );
 }
