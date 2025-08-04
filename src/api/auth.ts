@@ -4,23 +4,23 @@ export async function getUser() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   // No-op for mock
 }
-export async function login(id?: string | number, password?: string) {
+export async function login(email?: string | number, password?: string) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  if (!id) {
-    return { error: "ID is required." };
+  if (!email) {
+    return { error: "Email is required." };
   }
   if (!password) {
     return { error: "Password is required." };
   }
-  const userById = users.find((u) => String(u.id) === String(id));
-  if (!userById || userById.password !== password) {
+  const userByEmail = users.find((u) => String(u.email) === String(email));
+  if (!userByEmail || userByEmail.password !== password) {
     return { error: "Incorrect User ID or password entered." };
   }
-  if (!userById.roles || userById.roles.length === 0) {
+  if (!userByEmail.roles || userByEmail.roles.length === 0) {
     return { error: "No roles found for this user." };
   }
   const authToken = generateAuthToken();
-  return [200, { authToken, user: userById }] as const;
+  return [200, { authToken, user: userByEmail }] as const;
 }
 
 function generateAuthToken() {

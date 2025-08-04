@@ -13,7 +13,7 @@ type AuthContext = {
   authToken?: string | null;
   user?: User | null;
   roles?: User["roles"] | null;
-  handleLogin: (id: string, password: string) => Promise<void>;
+  handleLogin: (email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 };
 
@@ -42,9 +42,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     fetchUser();
   }, []);
 
-  async function handleLogin(id: string, password: string) {
+  async function handleLogin(email: string, password: string) {
     try {
-      const response = await login(id, password);
+      const response = await login(email, password);
       if (Array.isArray(response)) {
         const { authToken, user } = response[1];
         setAuthToken(authToken);

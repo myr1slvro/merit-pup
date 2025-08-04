@@ -4,7 +4,7 @@ import { BsFillEyeFill, BsFillEyeSlashFill } from "react-icons/bs";
 
 export default function LoginForm() {
   const { handleLogin } = useAuth();
-  const [id, setId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,9 +15,8 @@ export default function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      // @ts-ignore
-      await handleLogin(id, password);
-      console.log("Login successful for ID:", id);
+      await handleLogin(email, password);
+      console.log("Login successful for email:", email);
     } catch (err: any) {
       let message = "Login failed";
       if (err instanceof Error && err.message) {
@@ -42,12 +41,12 @@ export default function LoginForm() {
             <hr className="border-t border-meritGray opacity-50" />
           </div>
           <form onSubmit={handleFormLogin} className="flex flex-col gap-2 py-4">
-            <label className="text-sm font-medium">User ID</label>
+            <label className="text-sm font-medium">Email</label>
             <input
               type="text"
-              placeholder="Enter your User ID"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="border border-meritGray rounded-lg px-4 py-2 placeholder:text-sm"
               required
             />
