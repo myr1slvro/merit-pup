@@ -14,19 +14,19 @@ export async function addUser(newUser: User) {
   return { success: true, user: newUser };
 }
 
-export async function deleteUser(id: string) {
+  export async function deleteUser(staff_id: string) {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  users = users.filter((u) => u.id !== id);
+  users = users.filter((u) => u.staff_id !== staff_id);
   return { success: true };
 }
 
 export async function updateUserRole(
-  id: string,
+  staff_id: string,
   newRole: UserRole,
   action: "add" | "remove" = "add"
 ) {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = users.find((u) => u.id === id);
+  const user = users.find((u) => u.staff_id === staff_id);
   if (user) {
     if (!user.roles) user.roles = [];
     if (action === "add" && !user.roles.includes(newRole)) {
@@ -38,23 +38,29 @@ export async function updateUserRole(
   return { success: !!user, user };
 }
 
-export async function updateUserId(oldId: string, newId: string) {
+export async function updateUserStaffId(
+  oldStaffId: string,
+  newStaffId: string
+) {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = users.find((u) => u.id === oldId);
-  if (user) user.id = newId;
+  const user = users.find((u) => u.staff_id === oldStaffId);
+  if (user) user.staff_id = newStaffId;
   return { success: !!user, user };
 }
 
-export async function updateUserEmail(id: string, newEmail: string) {
+export async function updateUserEmail(staff_id: string, newEmail: string) {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = users.find((u) => u.id === id);
+  const user = users.find((u) => u.staff_id === staff_id);
   if (user) user.email = newEmail;
   return { success: !!user, user };
 }
 
-export async function updateUserPassword(id: string, newPassword: string) {
+export async function updateUserPassword(
+  staff_id: string,
+  newPassword: string
+) {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = users.find((u) => u.id === id);
+  const user = users.find((u) => u.staff_id === staff_id);
   if (user) user.password = newPassword;
   return { success: !!user, user };
 }
