@@ -2,13 +2,30 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
 const NAV_TABS: Record<string, { label: string; to: string }[]> = {
-  Faculty: [{ label: "Faculty Directory", to: "/faculty" }],
-  Evaluator: [{ label: "Directory", to: "/evaluator" }],
-  "UTLDO Admin": [
-    { label: "User Analytics", to: "/utldo-admin" },
+  Faculty: [
+    { label: "Faculty Directory", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
   ],
-  "Technical Admin": [{ label: "User Management", to: "/technical-admin" }],
+  Evaluator: [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
+  "UTLDO Admin": [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
+  "Technical Admin": [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
 };
 
 export default function Navbar() {

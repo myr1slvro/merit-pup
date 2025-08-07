@@ -45,7 +45,7 @@ export default function AppRoutes() {
       <Route
         path="/faculty"
         element={
-          <ProtectedRoute allowedRoles={["Faculty"]}>
+          <ProtectedRoute allowedRoles={["Faculty", "Evaluator", "UTLDO Admin", "Technical Admin"]}>
             <FacultyRoleContent />
           </ProtectedRoute>
         }
@@ -53,7 +53,7 @@ export default function AppRoutes() {
       <Route
         path="/evaluator"
         element={
-          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin"]}>
+          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}>
             <EvaluatorRoleContent />
           </ProtectedRoute>
         }
@@ -61,7 +61,7 @@ export default function AppRoutes() {
       <Route
         path="/utldo-admin"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin"]}>
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
             <UtldoAdminRoleContent />
           </ProtectedRoute>
         }
