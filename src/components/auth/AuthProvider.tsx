@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 type AuthContext = {
   authToken?: string | null;
   user?: User | null;
-  roles?: User["roles"] | null;
   handleLogin: (email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 };
@@ -24,7 +23,7 @@ type AuthProviderProps = PropsWithChildren;
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [authToken, setAuthToken] = useState<string | null>();
   const [user, setUser] = useState<User | null>();
-  const roles = user?.roles ?? null;
+  // ...existing code...
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,24 +48,15 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         const { authToken, user } = response[1];
         setAuthToken(authToken);
         setUser(user);
-        // Redirect to highest authority role route
-        const roleHierarchy = [
-          "Technical Admin",
-          "UTLDO Admin",
-          "Evaluator",
-          "Faculty",
-        ];
+        // Redirect to appropriate role route
         const roleToRoute = {
           "Technical Admin": "/technical-admin",
           "UTLDO Admin": "/utldo-admin",
           Evaluator: "/evaluator",
           Faculty: "/faculty",
         };
-        const highestRole = roleHierarchy.find((role) =>
-          user.roles?.includes(role)
-        );
-        if (highestRole) {
-          navigate(roleToRoute[highestRole], { replace: true });
+        if (user.role && roleToRoute[user.role]) {
+          navigate(roleToRoute[user.role], { replace: true });
         }
       } else if (
         response &&
@@ -93,7 +83,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       value={{
         authToken,
         user,
-        roles,
         handleLogin,
         handleLogout,
       }}

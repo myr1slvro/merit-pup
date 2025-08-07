@@ -7,7 +7,7 @@ import "./globals.css";
 import "./globals.css";
 
 export default function App() {
-  const { authToken, handleLogin } = useAuth();
+  const { authToken } = useAuth();
 
   return (
     <div className="relative flex flex-col min-h-screen">

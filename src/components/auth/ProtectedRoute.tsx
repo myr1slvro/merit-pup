@@ -10,7 +10,7 @@ export default function ProtectedRoute({
   allowedRoles,
   children,
 }: ProtectedRouteProps) {
-  const { user, roles } = useAuth();
+  const { user } = useAuth();
 
   if (user === undefined) {
     return <div>Loading...</div>;
@@ -18,8 +18,7 @@ export default function ProtectedRoute({
 
   if (
     user === null ||
-    (allowedRoles &&
-      (!roles || !roles.some((role) => allowedRoles.includes(role))))
+    (allowedRoles && (!user.role || !allowedRoles.includes(user.role)))
   ) {
     return <div>Permission denied</div>;
   }

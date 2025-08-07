@@ -12,19 +12,11 @@ const NAV_TABS: Record<string, { label: string; to: string }[]> = {
 };
 
 export default function Navbar() {
-  const { roles, authToken, handleLogout } = useAuth();
+  const { user, authToken, handleLogout } = useAuth();
   const location = useLocation();
   let tabs: { label: string; to: string }[] = [];
-  if (roles && roles.length > 1) {
-    const allTabs = roles.flatMap((role) => NAV_TABS[role] || []);
-    const seen = new Set();
-    tabs = allTabs.filter((tab) => {
-      if (seen.has(tab.to)) return false;
-      seen.add(tab.to);
-      return true;
-    });
-  } else if (roles && roles.length === 1) {
-    tabs = NAV_TABS[roles[0]] || [];
+  if (user && user.role && NAV_TABS[user.role]) {
+    tabs = NAV_TABS[user.role];
   }
 
   return (

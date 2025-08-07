@@ -14,26 +14,17 @@ export async function addUser(newUser: User) {
   return { success: true, user: newUser };
 }
 
-  export async function deleteUser(staff_id: string) {
+export async function deleteUser(staff_id: string) {
   await new Promise((resolve) => setTimeout(resolve, 300));
   users = users.filter((u) => u.staff_id !== staff_id);
   return { success: true };
 }
 
-export async function updateUserRole(
-  staff_id: string,
-  newRole: UserRole,
-  action: "add" | "remove" = "add"
-) {
+export async function updateUserRole(staff_id: string, newRole: UserRole) {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const user = users.find((u) => u.staff_id === staff_id);
   if (user) {
-    if (!user.roles) user.roles = [];
-    if (action === "add" && !user.roles.includes(newRole)) {
-      user.roles.push(newRole);
-    } else if (action === "remove") {
-      user.roles = user.roles.filter((role) => role !== newRole);
-    }
+    user.role = newRole;
   }
   return { success: !!user, user };
 }
