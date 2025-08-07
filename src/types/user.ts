@@ -14,7 +14,7 @@ export type User = {
   email: string;
   phone: string;
   password: string;
-  roles: UserRole[];
+  role: UserRole;
   created_by: string;
   created_at: string;
   updated_by: string;

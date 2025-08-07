@@ -2,29 +2,38 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
 const NAV_TABS: Record<string, { label: string; to: string }[]> = {
-  Faculty: [{ label: "Faculty Directory", to: "/faculty" }],
-  Evaluator: [{ label: "Directory", to: "/evaluator" }],
-  "UTLDO Admin": [
-    { label: "User Analytics", to: "/utldo-admin" },
+  Faculty: [
+    { label: "Faculty Directory", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
   ],
-  "Technical Admin": [{ label: "User Management", to: "/technical-admin" }],
+  Evaluator: [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
+  "UTLDO Admin": [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
+  "Technical Admin": [
+    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Evaluation", to: "/evaluator" },
+    { label: "User Analytics", to: "/utldo-admin" },
+    { label: "User Management", to: "/technical-admin" },
+  ],
 };
 
 export default function Navbar() {
-  const { roles, authToken, handleLogout } = useAuth();
+  const { user, authToken, handleLogout } = useAuth();
   const location = useLocation();
   let tabs: { label: string; to: string }[] = [];
-  if (roles && roles.length > 1) {
-    const allTabs = roles.flatMap((role) => NAV_TABS[role] || []);
-    const seen = new Set();
-    tabs = allTabs.filter((tab) => {
-      if (seen.has(tab.to)) return false;
-      seen.add(tab.to);
-      return true;
-    });
-  } else if (roles && roles.length === 1) {
-    tabs = NAV_TABS[roles[0]] || [];
+  if (user && user.role && NAV_TABS[user.role]) {
+    tabs = NAV_TABS[user.role];
   }
 
   return (

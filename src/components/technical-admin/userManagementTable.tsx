@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
+import {
+  updateUserEmail,
+  updateUserStaffId,
+  updateUserRole,
+  updateUserPassword,
+} from "../../api/users";
 import { getAllUserDetails } from "../../api/users";
 import { User } from "../../types/user";
+import EditButton from "./EditButton";
+import EditModal from "./EditModal";
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editForm, setEditForm] = useState<Partial<User>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -15,6 +26,56 @@ export default function UserManagementTable() {
     }
     fetchUsers();
   }, []);
+
+  function handleEditClick(user: User) {
+    setEditingUser(user);
+    setEditForm({ ...user });
+  }
+
+  function handleEditChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleEditSave() {
+    if (!editingUser) return;
+    setSaving(true);
+    if (editForm.email && editForm.email !== editingUser.email) {
+      await updateUserEmail(editingUser.staff_id, editForm.email);
+    }
+    if (editForm.staff_id && editForm.staff_id !== editingUser.staff_id) {
+      await updateUserStaffId(editingUser.staff_id, editForm.staff_id);
+    }
+    if (editForm.role && editForm.role !== editingUser.role) {
+      await updateUserRole(editingUser.staff_id, editForm.role as any);
+    }
+    if (editForm.password && editForm.password !== editingUser.password) {
+      await updateUserPassword(editingUser.staff_id, editForm.password);
+    }
+    // Refresh users
+    const data = await getAllUserDetails();
+    setUsers(data);
+    setEditingUser(null);
+    setSaving(false);
+  }
+
+  async function handleDeleteUser() {
+    if (!editingUser) return;
+    setSaving(true);
+    // Soft delete: set is_deleted to true
+    editingUser.is_deleted = true;
+    // Remove from table immediately
+    setUsers((prev) => prev.filter((u) => u.user_id !== editingUser.user_id));
+    setEditingUser(null);
+    setSaving(false);
+  }
+
+  function handleEditCancel() {
+    setEditingUser(null);
+    setEditForm({});
+  }
 
   if (loading) {
     return <div className="p-4">Loading users...</div>;
@@ -27,7 +88,7 @@ export default function UserManagementTable() {
   // Get all unique keys from users for columns
   const columns = Array.from(
     new Set(users.flatMap((user) => Object.keys(user)))
-  );
+  ).filter((col) => col !== "is_deleted");
 
   // Map column names to readable labels
   const columnLabels: Record<string, string> = {
@@ -39,13 +100,12 @@ export default function UserManagementTable() {
     email: "Email",
     phone: "Phone",
     password: "Password",
-    roles: "Roles",
+    role: "Role",
     birthdate: "Birthdate",
     created_by: "Created By",
     created_at: "Created At",
     updated_by: "Updated By",
     updated_at: "Updated At",
-    is_deleted: "Is Deleted",
   };
 
   return (
@@ -74,10 +134,22 @@ export default function UserManagementTable() {
                     : user[col] ?? ""}
                 </td>
               ))}
+              <td className="px-4 py-2 border-b text-sm">
+                <EditButton onClick={() => handleEditClick(user)} />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <EditModal
+        editingUser={editingUser}
+        editForm={editForm}
+        handleEditChange={handleEditChange}
+        handleEditSave={handleEditSave}
+        handleEditCancel={handleEditCancel}
+        handleDeleteUser={handleDeleteUser}
+        saving={saving}
+      />
     </div>
   );
 }

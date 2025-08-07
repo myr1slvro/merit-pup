@@ -16,8 +16,8 @@ export async function login(email?: string | number, password?: string) {
   if (!userByEmail || userByEmail.password !== password) {
     return { error: "Incorrect User ID or password entered." };
   }
-  if (!userByEmail.roles || userByEmail.roles.length === 0) {
-    return { error: "No roles found for this user." };
+  if (!userByEmail.role) {
+    return { error: "No role found for this user." };
   }
   const authToken = generateAuthToken();
   return [200, { authToken, user: userByEmail }] as const;

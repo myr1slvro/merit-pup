@@ -17,21 +17,12 @@ function UtldoAdminRoleContent() {
 }
 
 export default function AppRoutes() {
-  const { roles } = useAuth();
-  // Define hierarchy from highest to lowest
-  const roleHierarchy: UserRole[] = [
-    "Technical Admin",
-    "UTLDO Admin",
-    "Evaluator",
-    "Faculty",
-  ];
-  // Find the highest role the user has
-  const highestRole = roleHierarchy.find((role) => roles?.includes(role));
+  const { user } = useAuth();
   const roleToRoute: Record<UserRole, string> = {
     "Technical Admin": "/technical-admin",
     "UTLDO Admin": "/utldo-admin",
-    "Evaluator": "/evaluator",
-    "Faculty": "/faculty",
+    Evaluator: "/evaluator",
+    Faculty: "/faculty",
   };
   return (
     <Routes>
@@ -39,11 +30,11 @@ export default function AppRoutes() {
       <Route
         path="/"
         element={
-          highestRole ? (
-            <Navigate to={roleToRoute[highestRole]} replace />
+          user && user.role ? (
+            <Navigate to={roleToRoute[user.role]} replace />
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-8">
-              <h1 className="text-3xl font-bold mb-4">No roles assigned</h1>
+              <h1 className="text-3xl font-bold mb-4">No role assigned</h1>
               <p className="text-lg text-gray-700">
                 Contact your administrator.
               </p>
@@ -54,7 +45,7 @@ export default function AppRoutes() {
       <Route
         path="/faculty"
         element={
-          <ProtectedRoute allowedRoles={["Faculty"]}>
+          <ProtectedRoute allowedRoles={["Faculty", "Evaluator", "UTLDO Admin", "Technical Admin"]}>
             <FacultyRoleContent />
           </ProtectedRoute>
         }
@@ -62,7 +53,7 @@ export default function AppRoutes() {
       <Route
         path="/evaluator"
         element={
-          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin"]}>
+          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}>
             <EvaluatorRoleContent />
           </ProtectedRoute>
         }
@@ -70,7 +61,7 @@ export default function AppRoutes() {
       <Route
         path="/utldo-admin"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin"]}>
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
             <UtldoAdminRoleContent />
           </ProtectedRoute>
         }
