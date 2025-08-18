@@ -1,33 +1,37 @@
-const API_URL = "http://127.0.0.1:5000/users";
+const API_URL = "http://127.0.0.1:5000/subjects";
 
-export async function createUser(user: any, token: string) {
+export async function createSubject(subject: any, token: string) {
   const res = await fetch(`${API_URL}/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(user),
+    body: JSON.stringify(subject),
   });
   return res.json();
 }
 
-export async function getUserById(userId: number, token: string) {
-  const res = await fetch(`${API_URL}/${userId}`, {
+export async function getSubjectById(subjectId: number, token: string) {
+  const res = await fetch(`${API_URL}/${subjectId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function getAllUsers(token: string, page = 1) {
+export async function getAllSubjects(token: string, page = 1) {
   const res = await fetch(`${API_URL}/?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function updateUser(userId: number, data: any, token: string) {
-  const res = await fetch(`${API_URL}/${userId}`, {
+export async function updateSubject(
+  subjectId: number,
+  data: any,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/${subjectId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -38,23 +42,23 @@ export async function updateUser(userId: number, data: any, token: string) {
   return res.json();
 }
 
-export async function deleteUser(userId: number, token: string) {
-  const res = await fetch(`${API_URL}/${userId}`, {
+export async function deleteSubject(subjectId: number, token: string) {
+  const res = await fetch(`${API_URL}/${subjectId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function getDeletedUsers(token: string, page = 1) {
+export async function getDeletedSubjects(token: string, page = 1) {
   const res = await fetch(`${API_URL}/deleted?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function restoreUser(userId: number, token: string) {
-  const res = await fetch(`${API_URL}/${userId}/restore`, {
+export async function restoreSubject(subjectId: number, token: string) {
+  const res = await fetch(`${API_URL}/${subjectId}/restore`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });

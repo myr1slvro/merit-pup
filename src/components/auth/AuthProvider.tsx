@@ -1,4 +1,5 @@
-import { getUser, login } from "../../api/auth";
+import { login } from "../../api/auth";
+import { getUserById } from "../../api/users";
 import { User } from "../../types/user";
 import {
   createContext,
@@ -21,49 +22,55 @@ const AuthContext = createContext<AuthContext | undefined>(undefined);
 type AuthProviderProps = PropsWithChildren;
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const [authToken, setAuthToken] = useState<string | null>();
-  const [user, setUser] = useState<User | null>();
-  // ...existing code...
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const response = await getUser();
-        const { authToken, user } = response[1];
-        setAuthToken(authToken);
-        setUser(user);
-      } catch {
-        setAuthToken(null);
-        setUser(null);
-      }
+  function decodeJwtSub(token: string): number | null {
+    try {
+      const [, payload] = token.split(".");
+      if (!payload) return null;
+  let b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  const json = JSON.parse(atob(b64));
+      const sub = json.sub ?? json.identity ?? json.user_id;
+      const id = typeof sub === "string" ? parseInt(sub, 10) : sub;
+      return Number.isFinite(id) ? (id as number) : null;
+    } catch {
+      return null;
     }
-    fetchUser();
-  }, []);
+  }
 
   async function handleLogin(email: string, password: string) {
     try {
       const response = await login(email, password);
-      if (Array.isArray(response)) {
-        const { authToken, user } = response[1];
-        setAuthToken(authToken);
-        setUser(user);
-        // Redirect to appropriate role route
-        const roleToRoute = {
-          "Technical Admin": "/technical-admin",
-          "UTLDO Admin": "/utldo-admin",
-          Evaluator: "/evaluator",
-          Faculty: "/faculty",
-        };
-        if (user.role && roleToRoute[user.role]) {
-          navigate(roleToRoute[user.role], { replace: true });
+      if (response && response.access_token) {
+        setAuthToken(response.access_token);
+        // Try to resolve user id from JWT and load profile
+        const id = decodeJwtSub(response.access_token);
+        if (id != null) {
+          const userProfile = await getUserById(id, response.access_token);
+          setUser(userProfile);
+          const roleToRoute: Record<string, string> = {
+            "Technical Admin": "/technical-admin",
+            "UTLDO Admin": "/utldo-admin",
+            Evaluator: "/evaluator",
+            Faculty: "/faculty",
+          };
+          if (userProfile?.role && roleToRoute[userProfile.role]) {
+            navigate(roleToRoute[userProfile.role], { replace: true });
+          } else {
+            navigate("/", { replace: true });
+          }
+        } else {
+          // Fallback if token can't be decoded
+          setUser(null);
+          navigate("/", { replace: true });
         }
-      } else if (
-        response &&
-        typeof response === "object" &&
-        "error" in response
-      ) {
-        throw new Error((response as any).error);
+      } else if (response && response.error) {
+        throw new Error(response.error);
+      } else if (response && response.error) {
+        throw new Error(response.error);
       }
     } catch (err) {
       setAuthToken(null);

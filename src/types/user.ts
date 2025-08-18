@@ -5,19 +5,19 @@ export type UserRole =
   | "Technical Admin";
 
 export type User = {
-  user_id: number;
+  id?: number;
   staff_id: string;
   first_name: string;
-  middle_name: string;
+  middle_name?: string;
   last_name: string;
-  birthdate: string;
+  birth_date: string; // matches backend
   email: string;
-  phone: string;
-  password: string;
+  phone_number: string;
+  password?: string;
   role: UserRole;
   created_by: string;
-  created_at: string;
+  created_at?: string;
   updated_by: string;
-  updated_at: string;
-  is_deleted: boolean;
+  updated_at?: string;
+  is_deleted?: boolean;
 };
