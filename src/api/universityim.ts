@@ -56,21 +56,36 @@ export async function deleteUniversityIM(
   return res.json();
 }
 
-export async function getUniversityIMsByCollege(collegeId: number, token: string, page = 1) {
+export async function getUniversityIMsByCollege(
+  collegeId: number,
+  token: string,
+  page = 1
+) {
   const res = await fetch(`${API_URL}/college/${collegeId}?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function getUniversityIMsByDepartment(departmentId: number, token: string, page = 1) {
-  const res = await fetch(`${API_URL}/department/${departmentId}?page=${page}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function getUniversityIMsByDepartment(
+  departmentId: number,
+  token: string,
+  page = 1
+) {
+  const res = await fetch(
+    `${API_URL}/department/${departmentId}?page=${page}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
   return res.json();
 }
 
-export async function getUniversityIMsBySubject(subjectId: number, token: string, page = 1) {
+export async function getUniversityIMsBySubject(
+  subjectId: number,
+  token: string,
+  page = 1
+) {
   const res = await fetch(`${API_URL}/subject/${subjectId}?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });

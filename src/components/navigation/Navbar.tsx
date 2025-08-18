@@ -1,24 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
-const NAV_TABS: Record<string, { label: string; to: string }[]> = {
-  Faculty: [
-    { label: "Faculty Directory", to: "/faculty" },
-    { label: "Evaluation", to: "/evaluator" },
-    { label: "User Analytics", to: "/utldo-admin" },
-    { label: "User Management", to: "/technical-admin" },
-  ],
+import { UserRole } from "../../types/user";
+
+const ROLE_TABS: Record<UserRole, { label: string; to: string }[]> = {
+  Faculty: [{ label: "Faculty Directory", to: "/faculty" }],
   Evaluator: [
     { label: "Faculty Directory", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
-    { label: "User Analytics", to: "/utldo-admin" },
-    { label: "User Management", to: "/technical-admin" },
   ],
   "UTLDO Admin": [
     { label: "Faculty Directory", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
     { label: "User Analytics", to: "/utldo-admin" },
-    { label: "User Management", to: "/technical-admin" },
   ],
   "Technical Admin": [
     { label: "Faculty Directory", to: "/faculty" },
@@ -32,8 +26,8 @@ export default function Navbar() {
   const { user, authToken, handleLogout } = useAuth();
   const location = useLocation();
   let tabs: { label: string; to: string }[] = [];
-  if (user && user.role && NAV_TABS[user.role]) {
-    tabs = NAV_TABS[user.role];
+  if (user && user.role && ROLE_TABS[user.role as UserRole]) {
+    tabs = ROLE_TABS[user.role as UserRole];
   }
 
   return (

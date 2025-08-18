@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  updateUserEmail,
-  updateUserStaffId,
-  updateUserRole,
-  updateUserPassword,
-} from "../../api/users";
-import { getAllUserDetails } from "../../api/users";
+import { getAllUsers, updateUser, deleteUser } from "../../api/users";
 import { User } from "../../types/user";
 import EditButton from "./EditButton";
 import EditModal from "./EditModal";
+import { useAuth } from "../auth/AuthProvider";
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState<User[]>([]);
@@ -16,16 +11,26 @@ export default function UserManagementTable() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState<Partial<User>>({});
   const [saving, setSaving] = useState(false);
+  const { authToken } = useAuth();
 
   useEffect(() => {
     async function fetchUsers() {
       setLoading(true);
-      const data = await getAllUserDetails();
-      setUsers(data);
+      if (!authToken) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await getAllUsers(authToken);
+        setUsers(res?.users ?? []);
+      } catch (e) {
+        setUsers([]);
+      }
       setLoading(false);
     }
     fetchUsers();
-  }, []);
+  }, [authToken]);
 
   function handleEditClick(user: User) {
     setEditingUser(user);
@@ -41,35 +46,48 @@ export default function UserManagementTable() {
 
   async function handleEditSave() {
     if (!editingUser) return;
+    if (!authToken) return;
     setSaving(true);
+    const payload: Partial<User> = {};
     if (editForm.email && editForm.email !== editingUser.email) {
-      await updateUserEmail(editingUser.staff_id, editForm.email);
+      payload.email = editForm.email;
     }
     if (editForm.staff_id && editForm.staff_id !== editingUser.staff_id) {
-      await updateUserStaffId(editingUser.staff_id, editForm.staff_id);
+      payload.staff_id = editForm.staff_id;
     }
     if (editForm.role && editForm.role !== editingUser.role) {
-      await updateUserRole(editingUser.staff_id, editForm.role as any);
+      payload.role = editForm.role;
     }
     if (editForm.password && editForm.password !== editingUser.password) {
-      await updateUserPassword(editingUser.staff_id, editForm.password);
+      payload.password = editForm.password;
     }
-    // Refresh users
-    const data = await getAllUserDetails();
-    setUsers(data);
-    setEditingUser(null);
-    setSaving(false);
+    try {
+      if (Object.keys(payload).length > 0 && editingUser.id != null) {
+        await updateUser(editingUser.id, payload, authToken);
+      }
+      const res = await getAllUsers(authToken);
+      setUsers(res?.users ?? []);
+    } finally {
+      setEditingUser(null);
+      setSaving(false);
+    }
   }
 
   async function handleDeleteUser() {
     if (!editingUser) return;
+    if (!authToken) return;
     setSaving(true);
-    // Soft delete: set is_deleted to true
-    editingUser.is_deleted = true;
-    // Remove from table immediately
-    setUsers((prev) => prev.filter((u) => u.user_id !== editingUser.user_id));
-    setEditingUser(null);
-    setSaving(false);
+    try {
+      if (editingUser.id != null) {
+        await deleteUser(editingUser.id, authToken);
+      }
+      // Refresh list after delete
+      const res = await getAllUsers(authToken);
+      setUsers(res?.users ?? []);
+    } finally {
+      setEditingUser(null);
+      setSaving(false);
+    }
   }
 
   function handleEditCancel() {
@@ -92,16 +110,16 @@ export default function UserManagementTable() {
 
   // Map column names to readable labels
   const columnLabels: Record<string, string> = {
-    user_id: "User ID",
+    id: "User ID",
     staff_id: "Staff ID",
     first_name: "First Name",
     middle_name: "Middle Name",
     last_name: "Last Name",
     email: "Email",
-    phone: "Phone",
+    phone_number: "Phone",
     password: "Password",
     role: "Role",
-    birthdate: "Birthdate",
+    birth_date: "Birthdate",
     created_by: "Created By",
     created_at: "Created At",
     updated_by: "Updated By",
@@ -126,7 +144,7 @@ export default function UserManagementTable() {
         </thead>
         <tbody>
           {users.map((user, idx) => (
-            <tr key={user.user_id || idx} className="hover:bg-gray-50">
+            <tr key={user.id || idx} className="hover:bg-gray-50">
               {columns.map((col) => (
                 <td key={col} className="px-4 py-2 border-b text-sm">
                   {Array.isArray(user[col])

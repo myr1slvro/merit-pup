@@ -50,14 +50,22 @@ export async function deleteServiceIM(serviceimId: number, token: string) {
   return res.json();
 }
 
-export async function getServiceIMsByCollege(collegeId: number, token: string, page = 1) {
+export async function getServiceIMsByCollege(
+  collegeId: number,
+  token: string,
+  page = 1
+) {
   const res = await fetch(`${API_URL}/college/${collegeId}?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }
 
-export async function getServiceIMsBySubject(subjectId: number, token: string, page = 1) {
+export async function getServiceIMsBySubject(
+  subjectId: number,
+  token: string,
+  page = 1
+) {
   const res = await fetch(`${API_URL}/subject/${subjectId}?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
