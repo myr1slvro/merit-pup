@@ -1,28 +1,13 @@
-import { users } from "./mockUsers";
+const API_URL = "http://127.0.0.1:5000/auth";
 
-export async function getUser() {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  // No-op for mock
-}
-export async function login(email?: string | number, password?: string) {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  if (!email) {
-    return { error: "Email is required." };
+export async function login(email: string, password: string) {
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    return { error: "Login failed", status: res.status };
   }
-  if (!password) {
-    return { error: "Password is required." };
-  }
-  const userByEmail = users.find((u) => String(u.email) === String(email));
-  if (!userByEmail || userByEmail.password !== password) {
-    return { error: "Incorrect User ID or password entered." };
-  }
-  if (!userByEmail.role) {
-    return { error: "No role found for this user." };
-  }
-  const authToken = generateAuthToken();
-  return [200, { authToken, user: userByEmail }] as const;
-}
-
-function generateAuthToken() {
-  return Math.random().toString(36).substring(2);
+  return res.json();
 }
