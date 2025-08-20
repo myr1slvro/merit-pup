@@ -48,3 +48,31 @@ export async function deleteAssociation(
   });
   return res.json();
 }
+
+// Convenience: fetch full College objects for a user
+import { getCollegeById } from "./college";
+import type { College } from "../types/college";
+import type { CollegeIncluded } from "../types/collegeincluded";
+
+export async function getCollegesForUserDetailed(
+  userId: number,
+  authToken: string
+): Promise<College[]> {
+  const res = (await (getCollegesForUser as any)(userId, authToken)) as
+    | CollegeIncluded[]
+    | any;
+  const list: CollegeIncluded[] = Array.isArray(res) ? res : res?.data || [];
+  const collegeIds = list
+    .map((ci) =>
+      typeof (ci as any).college_id === "string"
+        ? parseInt((ci as any).college_id, 10)
+        : (ci as any).college_id
+    )
+    .filter((id): id is number => Number.isFinite(id));
+  const results = await Promise.all(
+    collegeIds.map((id) => getCollegeById(id, authToken))
+  );
+  return results
+    .map((r: any) => r?.college || r)
+    .filter((c: any) => c && c.id != null && c.name != null) as College[];
+}
