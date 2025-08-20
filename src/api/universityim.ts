@@ -91,3 +91,33 @@ export async function getUniversityIMsBySubject(
   });
   return res.json();
 }
+
+import { getSubjectById } from "./subject";
+import type { UniversityIM } from "../types/universityim";
+
+export async function getUniversityIMsByCollegeWithSubjects(
+  collegeId: number,
+  authToken: string
+): Promise<UniversityIM[]> {
+  const base: any = await (getUniversityIMsByCollege as any)(
+    collegeId,
+    authToken
+  );
+  const list: UniversityIM[] = Array.isArray(base)
+    ? base
+    : (base?.universityims as UniversityIM[]) || [];
+  const enriched = await Promise.all(
+    list.map(async (im: any) => {
+      if (!im.subject && im.subject_id && authToken) {
+        try {
+          const subject = await getSubjectById(im.subject_id, authToken);
+          return { ...im, subject } as UniversityIM;
+        } catch {
+          return im as UniversityIM;
+        }
+      }
+      return im as UniversityIM;
+    })
+  );
+  return enriched;
+}

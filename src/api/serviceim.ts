@@ -71,3 +71,30 @@ export async function getServiceIMsBySubject(
   });
   return res.json();
 }
+
+import { getSubjectById } from "./subject";
+import type { ServiceIM } from "../types/serviceim";
+
+export async function getServiceIMsByCollegeWithSubjects(
+  collegeId: number,
+  authToken: string
+): Promise<ServiceIM[]> {
+  const base: any = await (getServiceIMsByCollege as any)(collegeId, authToken);
+  const list: ServiceIM[] = Array.isArray(base)
+    ? base
+    : (base?.serviceims as ServiceIM[]) || [];
+  const enriched = await Promise.all(
+    list.map(async (im: any) => {
+      if (!im.subject && im.subject_id && authToken) {
+        try {
+          const subject = await getSubjectById(im.subject_id, authToken);
+          return { ...im, subject } as ServiceIM;
+        } catch {
+          return im as ServiceIM;
+        }
+      }
+      return im as ServiceIM;
+    })
+  );
+  return enriched;
+}

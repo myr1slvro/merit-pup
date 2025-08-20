@@ -64,3 +64,51 @@ export async function restoreDepartment(departmentId: number, token: string) {
   });
   return res.json();
 }
+
+import type { Department } from "../types/department";
+
+const __departmentCache: Record<
+  number,
+  { name: string; abbreviation?: string }
+> = {};
+
+export function getDepartmentCacheEntry(
+  id: number
+): { name: string; abbreviation?: string } | undefined {
+  return __departmentCache[id];
+}
+
+export async function getDepartmentsByIdsCached(
+  ids: number[],
+  authToken: string
+): Promise<Record<number, { name: string; abbreviation?: string }>> {
+  const unique = Array.from(new Set(ids.filter((x) => Number.isFinite(x))));
+  const missing = unique.filter((id) => __departmentCache[id] === undefined);
+  if (missing.length) {
+    const results = await Promise.all(
+      missing.map((id) =>
+        (getDepartmentById as any)(id, authToken)
+          .then((dep: any) => ({ id, dep }))
+          .catch(() => null)
+      )
+    );
+    results.forEach((r) => {
+      if (r && r.dep) {
+        const d: Department =
+          (r.dep as any).department || (r.dep as Department);
+        if (d && d.id != null) {
+          __departmentCache[d.id] = {
+            name: d.name,
+            abbreviation: (d as any).abbreviation,
+          };
+        }
+      }
+    });
+  }
+  const out: Record<number, { name: string; abbreviation?: string }> = {};
+  unique.forEach((id) => {
+    const c = __departmentCache[id];
+    if (c) out[id] = { ...c };
+  });
+  return out;
+}
