@@ -4,96 +4,100 @@ import { FaUniversity } from "react-icons/fa";
 import CollegeButtonsRow from "./CollegeButtonsRow";
 import DepartmentFilter from "./DepartmentFilter";
 import IMColumns from "./IMColumns";
-import useCollegeIMs from "./useCollegeIMs";
+import { useState as useReactState } from "react";
+import { getUniversityIMsByCollege } from "../../api/universityim";
+import { getServiceIMsByCollege } from "../../api/serviceim";
 
 import useUserColleges from "./useUserColleges";
 import {
   getDepartmentsByIdsCached,
   getDepartmentCacheEntry,
+  getDepartmentIdFromIM,
+  getDepartmentsByCollegeId,
 } from "../../api/department";
 
 import type { UniversityIM } from "../../types/universityim";
+import type { ServiceIM } from "../../types/serviceim";
+
+const { authToken } = useAuth();
+const { colleges, loading, error } = useUserColleges();
+const [selectedCollege, setSelectedCollege] = useReactState<any>(null);
+const [universityIMs, setUniversityIMs] = useReactState<UniversityIM[]>([]);
+const [serviceIMs, setServiceIMs] = useReactState<ServiceIM[]>([]);
+const [imsLoading, setIMsLoading] = useReactState(false);
+const [imsError, setIMsError] = useReactState<string | null>(null);
+const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(
+  null
+);
+
+// Fetch IMs per college and reset department filter
+useEffect(() => {
+  setSelectedDepartmentId(null);
+  if (!selectedCollege || !authToken) {
+    setUniversityIMs([]);
+    setServiceIMs([]);
+    return;
+  }
+  setIMsLoading(true);
+  setIMsError(null);
+  Promise.all([
+    getUniversityIMsByCollege(selectedCollege.id, authToken),
+    getServiceIMsByCollege(selectedCollege.id, authToken),
+  ])
+    .then(([univ, serv]) => {
+      setUniversityIMs(Array.isArray(univ) ? univ : univ?.universityims || []);
+      setServiceIMs(Array.isArray(serv) ? serv : serv?.serviceims || []);
+    })
+    .catch((e) => {
+      setIMsError("Failed to load IMs for this college.");
+      setUniversityIMs([]);
+      setServiceIMs([]);
+    })
+    .finally(() => setIMsLoading(false));
+}, [selectedCollege?.id, authToken]);
+
+// IMs are now fetched per college, so no need to filter
+const filteredUniversityIMs = universityIMs;
+const filteredServiceIMs = serviceIMs;
+
+// Department options fetched from API for selected college
+const [departmentOptions, setDepartmentOptions] = useState<number[]>([]);
+useEffect(() => {
+  if (selectedCollege && authToken) {
+    getDepartmentsByCollegeId(selectedCollege.id, authToken)
+      .then((departments) => {
+        // departments is expected to be an array of department objects
+        setDepartmentOptions(
+          Array.isArray(departments)
+            ? departments
+                .map((d: any) => d.id)
+                .filter((id: any) => typeof id === "number")
+            : []
+        );
+      })
+      .catch(() => setDepartmentOptions([]));
+  } else {
+    setDepartmentOptions([]);
+  }
+}, [selectedCollege?.id, authToken]);
+
+// Fetch department details for pills if missing
+useEffect(() => {
+  if (departmentOptions.length && authToken) {
+    getDepartmentsByIdsCached(departmentOptions, authToken);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [departmentOptions, authToken]);
+
+const filteredUniversityIMsByDept = useMemo(() => {
+  if (!selectedCollege) return [] as UniversityIM[];
+  if (selectedDepartmentId == null) return filteredUniversityIMs;
+  return filteredUniversityIMs.filter(
+    (im) => getDepartmentIdFromIM(im) === selectedDepartmentId
+  );
+}, [selectedCollege?.id, selectedDepartmentId, filteredUniversityIMs]);
 
 export default function FacultyDirectory() {
-  const { user, authToken } = useAuth();
-  const { colleges, loading, error } = useUserColleges();
-  const {
-    selectedCollege,
-    serviceIMs,
-    universityIMs,
-    imsLoading,
-    imsError,
-    selectCollege,
-  } = useCollegeIMs();
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
-    number | null
-  >(null);
-
-  // Reset department filter when college changes
-  useEffect(() => {
-    setSelectedDepartmentId(null);
-  }, [selectedCollege?.id]);
-
-  // Helpers to support both FK id fields and nested objects
-  const parseId = (raw: unknown): number | undefined => {
-    if (raw == null) return undefined;
-    if (typeof raw === "number") return raw;
-    if (typeof raw === "string") {
-      const n = parseInt(raw, 10);
-      return Number.isFinite(n) ? n : undefined;
-    }
-    return undefined;
-  };
-  const getCollegeIdFromUIM = (im: UniversityIM) =>
-    parseId((im as any).college_id ?? (im as any).college?.id);
-  const getDepartmentIdFromUIM = (im: UniversityIM) =>
-    parseId((im as any).department_id ?? (im as any).department?.id);
-
-  // Helper to extract college id from an IM that may have either `college?.id` or `college_id`
-  const getCollegeIdFromIM = (im: any): number | undefined => {
-    const raw = im?.college?.id ?? im?.college_id;
-    if (raw == null) return undefined;
-    const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
-    return Number.isFinite(n) ? (n as number) : undefined;
-  };
-
-  const filteredUniversityIMs = selectedCollege
-    ? universityIMs.filter(
-        (im) => getCollegeIdFromIM(im) === selectedCollege.id
-      )
-    : [];
-  const filteredServiceIMs = selectedCollege
-    ? serviceIMs.filter((im) => getCollegeIdFromIM(im) === selectedCollege.id)
-    : [];
-
-  // Department filter options derived from university IMs under the selected college
-  const departmentOptions: number[] = selectedCollege
-    ? Array.from(
-        new Set(
-          filteredUniversityIMs
-            .map((im) => getDepartmentIdFromUIM(im))
-            .filter((id): id is number => typeof id === "number")
-        )
-      )
-    : [];
-
-  // Fetch department details for pills if missing
-  useEffect(() => {
-    if (departmentOptions.length && authToken) {
-      // Prefill API cache for these departments; no local state needed
-      getDepartmentsByIdsCached(departmentOptions, authToken);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departmentOptions.join(","), authToken]);
-
-  const filteredUniversityIMsByDept = useMemo(() => {
-    if (!selectedCollege) return [] as UniversityIM[];
-    if (selectedDepartmentId == null) return filteredUniversityIMs;
-    return filteredUniversityIMs.filter(
-      (im) => getDepartmentIdFromUIM(im) === selectedDepartmentId
-    );
-  }, [selectedCollege?.id, selectedDepartmentId, filteredUniversityIMs]);
-
   return (
     <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -104,7 +108,7 @@ export default function FacultyDirectory() {
         selectedCollege={selectedCollege}
         loading={loading}
         error={error}
-        onSelect={selectCollege}
+        onSelect={setSelectedCollege}
       />
       {selectedCollege && (
         <div className="flex flex-col mt-6">
@@ -121,7 +125,7 @@ export default function FacultyDirectory() {
               const cached = cacheEntry?.abbreviation || cacheEntry?.name;
               if (cached) return cached;
               const sample = universityIMs.find(
-                (im) => getDepartmentIdFromUIM(im) === deptId
+                (im) => getDepartmentIdFromIM(im) === deptId
               );
               return (
                 (sample as any)?.department?.abbreviation ||
