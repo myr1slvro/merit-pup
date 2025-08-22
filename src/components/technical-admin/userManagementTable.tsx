@@ -103,10 +103,22 @@ export default function UserManagementTable() {
     return <div className="p-4">No users found.</div>;
   }
 
-  // Get all unique keys from users for columns
-  const columns = Array.from(
-    new Set(users.flatMap((user) => Object.keys(user)))
-  ).filter((col) => col !== "is_deleted");
+  // Define the desired column order
+  const columns = [
+    "id",
+    "last_name",
+    "first_name",
+    "middle_name",
+    "role",
+    "staff_id",
+    "email",
+    "phone_number",
+    "birth_date",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ];
 
   // Map column names to readable labels
   const columnLabels: Record<string, string> = {
