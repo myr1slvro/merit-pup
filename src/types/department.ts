@@ -1,5 +1,6 @@
 export interface Department {
   id: number;
+  college_id: number;
   abbreviation: string;
   name: string;
   created_by: string;

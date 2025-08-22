@@ -1,3 +1,16 @@
+export const getCollegeIdFromIM = (im: any): number | undefined => {
+  const raw = im?.college?.id ?? im?.college_id;
+  if (raw == null) return undefined;
+  const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? (n as number) : undefined;
+};
+
+export const getDepartmentIdFromIM = (im: any): number | undefined => {
+  const raw = im?.department?.id ?? im?.department_id;
+  if (raw == null) return undefined;
+  const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? (n as number) : undefined;
+};
 const API_URL = "http://127.0.0.1:5000/departments";
 
 export async function createDepartment(department: any, token: string) {
@@ -19,8 +32,18 @@ export async function getDepartmentById(departmentId: number, token: string) {
   return res.json();
 }
 
-export async function getAllDepartments(token: string, page = 1) {
-  const res = await fetch(`${API_URL}/?page=${page}`, {
+export async function getAllDepartments(token: string) {
+  const res = await fetch(`${API_URL}/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
+export async function getDepartmentsByCollegeId(
+  collegeId: number,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/college/${collegeId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
