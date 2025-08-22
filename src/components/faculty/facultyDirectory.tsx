@@ -7,6 +7,7 @@ import IMColumns from "./IMColumns";
 import { useState as useReactState } from "react";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
+import { getSubjectById } from "../../api/subject";
 
 import useUserColleges from "./useUserColleges";
 import {
@@ -46,11 +47,49 @@ export default function FacultyDirectory() {
       getUniversityIMsByCollege(selectedCollege.id, authToken),
       getServiceIMsByCollege(selectedCollege.id, authToken),
     ])
-      .then(([univ, serv]) => {
-        setUniversityIMs(
-          Array.isArray(univ) ? univ : univ?.universityims || []
+      .then(async ([univ, serv]) => {
+        const uims: any[] = Array.isArray(univ)
+          ? univ
+          : univ?.universityims || [];
+        const sims: any[] = Array.isArray(serv) ? serv : serv?.serviceims || [];
+
+        // Collect all unique subject_ids from both IM arrays
+        const allIMs = [...uims, ...sims];
+        const subjectIds = Array.from(
+          new Set(
+            allIMs
+              .map((im) => im.subject_id)
+              .filter((id) => typeof id === "number")
+          )
         );
-        setServiceIMs(Array.isArray(serv) ? serv : serv?.serviceims || []);
+
+        // Fetch all subject names in parallel
+        const subjectMap: Record<number, string> = {};
+        await Promise.all(
+          subjectIds.map(async (id) => {
+            try {
+              const subj = await getSubjectById(id, authToken);
+              if (subj && subj.name) subjectMap[id] = subj.name;
+            } catch {}
+          })
+        );
+
+        // Attach subject name to each IM
+        const attachSubjectName = (ims: any[]) =>
+          ims.map((im) =>
+            im.subject_id && subjectMap[im.subject_id]
+              ? {
+                  ...im,
+                  subject: {
+                    ...(im.subject || {}),
+                    name: subjectMap[im.subject_id],
+                  },
+                }
+              : im
+          );
+
+        setUniversityIMs(attachSubjectName(uims));
+        setServiceIMs(attachSubjectName(sims));
       })
       .catch((e) => {
         setIMsError("Failed to load IMs for this college.");
