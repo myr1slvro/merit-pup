@@ -32,55 +32,171 @@ export default function EditModal({
           }}
           className="space-y-3"
         >
-          <label className="block">
-            <span className="text-sm font-semibold">Email</span>
-            <input
-              type="email"
-              name="email"
-              value={editForm.email ?? ""}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold">Staff ID</span>
-            <input
-              type="text"
-              name="staff_id"
-              value={editForm.staff_id ?? ""}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold">Role</span>
-            <select
-              name="role"
-              value={editForm.role ?? ""}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              required
-            >
-              <option value="">Select Role</option>
-              <option value="Faculty">Faculty</option>
-              <option value="Evaluator">Evaluator</option>
-              <option value="UTLDO Admin">UTLDO Admin</option>
-              <option value="Technical Admin">Technical Admin</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold">Password</span>
-            <input
-              type="text"
-              name="password"
-              value={editForm.password ?? ""}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              required
-            />
-          </label>
+          {/* User ID (read-only) */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">User ID</span>
+              <input
+                type="text"
+                value={editingUser.id ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Role</span>
+              <select
+                name="role"
+                value={editForm.role ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              >
+                <option value="">Select Role</option>
+                <option value="Faculty">Faculty</option>
+                <option value="Evaluator">Evaluator</option>
+                <option value="UTLDO Admin">UTLDO Admin</option>
+                <option value="Technical Admin">Technical Admin</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Last Name</span>
+              <input
+                type="text"
+                name="last_name"
+                value={editForm.last_name ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">First Name</span>
+              <input
+                type="text"
+                name="first_name"
+                value={editForm.first_name ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Middle Name</span>
+              <input
+                type="text"
+                name="middle_name"
+                value={editForm.middle_name ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Staff ID</span>
+              <input
+                type="text"
+                name="staff_id"
+                value={editForm.staff_id ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Email</span>
+              <input
+                type="email"
+                name="email"
+                value={editForm.email ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Phone</span>
+              <input
+                type="text"
+                name="phone_number"
+                value={editForm.phone_number ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+              />
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Password</span>
+              <input
+                type="password"
+                name="password"
+                value={editForm.password ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+                required
+              />
+            </div>
+          </div>
+          {/* Read-only fields: birthdate, created/updated by/at */}
+          <div className="flex gap-2 mt-2 text-xs text-gray-500">
+            <div className="flex-1">
+              <span>Birthdate</span>
+              <input
+                type="text"
+                value={editingUser.birth_date ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="flex-1">
+              <span>Created At</span>
+              <input
+                type="text"
+                value={editingUser.created_at ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="flex-1">
+              <span>Created By</span>
+              <input
+                type="text"
+                value={editingUser.created_by ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-2 text-xs text-gray-500">
+            <div className="flex-1">
+              <span>Updated At</span>
+              <input
+                type="text"
+                value={editingUser.updated_at ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="flex-1">
+              <span>Updated By</span>
+              <input
+                type="text"
+                value={editingUser.updated_by ?? ""}
+                className="mt-1 block w-full border rounded px-2 py-1 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+            </div>
+          </div>
           <div className="flex gap-2 mt-4">
             <button
               type="submit"

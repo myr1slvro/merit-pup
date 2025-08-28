@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
+import Pagination from "../navigation/Pagination";
 import { getAllUsers, updateUser, deleteUser } from "../../api/users";
 import { User } from "../../types/user";
 import EditButton from "./EditButton";
 import EditModal from "./EditModal";
 import { useAuth } from "../auth/AuthProvider";
 
-export default function UserManagementTable() {
+interface UserManagementTableProps {
+  page: number;
+  setPage: (page: number) => void;
+  setHasNext: (hasNext: boolean) => void;
+  setHasPrev: (hasPrev: boolean) => void;
+}
+
+export default function UserManagementTable({
+  page,
+  setPage,
+  setHasNext,
+  setHasPrev,
+}: UserManagementTableProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -13,24 +26,36 @@ export default function UserManagementTable() {
   const [saving, setSaving] = useState(false);
   const { authToken } = useAuth();
 
-  useEffect(() => {
-    async function fetchUsers() {
-      setLoading(true);
-      if (!authToken) {
-        setUsers([]);
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await getAllUsers(authToken);
-        setUsers(res?.users ?? []);
-      } catch (e) {
-        setUsers([]);
-      }
+  async function fetchUsers(currentPage = page) {
+    setLoading(true);
+    if (!authToken) {
+      setUsers([]);
       setLoading(false);
+      setHasNext(false);
+      setHasPrev(false);
+      return;
     }
-    fetchUsers();
-  }, [authToken]);
+    try {
+      const res = await getAllUsers(authToken, currentPage);
+      setUsers(res?.users ?? []);
+      setHasNext(
+        !!res?.has_next ||
+          ((res?.users?.length ?? 0) > 0 &&
+            res?.users?.length === (res?.per_page ?? 10))
+      );
+      setHasPrev(currentPage > 1);
+    } catch (e) {
+      setUsers([]);
+      setHasNext(false);
+      setHasPrev(false);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchUsers(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken, page]);
 
   function handleEditClick(user: User) {
     setEditingUser(user);
@@ -65,8 +90,7 @@ export default function UserManagementTable() {
       if (Object.keys(payload).length > 0 && editingUser.id != null) {
         await updateUser(editingUser.id, payload, authToken);
       }
-      const res = await getAllUsers(authToken);
-      setUsers(res?.users ?? []);
+      await fetchUsers(1);
     } finally {
       setEditingUser(null);
       setSaving(false);
@@ -82,8 +106,7 @@ export default function UserManagementTable() {
         await deleteUser(editingUser.id, authToken);
       }
       // Refresh list after delete
-      const res = await getAllUsers(authToken);
-      setUsers(res?.users ?? []);
+      await fetchUsers(page);
     } finally {
       setEditingUser(null);
       setSaving(false);
@@ -103,10 +126,22 @@ export default function UserManagementTable() {
     return <div className="p-4">No users found.</div>;
   }
 
-  // Get all unique keys from users for columns
-  const columns = Array.from(
-    new Set(users.flatMap((user) => Object.keys(user)))
-  ).filter((col) => col !== "is_deleted");
+  // Define the desired column order
+  const columns = [
+    "id",
+    "last_name",
+    "first_name",
+    "middle_name",
+    "role",
+    "staff_id",
+    "email",
+    "phone_number",
+    "birth_date",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ];
 
   // Map column names to readable labels
   const columnLabels: Record<string, string> = {
@@ -140,6 +175,9 @@ export default function UserManagementTable() {
                   col.charAt(0).toUpperCase() + col.slice(1)}
               </th>
             ))}
+            <th className="px-4 py-2 border-b bg-gray-100 text-left text-sm font-semibold">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -152,7 +190,7 @@ export default function UserManagementTable() {
                     : user[col] ?? ""}
                 </td>
               ))}
-              <td className="px-4 py-2 border-b text-sm">
+              <td className="px-4 py-2 border-b text-sm font-medium">
                 <EditButton onClick={() => handleEditClick(user)} />
               </td>
             </tr>
