@@ -133,7 +133,7 @@ export default function EditModal({
             <div className="flex-1">
               <span className="text-xs text-gray-500">Password</span>
               <input
-                type="text"
+                type="password"
                 name="password"
                 value={editForm.password ?? ""}
                 onChange={handleEditChange}

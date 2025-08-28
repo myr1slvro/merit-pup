@@ -1,10 +1,14 @@
 import UserManagementTable from "./userManagementTable";
+import Pagination from "../navigation/Pagination";
 import { useState } from "react";
 import UserCreationForm from "./UserCreationForm";
 import { createUser } from "../../api/users";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function userManagement() {
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
     role: "",
@@ -90,7 +94,7 @@ export default function userManagement() {
 
   return (
     <div className="flex-1 flex w-full">
-      <div className="flex flex-col w-full bg-white m-16 rounded-lg shadow-lg">
+      <div className="flex flex-col w-full bg-white m-16 rounded-lg shadow-lg h-full">
         <div className="flex items-center justify-between p-8">
           <h1 className="text-3xl font-bold">User Management</h1>
           <button
@@ -101,12 +105,32 @@ export default function userManagement() {
           </button>
         </div>
         <hr className="h-1 rounded-full border-meritGray/50" />
-        <div className="">
-          <UserManagementTable key={refreshKey} />
+        <div className="flex-grow">
+          <UserManagementTable
+            key={refreshKey}
+            page={page}
+            setPage={setPage}
+            setHasNext={setHasNext}
+            setHasPrev={setHasPrev}
+          />
         </div>
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded shadow-lg p-6 min-w-[350px] max-w-[90vw]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Blurred, darkened background overlay */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              style={{ pointerEvents: "auto" }}
+            />
+            {/* Modal content */}
+            <div className="relative bg-white rounded-lg shadow-lg p-6 min-w-1/2 max-w-9/10 z-10">
+              <button
+                className="absolute top-0 right-0 p-4 text-gray-500 hover:text-gray-800 text-2xl font-bold focus:outline-none"
+                onClick={handleCloseCreateModal}
+                aria-label="Close"
+                type="button"
+              >
+                &times;
+              </button>
               <h2 className="text-xl font-bold mb-4">Create User</h2>
               <UserCreationForm
                 form={createForm}
@@ -118,6 +142,15 @@ export default function userManagement() {
             </div>
           </div>
         )}
+        <div className="pb-8 px-8">
+          <Pagination
+            page={page}
+            hasPrev={hasPrev}
+            hasNext={hasNext}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+          />
+        </div>
       </div>
     </div>
   );

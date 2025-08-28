@@ -53,6 +53,7 @@ export default function UserCreationForm({
       setPhoneError("");
     }
   }
+
   function handlePasswordBlur() {
     if (form.password && !passwordPattern.test(form.password)) {
       setPasswordError(
@@ -205,7 +206,7 @@ export default function UserCreationForm({
           )}
         </div>
       </div>
-      <div className="flex gap-2 mt-4">
+      <div className="flex flex-row-reverse gap-2 mt-4">
         <button
           type="submit"
           className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold"
@@ -215,7 +216,7 @@ export default function UserCreationForm({
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 font-semibold"
+          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-meritGray font-semibold"
           onClick={onCancel}
           disabled={saving}
         >
