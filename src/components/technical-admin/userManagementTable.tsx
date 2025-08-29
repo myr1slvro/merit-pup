@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Pagination from "../navigation/Pagination";
 import { getAllUsers, updateUser, deleteUser } from "../../api/users";
+import { getCollegesForUser } from "../../api/collegeincluded";
+import { getCollegeById } from "../../api/college";
 import { User } from "../../types/user";
 import EditButton from "./EditButton";
 import EditModal from "./EditModal";
@@ -13,6 +15,8 @@ interface UserManagementTableProps {
   setHasPrev: (hasPrev: boolean) => void;
 }
 
+type CollegeMap = Record<number, string[]>;
+
 export default function UserManagementTable({
   page,
   setPage,
@@ -20,6 +24,7 @@ export default function UserManagementTable({
   setHasPrev,
 }: UserManagementTableProps) {
   const [users, setUsers] = useState<User[]>([]);
+  const [collegeMap, setCollegeMap] = useState<CollegeMap>({});
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState<Partial<User>>({});
@@ -37,17 +42,63 @@ export default function UserManagementTable({
     }
     try {
       const res = await getAllUsers(authToken, currentPage);
-      setUsers(res?.users ?? []);
+      const userList = res?.users ?? [];
+      setUsers(userList);
       setHasNext(
         !!res?.has_next ||
           ((res?.users?.length ?? 0) > 0 &&
             res?.users?.length === (res?.per_page ?? 10))
       );
       setHasPrev(currentPage > 1);
+
+      // Fetch colleges for each user, then fetch each college's abbreviation
+      const collegeMapResult: CollegeMap = {};
+      await Promise.all(
+        userList.map(async (user: User) => {
+          if (user.id != null) {
+            try {
+              const colleges = await getCollegesForUser(user.id, authToken);
+              // colleges may be array of ids or objects with college_id
+              let ids: number[] = [];
+              if (Array.isArray(colleges)) {
+                ids = colleges.map((c: any) =>
+                  typeof c === "object" && c.college_id ? c.college_id : c
+                );
+              } else if (colleges?.data) {
+                ids = colleges.data.map((c: any) =>
+                  typeof c === "object" && c.college_id ? c.college_id : c
+                );
+              }
+              // Fetch abbreviations for each id
+              const abbrs: string[] = await Promise.all(
+                ids
+                  .filter((id) => typeof id === "number")
+                  .map(async (id) => {
+                    try {
+                      const college = await getCollegeById(id, authToken);
+                      return (
+                        college?.abbreviation ||
+                        college?.college?.abbreviation ||
+                        String(id)
+                      );
+                    } catch {
+                      return String(id);
+                    }
+                  })
+              );
+              collegeMapResult[user.id] = abbrs;
+            } catch {
+              collegeMapResult[user.id] = [];
+            }
+          }
+        })
+      );
+      setCollegeMap(collegeMapResult);
     } catch (e) {
       setUsers([]);
       setHasNext(false);
       setHasPrev(false);
+      setCollegeMap({});
     }
     setLoading(false);
   }
@@ -136,6 +187,7 @@ export default function UserManagementTable({
     "staff_id",
     "email",
     "phone_number",
+    "colleges",
     "birth_date",
     "created_at",
     "created_by",
@@ -153,6 +205,7 @@ export default function UserManagementTable({
     email: "Email",
     phone_number: "Phone",
     password: "Password",
+    colleges: "Colleges",
     role: "Role",
     birth_date: "Birthdate",
     created_by: "Created By",
@@ -185,7 +238,11 @@ export default function UserManagementTable({
             <tr key={user.id || idx} className="hover:bg-gray-50">
               {columns.map((col) => (
                 <td key={col} className="px-4 py-2 border-b text-sm">
-                  {Array.isArray(user[col])
+                  {col === "colleges"
+                    ? typeof user.id === "number" && collegeMap[user.id]
+                      ? collegeMap[user.id].join(", ")
+                      : "Loading..."
+                    : Array.isArray(user[col])
                     ? user[col].join(", ")
                     : user[col] ?? ""}
                 </td>
