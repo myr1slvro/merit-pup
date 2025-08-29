@@ -189,8 +189,6 @@ export default function UserManagementTable({
     "phone_number",
     "colleges",
     "birth_date",
-    "created_at",
-    "created_by",
     "updated_at",
     "updated_by",
   ];
@@ -208,11 +206,27 @@ export default function UserManagementTable({
     colleges: "Colleges",
     role: "Role",
     birth_date: "Birthdate",
-    created_by: "Created By",
-    created_at: "Created At",
     updated_by: "Updated By",
     updated_at: "Updated At",
   };
+
+  // Helper to format date string as 'YYYY-MM-DD | hh:mm:ss AM/PM'
+  function formatDateTime(dt: string | undefined): string {
+    if (!dt) return "";
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const seconds = String(d.getSeconds()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    const hh = String(hours).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} \n ${hh}:${minutes}:${seconds} ${ampm}`;
+  }
 
   return (
     <div className="overflow-x-auto p-4">
@@ -242,6 +256,8 @@ export default function UserManagementTable({
                     ? typeof user.id === "number" && collegeMap[user.id]
                       ? collegeMap[user.id].join(", ")
                       : "Loading..."
+                    : col === "updated_at"
+                    ? formatDateTime(user[col])
                     : Array.isArray(user[col])
                     ? user[col].join(", ")
                     : user[col] ?? ""}
