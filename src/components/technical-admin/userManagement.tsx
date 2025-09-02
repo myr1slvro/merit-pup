@@ -5,8 +5,10 @@ import UserCreationForm from "./UserCreationForm";
 import { createUser } from "../../api/users";
 import { createAssociation } from "../../api/collegeincluded";
 import { useAuth } from "../auth/AuthProvider";
+import CollegeManagement from "./collegeManagement";
 
 export default function userManagement() {
+  const [showCollegeMgmt, setShowCollegeMgmt] = useState(false);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrev, setHasPrev] = useState(false);
@@ -26,8 +28,11 @@ export default function userManagement() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const { authToken, user } = useAuth();
-  // For triggering table refresh
   const [refreshKey, setRefreshKey] = useState(0);
+
+  if (showCollegeMgmt) {
+    return <CollegeManagement onBack={() => setShowCollegeMgmt(false)} />;
+  }
 
   function handleCreateUser() {
     setShowCreateModal(true);
@@ -127,12 +132,20 @@ export default function userManagement() {
       <div className="flex flex-col w-full bg-white m-16 rounded-lg shadow-lg h-full">
         <div className="flex items-center justify-between p-8">
           <h1 className="text-3xl font-bold">User Management</h1>
-          <button
-            className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
-            onClick={handleCreateUser}
-          >
-            + Create User
-          </button>
+          <div className="flex gap-3">
+            <button
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-semibold shadow text-sm"
+              onClick={() => setShowCollegeMgmt(true)}
+            >
+              College Management
+            </button>
+            <button
+              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+              onClick={handleCreateUser}
+            >
+              + Create User
+            </button>
+          </div>
         </div>
         <hr className="h-1 rounded-full border-meritGray/50" />
         <div className="flex-grow">
