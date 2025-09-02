@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import Pagination from "../navigation/Pagination";
 import { getAllUsers, updateUser, deleteUser } from "../../api/users";
-import { getCollegesForUser } from "../../api/collegeincluded";
+import {
+  getCollegesForUser,
+  createAssociation,
+  deleteAssociation,
+} from "../../api/collegeincluded";
 import { getCollegeById } from "../../api/college";
 import { User } from "../../types/user";
 import EditButton from "./EditButton";
@@ -27,7 +31,9 @@ export default function UserManagementTable({
   const [collegeMap, setCollegeMap] = useState<CollegeMap>({});
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState<Partial<User>>({});
+  const [editForm, setEditForm] = useState<
+    Partial<User> & { colleges?: number[] }
+  >({});
   const [saving, setSaving] = useState(false);
   const { authToken } = useAuth();
 
@@ -108,9 +114,25 @@ export default function UserManagementTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, page]);
 
-  function handleEditClick(user: User) {
+  async function handleEditClick(user: User) {
     setEditingUser(user);
-    setEditForm({ ...user });
+    // Fetch colleges for this user and set in editForm.colleges
+    let userColleges: number[] = [];
+    if (user.id && authToken) {
+      try {
+        const colleges = await getCollegesForUser(user.id, authToken);
+        if (Array.isArray(colleges)) {
+          userColleges = colleges.map((c: any) =>
+            typeof c === "object" && c.college_id ? c.college_id : c
+          );
+        } else if (colleges?.data) {
+          userColleges = colleges.data.map((c: any) =>
+            typeof c === "object" && c.college_id ? c.college_id : c
+          );
+        }
+      } catch {}
+    }
+    setEditForm({ ...user, colleges: userColleges });
   }
 
   function handleEditChange(
@@ -138,9 +160,60 @@ export default function UserManagementTable({
       payload.password = editForm.password;
     }
     try {
+      // 1. Update user info if changed
       if (Object.keys(payload).length > 0 && editingUser.id != null) {
         await updateUser(editingUser.id, payload, authToken);
       }
+
+      // 2. Update college associations
+      if (editingUser.id != null) {
+        // Get current associations from backend
+        let currentColleges: number[] = [];
+        try {
+          const colleges = await getCollegesForUser(editingUser.id, authToken);
+          if (Array.isArray(colleges)) {
+            currentColleges = colleges.map((c: any) =>
+              typeof c === "object" && c.college_id ? c.college_id : c
+            );
+          } else if (colleges?.data) {
+            currentColleges = colleges.data.map((c: any) =>
+              typeof c === "object" && c.college_id ? c.college_id : c
+            );
+          }
+        } catch {}
+
+        const selectedColleges = Array.isArray(editForm.colleges)
+          ? editForm.colleges
+          : [];
+        // Find colleges to add and remove
+        const toAdd = selectedColleges.filter(
+          (id) => !currentColleges.includes(id)
+        );
+        const toRemove = currentColleges.filter(
+          (id) => !selectedColleges.includes(id)
+        );
+
+        // Add new associations
+        for (const collegeId of toAdd) {
+          try {
+            await createAssociation(
+              { college_id: collegeId, user_id: editingUser.id },
+              authToken
+            );
+          } catch (err) {
+            // Optionally handle error
+          }
+        }
+        // Remove old associations
+        for (const collegeId of toRemove) {
+          try {
+            await deleteAssociation(collegeId, editingUser.id, authToken);
+          } catch (err) {
+            // Optionally handle error
+          }
+        }
+      }
+
       await fetchUsers(1);
     } finally {
       setEditingUser(null);

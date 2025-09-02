@@ -19,7 +19,14 @@ export async function getCollegeById(collegeId: number, token: string) {
   return res.json();
 }
 
-export async function getAllColleges(token: string, page = 1) {
+export async function getAllColleges(token: string) {
+  const res = await fetch(`${API_URL}/all`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
+export async function getAllCollegesWithPagination(token: string, page = 1) {
   const res = await fetch(`${API_URL}/?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
