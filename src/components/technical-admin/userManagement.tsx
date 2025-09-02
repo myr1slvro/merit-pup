@@ -3,6 +3,7 @@ import Pagination from "../navigation/Pagination";
 import { useState } from "react";
 import UserCreationForm from "./UserCreationForm";
 import { createUser } from "../../api/users";
+import { createAssociation } from "../../api/collegeincluded";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function userManagement() {
@@ -20,6 +21,7 @@ export default function userManagement() {
     phone_number: "",
     password: "",
     birth_date: "",
+    colleges: [] as number[],
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -42,12 +44,22 @@ export default function userManagement() {
       phone_number: "",
       password: "",
       birth_date: "",
+      colleges: [],
     });
   }
   function handleCreateFormChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+      | { target: { name: string; value: any } }
   ) {
-    setCreateForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    if (e.target.name === "colleges") {
+      setCreateForm((f) => ({
+        ...f,
+        colleges: Array.isArray(e.target.value) ? e.target.value : [],
+      }));
+    } else {
+      setCreateForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    }
   }
   async function handleCreateFormSubmit() {
     if (!authToken) return;
@@ -60,8 +72,10 @@ export default function userManagement() {
         created_by: user?.staff_id || "",
         updated_by: user?.staff_id || "",
       };
-      console.log("Creating user with:", payload);
-      const response = await createUser(payload, authToken);
+      // Remove colleges from payload for user creation
+      const { colleges, ...userPayload } = payload;
+      console.log("Creating user with:", userPayload);
+      const response = await createUser(userPayload, authToken);
       // Debug: log response
       console.log("Create user response:", response);
       if (response && response.error) {
@@ -69,6 +83,21 @@ export default function userManagement() {
         alert(response.error || "Unknown error");
         setSaving(false);
         return;
+      }
+      // Step 2: create associations synchronously
+      const userId = response?.id;
+      if (userId && Array.isArray(createForm.colleges)) {
+        for (const collegeId of createForm.colleges) {
+          try {
+            await createAssociation(
+              { college_id: collegeId, user_id: userId },
+              authToken
+            );
+          } catch (err) {
+            // Optionally handle error
+            console.error("Failed to create association", err);
+          }
+        }
       }
       setShowCreateModal(false);
       setCreateForm({
@@ -81,6 +110,7 @@ export default function userManagement() {
         phone_number: "",
         password: "",
         birth_date: "",
+        colleges: [],
       });
       setRefreshKey((k) => k + 1); // trigger table refresh
     } catch (err) {
