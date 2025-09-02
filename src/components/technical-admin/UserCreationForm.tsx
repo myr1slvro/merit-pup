@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getAllColleges } from "../../api/college";
 
 // Helper to get max birthdate (18 years before today)
 function getMaxBirthdate() {
   const today = new Date();
   today.setFullYear(today.getFullYear() - 18);
   // Format as yyyy-mm-dd
+  return today.toISOString().split("T")[0];
+}
+
+// Helper to get min birthdate (61 years before today)
+function getMinBirthdate() {
+  const today = new Date();
+  today.setFullYear(today.getFullYear() - 61);
   return today.toISOString().split("T")[0];
 }
 
@@ -19,6 +27,7 @@ type UserCreationFormProps = {
     phone_number?: string;
     password?: string;
     birth_date?: string;
+    colleges?: number[];
   };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -37,6 +46,38 @@ export default function UserCreationForm({
 }: UserCreationFormProps) {
   const [phoneError, setPhoneError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [collegesLoading, setCollegesLoading] = useState(true);
+
+  // Fetch all colleges on mount
+  useEffect(() => {
+    async function fetchAllColleges() {
+      setCollegesLoading(true);
+      const token = localStorage.getItem("authToken") || "";
+      try {
+        const res = await getAllColleges(token);
+        const collegesList = res?.colleges || res?.data || [];
+        setColleges(collegesList);
+      } catch {
+        setColleges([]);
+      }
+      setCollegesLoading(false);
+    }
+    fetchAllColleges();
+  }, []);
+  function handleCollegeCheck(id: number) {
+    const selected = Array.isArray(form.colleges) ? form.colleges : [];
+    let newValue: number[];
+    if (selected.includes(id)) {
+      newValue = selected.filter((c) => c !== id);
+    } else {
+      newValue = [...selected, id];
+    }
+    // Always pass an array of numbers
+    onChange({
+      target: { name: "colleges", value: newValue },
+    } as any);
+  }
 
   // Regex for phone: 10-15 digits, may start with +
   const phonePattern = /^\+?\d{10,15}$/;
@@ -82,8 +123,49 @@ export default function UserCreationForm({
     if (!valid) return;
     onSubmit();
   }
+  // Clamp birthdate to min/max if out of range
+  function handleBirthdateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let value = e.target.value;
+    const min = getMinBirthdate();
+    const max = getMaxBirthdate();
+    if (value < min) value = min;
+    if (value > max) value = max;
+    onChange({
+      ...e,
+      target: { ...e.target, value, name: "birth_date" },
+    });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <span className="text-xs text-gray-500">Colleges</span>
+        {collegesLoading ? (
+          <div className="text-sm text-gray-400">Loading colleges...</div>
+        ) : (
+          <div className="flex flex-wrap gap-2 mt-1">
+            {colleges.map((college) => (
+              <label
+                key={college.id}
+                className="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={!!(form.colleges || []).includes(college.id)}
+                  onChange={() => handleCollegeCheck(college.id)}
+                  className="accent-meritRed"
+                />
+                <span className="text-sm">
+                  {college.name}{" "}
+                  <span className="text-xs text-gray-500">
+                    ({college.abbreviation})
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="flex gap-2">
         <div className="flex-1">
           <span className="text-xs text-gray-500">Role</span>
@@ -165,8 +247,9 @@ export default function UserCreationForm({
             type="date"
             name="birth_date"
             value={form.birth_date ?? ""}
-            onChange={onChange}
+            onChange={handleBirthdateChange}
             className="mt-1 block w-full border rounded px-2 py-1"
+            min={getMinBirthdate()}
             max={getMaxBirthdate()}
             required
           />

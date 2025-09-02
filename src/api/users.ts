@@ -19,8 +19,17 @@ export async function getUserById(userId: number, token: string) {
   return res.json();
 }
 
-export async function getAllUsers(token: string, page = 1) {
-  const res = await fetch(`${API_URL}/?page=${page}`, {
+export async function getAllUsers(
+  token: string,
+  page = 1,
+  sort_by?: string,
+  sort_dir: "asc" | "desc" = "asc"
+) {
+  const params = new URLSearchParams();
+  params.append("page", String(page));
+  if (sort_by) params.append("sort_by", sort_by);
+  if (sort_dir) params.append("sort_dir", sort_dir);
+  const res = await fetch(`${API_URL}/?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();

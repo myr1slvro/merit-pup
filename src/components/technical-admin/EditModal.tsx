@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { User } from "../../types/user";
+import { getAllColleges } from "../../api/college";
+
+type EditFormType = Partial<User> & { colleges?: number[] };
 
 export default function EditModal({
   editingUser,
@@ -11,7 +14,7 @@ export default function EditModal({
   saving,
 }: {
   editingUser: User | null;
-  editForm: Partial<User>;
+  editForm: EditFormType;
   handleEditChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
@@ -20,6 +23,38 @@ export default function EditModal({
   handleDeleteUser: () => void;
   saving: boolean;
 }) {
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [collegesLoading, setCollegesLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAllColleges() {
+      setCollegesLoading(true);
+      const token = localStorage.getItem("authToken") || "";
+      try {
+        const res = await getAllColleges(token);
+        const collegesList = res?.colleges || res?.data || [];
+        setColleges(collegesList);
+      } catch {
+        setColleges([]);
+      }
+      setCollegesLoading(false);
+    }
+    fetchAllColleges();
+  }, []);
+
+  function handleCollegeCheck(id: number) {
+    const selected = Array.isArray(editForm.colleges) ? editForm.colleges : [];
+    let newValue: number[];
+    if (selected.includes(id)) {
+      newValue = selected.filter((c) => c !== id);
+    } else {
+      newValue = [...selected, id];
+    }
+    handleEditChange({
+      target: { name: "colleges", value: newValue },
+    } as any);
+  }
+
   if (!editingUser) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -32,6 +67,34 @@ export default function EditModal({
           }}
           className="space-y-3"
         >
+          <div>
+            <span className="text-xs text-gray-500">Colleges</span>
+            {collegesLoading ? (
+              <div className="text-sm text-gray-400">Loading colleges...</div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {colleges.map((college) => (
+                  <label
+                    key={college.id}
+                    className="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!(editForm.colleges || []).includes(college.id)}
+                      onChange={() => handleCollegeCheck(college.id)}
+                      className="accent-meritRed"
+                    />
+                    <span className="text-sm">
+                      {college.name}{" "}
+                      <span className="text-xs text-gray-500">
+                        ({college.abbreviation})
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           {/* User ID (read-only) */}
           <div className="flex gap-2">
             <div className="flex-1">
@@ -138,7 +201,6 @@ export default function EditModal({
                 value={editForm.password ?? ""}
                 onChange={handleEditChange}
                 className="mt-1 block w-full border rounded px-2 py-1"
-                required
               />
             </div>
           </div>

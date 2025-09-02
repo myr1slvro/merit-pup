@@ -30,9 +30,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     try {
       const [, payload] = token.split(".");
       if (!payload) return null;
-  let b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-  while (b64.length % 4) b64 += "=";
-  const json = JSON.parse(atob(b64));
+      let b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      const json = JSON.parse(atob(b64));
       const sub = json.sub ?? json.identity ?? json.user_id;
       const id = typeof sub === "string" ? parseInt(sub, 10) : sub;
       return Number.isFinite(id) ? (id as number) : null;
@@ -46,6 +46,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       const response = await login(email, password);
       if (response && response.access_token) {
         setAuthToken(response.access_token);
+        localStorage.setItem("authToken", response.access_token);
         // Try to resolve user id from JWT and load profile
         const id = decodeJwtSub(response.access_token);
         if (id != null) {
@@ -75,6 +76,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     } catch (err) {
       setAuthToken(null);
       setUser(null);
+      localStorage.removeItem("authToken");
       throw err;
     }
   }
@@ -82,6 +84,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   async function handleLogout() {
     setAuthToken(null);
     setUser(null);
+    localStorage.removeItem("authToken");
     navigate("/", { replace: true });
   }
 
