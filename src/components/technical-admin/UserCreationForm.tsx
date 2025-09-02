@@ -9,6 +9,13 @@ function getMaxBirthdate() {
   return today.toISOString().split("T")[0];
 }
 
+// Helper to get min birthdate (61 years before today)
+function getMinBirthdate() {
+  const today = new Date();
+  today.setFullYear(today.getFullYear() - 61);
+  return today.toISOString().split("T")[0];
+}
+
 type UserCreationFormProps = {
   form: {
     role?: string;
@@ -116,6 +123,19 @@ export default function UserCreationForm({
     if (!valid) return;
     onSubmit();
   }
+  // Clamp birthdate to min/max if out of range
+  function handleBirthdateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let value = e.target.value;
+    const min = getMinBirthdate();
+    const max = getMaxBirthdate();
+    if (value < min) value = min;
+    if (value > max) value = max;
+    onChange({
+      ...e,
+      target: { ...e.target, value, name: "birth_date" },
+    });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
@@ -227,8 +247,9 @@ export default function UserCreationForm({
             type="date"
             name="birth_date"
             value={form.birth_date ?? ""}
-            onChange={onChange}
+            onChange={handleBirthdateChange}
             className="mt-1 block w-full border rounded px-2 py-1"
+            min={getMinBirthdate()}
             max={getMaxBirthdate()}
             required
           />
