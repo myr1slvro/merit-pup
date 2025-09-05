@@ -5,7 +5,7 @@ import UserCreationForm from "./UserCreationForm";
 import { createUser } from "../../api/users";
 import { createAssociation } from "../../api/collegeincluded";
 import { useAuth } from "../auth/AuthProvider";
-import CollegeManagement from "./collegeManagement";
+import CollegeManagement from "./college-management/collegeManagement";
 
 export default function userManagement() {
   const [showCollegeMgmt, setShowCollegeMgmt] = useState(false);
