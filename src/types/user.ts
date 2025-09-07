@@ -10,7 +10,7 @@ export type User = {
   first_name: string;
   middle_name?: string;
   last_name: string;
-  birth_date: string; // matches backend
+  birth_date: string;
   email: string;
   phone_number: string;
   password?: string;

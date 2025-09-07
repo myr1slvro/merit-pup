@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../auth/AuthProvider";
+
 import { FaUniversity } from "react-icons/fa";
+import { FaRegFileLines } from "react-icons/fa6";
+
+import { useAuth } from "../auth/AuthProvider";
 import CollegeButtonsRow from "./CollegeButtonsRow";
 import DepartmentFilter from "./DepartmentFilter";
 import IMColumns from "./IMColumns";
-import { useState as useReactState } from "react";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 import { getSubjectById } from "../../api/subject";
@@ -23,15 +25,21 @@ import type { ServiceIM } from "../../types/serviceim";
 export default function FacultyDirectory() {
   const { authToken } = useAuth();
   const { colleges, loading, error } = useUserColleges();
-  const [selectedCollege, setSelectedCollege] = useReactState<any>(null);
-  const [universityIMs, setUniversityIMs] = useReactState<UniversityIM[]>([]);
-  const [serviceIMs, setServiceIMs] = useReactState<ServiceIM[]>([]);
-  const [imsLoading, setIMsLoading] = useReactState(false);
-  const [imsError, setIMsError] = useReactState<string | null>(null);
+  const [selectedCollege, setSelectedCollege] = useState<any>(null);
+  const [universityIMs, setUniversityIMs] = useState<UniversityIM[]>([]);
+  const [serviceIMs, setServiceIMs] = useState<ServiceIM[]>([]);
+  const [imsLoading, setIMsLoading] = useState(false);
+  const [imsError, setIMsError] = useState<string | null>(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<
     number | null
   >(null);
   const [departmentOptions, setDepartmentOptions] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (colleges && colleges.length > 0 && !selectedCollege) {
+      setSelectedCollege(colleges[0]);
+    }
+  }, [colleges, selectedCollege]);
 
   // Fetch IMs per college and reset department filter
   useEffect(() => {
@@ -139,7 +147,7 @@ export default function FacultyDirectory() {
   }, [selectedCollege?.id, selectedDepartmentId, filteredUniversityIMs]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow">
+    <div className="ml-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
         <FaUniversity className="text-meritRed" /> My Colleges
       </h2>
@@ -151,11 +159,10 @@ export default function FacultyDirectory() {
         onSelect={setSelectedCollege}
       />
       {selectedCollege && (
-        <div className="flex flex-col mt-6">
-          <h3 className="text-lg font-semibold mb-2 text-meritRed">
-            {selectedCollege.name} IMs
+        <div className="flex flex-col">
+          <h3 className="text-xl font-semibold mb-2 text-meritRed">
+            {selectedCollege.name}
           </h3>
-          {/* Department filter (only after a college is selected) */}
           <DepartmentFilter
             departmentIds={departmentOptions}
             selectedDepartmentId={selectedDepartmentId}
@@ -174,6 +181,18 @@ export default function FacultyDirectory() {
               );
             }}
           />
+          <div className="border-t border-gray-300 my-4" />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <FaRegFileLines className="text-meritRed" /> 
+              Instructional Materials
+            </h2>
+            <button
+              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+            >
+              + Create New Instructional Material
+            </button>
+          </div>
           {imsLoading ? (
             <div className="text-gray-500">Loading IMs...</div>
           ) : imsError ? (
