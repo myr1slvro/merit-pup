@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./components/auth/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FacultyRoleContent from "./components/faculty/facultyRoleContent";
-import UserManagement from "./components/technical-admin/user-management/UserManagement";
+import ManagementSwitcher from "./components/technical-admin/ManagementSwitcher";
 import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
 import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
 import { UserRole } from "./types/user";
@@ -79,7 +79,7 @@ export default function AppRoutes() {
         path="/technical-admin"
         element={
           <ProtectedRoute allowedRoles={["Technical Admin"]}>
-            <UserManagement />
+            <ManagementSwitcher />
           </ProtectedRoute>
         }
       />
