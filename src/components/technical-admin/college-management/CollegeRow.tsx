@@ -51,21 +51,24 @@ export default function CollegeRow({
     <>
       <tr className="border-b hover:bg-gray-50">
         <td className="px-3 py-2">
-          <button
-            onClick={() => onExpand(college.id)}
-            className="mr-2 text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
-          >
-            {isExpanded ? "-" : "+"}
-          </button>
-          {isEditing ? (
-            <input
-              value={editDraft.name}
-              onChange={(e) => onEdit({ ...college, name: e.target.value })}
-              className="border rounded px-2 py-1"
-            />
-          ) : (
-            college.name
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onExpand(college.id)}
+              className="mr-2 text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+            >
+              {isExpanded ? "-" : "+"}
+            </button>
+            {isEditing ? (
+              <input
+                value={editDraft.name}
+                onChange={(e) => onEdit({ ...college, name: e.target.value })}
+                className="text-sm px-2 py-1 border border-gray-300 rounded bg-white"
+                style={{ maxWidth: "350px", minWidth: "120px" }}
+              />
+            ) : (
+              <span>{college.name}</span>
+            )}
+          </div>
         </td>
         <td className="px-3 py-2">
           {isEditing ? (
@@ -74,10 +77,11 @@ export default function CollegeRow({
               onChange={(e) =>
                 onEdit({ ...college, abbreviation: e.target.value })
               }
-              className="border rounded px-2 py-1"
+              className="text-sm px-2 py-1 border border-gray-300 rounded bg-white"
+              style={{ maxWidth: "120px", minWidth: "60px" }}
             />
           ) : (
-            college.abbreviation
+            <span>{college.abbreviation}</span>
           )}
         </td>
         <td className="px-3 py-2 space-x-2">
