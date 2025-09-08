@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./components/auth/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FacultyRoleContent from "./components/faculty/facultyRoleContent";
-import UserManagement from "./components/technical-admin/userManagement";
+import UserManagement from "./components/technical-admin/user-management/UserManagement";
 import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
 import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
 import { UserRole } from "./types/user";
@@ -45,7 +45,14 @@ export default function AppRoutes() {
       <Route
         path="/faculty"
         element={
-          <ProtectedRoute allowedRoles={["Faculty", "Evaluator", "UTLDO Admin", "Technical Admin"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "Faculty",
+              "Evaluator",
+              "UTLDO Admin",
+              "Technical Admin",
+            ]}
+          >
             <FacultyRoleContent />
           </ProtectedRoute>
         }
@@ -53,7 +60,9 @@ export default function AppRoutes() {
       <Route
         path="/evaluator"
         element={
-          <ProtectedRoute allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}>
+          <ProtectedRoute
+            allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}
+          >
             <EvaluatorRoleContent />
           </ProtectedRoute>
         }

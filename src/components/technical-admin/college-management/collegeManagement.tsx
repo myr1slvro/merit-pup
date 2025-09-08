@@ -17,11 +17,11 @@ import {
 import CollegeCreationForm, {
   CollegeCreationData,
 } from "./CollegeCreationForm";
-import ConfirmationModal from "../ConfirmationModal";
-import ToastContainer, { ToastMessage } from "../Toast";
+import ConfirmationModal from "../../shared/ConfirmationModal";
+import ToastContainer, { ToastMessage } from "../../shared/Toast";
 import CollegeListTable from "./CollegeListTable";
-import PaginationControls from "./PaginationControls";
-import SearchBar from "./SearchBar";
+import Pagination from "../../shared/Pagination";
+import SearchBar from "./CollegeSearchBar";
 
 interface CollegeManagementProps {
   onBack?: () => void;
@@ -367,13 +367,15 @@ export default function CollegeManagement({ onBack }: CollegeManagementProps) {
             />
           )}
         </div>
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredColleges.length}
-          onPrev={() => setPage((p) => Math.max(1, p - 1))}
-          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-        />
+        <div className="pb-8 px-8">
+          <Pagination
+            page={currentPage}
+            hasPrev={currentPage > 1}
+            hasNext={currentPage < totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
+        </div>
       </div>
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

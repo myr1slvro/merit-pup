@@ -1,11 +1,11 @@
-mport UserManagementTable from "./userManagementTable";
-import Pagination from "../shared/Pagination";
+import UserManagementTable from "./UserManagementTable";
+import Pagination from "../../shared/Pagination";
 import { useState } from "react";
-import UserCreationForm from "./user-management/UserCreationForm";
-import { createUser } from "../../api/users";
-import { createAssociation } from "../../api/collegeincluded";
-import { useAuth } from "../auth/AuthProvider";
-import CollegeManagement from "./college-management/CollegeManagement";
+import UserCreationForm from "./UserCreationForm";
+import { createUser } from "../../../api/users";
+import { createAssociation } from "../../../api/collegeincluded";
+import { useAuth } from "../../auth/AuthProvider";
+import CollegeManagement from "../college-management/CollegeManagement";
 
 export default function userManagement() {
   const [showCollegeMgmt, setShowCollegeMgmt] = useState(false);

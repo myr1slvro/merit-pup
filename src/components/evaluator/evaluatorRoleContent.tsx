@@ -1,7 +1,7 @@
 import EvaluatorDirectory from "./evaluatorDirectory";
 import EvaluatorRecent from "./evaluatorRecent";
 import EvaluatorRecBin from "./evaluatorRecBin";
-import Sidebar from "../navigation/sidebar";
+import Sidebar from "../navigation/Sidebar";
 import { BiSolidHome, BiSolidTrash } from "react-icons/bi";
 import { IoLibrarySharp } from "react-icons/io5";
 import { IoIosTimer } from "react-icons/io";
@@ -49,9 +49,7 @@ export default function evaluatorRoleContent() {
         }}
         activeTab={activeTab}
       />
-      <div className="w-full">
-        {renderContent()}
-      </div>
+      <div className="w-full">{renderContent()}</div>
     </div>
   );
 }

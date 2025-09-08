@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { User } from "../../types/user";
-import { getAllColleges } from "../../api/college";
+import { User } from "../../../types/user";
+import { getAllColleges } from "../../../api/college";
 
 type EditFormType = Partial<User> & { colleges?: number[] };
 
