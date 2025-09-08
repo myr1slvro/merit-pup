@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthProvider";
 import CollegeButtonsRow from "./CollegeButtonsRow";
 import DepartmentFilter from "./DepartmentFilter";
 import IMColumns from "./IMColumns";
+import CreateIMForm from "./CreateIMForm";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 import { getSubjectById } from "../../api/subject";
@@ -30,6 +31,8 @@ export default function FacultyDirectory() {
   const [serviceIMs, setServiceIMs] = useState<ServiceIM[]>([]);
   const [imsLoading, setIMsLoading] = useState(false);
   const [imsError, setIMsError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<
     number | null
   >(null);
@@ -105,7 +108,7 @@ export default function FacultyDirectory() {
         setServiceIMs([]);
       })
       .finally(() => setIMsLoading(false));
-  }, [selectedCollege?.id, authToken]);
+  }, [selectedCollege?.id, authToken, reloadTick]);
 
   // IMs are now fetched per college, so no need to filter
   const filteredUniversityIMs = universityIMs;
@@ -135,7 +138,6 @@ export default function FacultyDirectory() {
     if (departmentOptions.length && authToken) {
       getDepartmentsByIdsCached(departmentOptions, authToken);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departmentOptions, authToken]);
 
   const filteredUniversityIMsByDept = useMemo(() => {
@@ -184,11 +186,12 @@ export default function FacultyDirectory() {
           <div className="border-t border-gray-300 my-4" />
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <FaRegFileLines className="text-meritRed" /> 
+              <FaRegFileLines className="text-meritRed" />
               Instructional Materials
             </h2>
             <button
               className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+              onClick={() => setShowCreateModal(true)}
             >
               + Create New Instructional Material
             </button>
@@ -202,6 +205,29 @@ export default function FacultyDirectory() {
               universityIMs={filteredUniversityIMsByDept}
               serviceIMs={filteredServiceIMs}
             />
+          )}
+          {showCreateModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <div className="relative bg-white rounded-lg shadow-lg p-6 min-w-1/2 max-w-9/10 z-10">
+                <button
+                  className="absolute top-0 right-0 p-4 text-gray-500 hover:text-gray-800 text-2xl font-bold focus:outline-none"
+                  onClick={() => setShowCreateModal(false)}
+                  aria-label="Close"
+                  type="button"
+                >
+                  &times;
+                </button>
+                <h2 className="text-xl font-bold mb-4">
+                  Create Instructional Material
+                </h2>
+                <CreateIMForm
+                  selectedCollege={selectedCollege}
+                  onCancel={() => setShowCreateModal(false)}
+                  onCreated={() => setReloadTick((n) => n + 1)}
+                />
+              </div>
+            </div>
           )}
         </div>
       )}
