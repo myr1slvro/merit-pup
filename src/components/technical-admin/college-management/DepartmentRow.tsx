@@ -43,7 +43,8 @@ export default function DepartmentRow({
                 e.target.value
               )
             }
-            className="border rounded px-1 py-0.5 w-full"
+            className="w-full text-xs px-2 py-1 border border-gray-300 rounded bg-white"
+            style={{ minWidth: 0 }}
           />
         ) : (
           department.abbreviation
@@ -61,7 +62,8 @@ export default function DepartmentRow({
                 e.target.value
               )
             }
-            className="border rounded px-1 py-0.5 w-full"
+            className="w-full text-xs px-2 py-1 border border-gray-300 rounded bg-white"
+            style={{ minWidth: 0 }}
           />
         ) : (
           department.name

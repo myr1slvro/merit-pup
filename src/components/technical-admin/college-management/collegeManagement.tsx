@@ -100,7 +100,9 @@ export default function CollegeManagement({ onBack }: CollegeManagementProps) {
     if (!authToken) return;
     try {
       const res = await getDepartmentsByCollegeId(collegeId, authToken);
-      const list = res?.departments || res?.data || [];
+      const list = Array.isArray(res)
+        ? res
+        : res?.departments || res?.data || [];
       setDepartments((d) => ({ ...d, [collegeId]: list }));
     } catch {
       setDepartments((d) => ({ ...d, [collegeId]: [] }));
