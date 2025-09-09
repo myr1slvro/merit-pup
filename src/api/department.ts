@@ -1,3 +1,5 @@
+const API_URL = "http://127.0.0.1:5000/departments";
+
 export const getCollegeIdFromIM = (im: any): number | undefined => {
   const raw = im?.college?.id ?? im?.college_id;
   if (raw == null) return undefined;
@@ -11,7 +13,6 @@ export const getDepartmentIdFromIM = (im: any): number | undefined => {
   const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? (n as number) : undefined;
 };
-const API_URL = "http://127.0.0.1:5000/departments";
 
 export async function createDepartment(department: any, token: string) {
   const res = await fetch(`${API_URL}/`, {
