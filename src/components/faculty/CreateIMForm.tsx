@@ -4,8 +4,9 @@ import {
   createInstructionalMaterial,
   checkMissingSections,
 } from "../../api/instructionalmaterial";
-import { getAllSubjects } from "../../api/subject";
+import { getAllSubjects, getSubjectsByCollegeId } from "../../api/subject";
 import { getDepartmentsByCollegeId } from "../../api/department";
+import { getAllColleges } from "../../api/college";
 import { createUniversityIM } from "../../api/universityim";
 import { createServiceIM } from "../../api/serviceim";
 import { useAuth } from "../auth/AuthProvider";
@@ -24,6 +25,13 @@ export default function CreateIMForm({
 }: CreateIMFormProps) {
   const { authToken, user } = useAuth();
 
+  // Helper: normalize responses that may be an array (college endpoint)
+  // or a paginated object { subjects: [...] } (paginated endpoint).
+  const normalizeList = (res: any) =>
+    Array.isArray(res)
+      ? res
+      : res?.subjects || res?.departments || res?.colleges || res?.data || [];
+
   const [imType, setImType] = useState<IMType>(IMType.university);
   const [file, setFile] = useState<File | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string>("");
@@ -33,9 +41,24 @@ export default function CreateIMForm({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>("");
 
-  // Step 1: Subject selection (filtered by selected college if backend supports it)
+  // --- College & subject selection state ---
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [collegesLoading, setCollegesLoading] = useState(false);
+  const [selectedCollegeId, setSelectedCollegeId] = useState<number | "">(
+    selectedCollege?.id ?? ""
+  );
+
+  // Subjects depend on the effective college selection
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | "">("");
+
+  // Effective college id used across the form: prefer the dropdown selection,
+  // otherwise fall back to the incoming `selectedCollege` prop when present.
+  const effectiveCollegeId =
+    typeof selectedCollegeId === "number"
+      ? selectedCollegeId
+      : selectedCollege?.id;
 
   // Conditional fields
   const [departments, setDepartments] = useState<any[]>([]);
@@ -48,40 +71,74 @@ export default function CreateIMForm({
     String(new Date().getFullYear())
   );
 
-  // Load subjects (all, since ERD doesn't link subjects directly to colleges)
+  // Load all colleges for the college dropdown
   useEffect(() => {
-    async function loadSubjects() {
-      if (!authToken) return;
+    if (!authToken) return;
+    let cancelled = false;
+    (async function loadColleges() {
+      setCollegesLoading(true);
       try {
-        const res = await getAllSubjects(authToken);
-        setSubjects(res?.subjects || []);
+        const res = await getAllColleges(authToken);
+        if (!cancelled) setColleges(normalizeList(res));
       } catch {
-        setSubjects([]);
+        if (!cancelled) setColleges([]);
+      } finally {
+        if (!cancelled) setCollegesLoading(false);
       }
-    }
-    loadSubjects();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [authToken]);
 
-  // Load departments for the selected college
+  // Load subjects whenever the effective college id changes
   useEffect(() => {
-    async function loadDepartments() {
-      if (!authToken || !selectedCollege?.id) {
-        setDepartments([]);
+    if (!authToken) return;
+    let cancelled = false;
+    (async function loadSubjects() {
+      setSubjectsLoading(true);
+      try {
+        const res = effectiveCollegeId
+          ? await getSubjectsByCollegeId(
+              effectiveCollegeId as number,
+              authToken
+            )
+          : await getAllSubjects(authToken);
+        if (!cancelled) setSubjects(normalizeList(res));
+      } catch {
+        if (!cancelled) setSubjects([]);
+      } finally {
+        if (!cancelled) setSubjectsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, effectiveCollegeId]);
+
+  // Load departments for the effective college
+  useEffect(() => {
+    if (!authToken) return;
+    let cancelled = false;
+    (async function loadDepartments() {
+      if (!effectiveCollegeId) {
+        if (!cancelled) setDepartments([]);
         return;
       }
       try {
         const res = await getDepartmentsByCollegeId(
-          selectedCollege.id,
+          effectiveCollegeId as number,
           authToken
         );
-        const list = Array.isArray(res) ? res : res?.departments || res || [];
-        setDepartments(list);
+        if (!cancelled) setDepartments(normalizeList(res));
       } catch {
-        setDepartments([]);
+        if (!cancelled) setDepartments([]);
       }
-    }
-    loadDepartments();
-  }, [authToken, selectedCollege?.id]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, effectiveCollegeId]);
 
   async function handleAnalyze() {
     if (!authToken) return;
@@ -132,12 +189,13 @@ export default function CreateIMForm({
       }
       // Create subtype record first
       let subtypeId: number | string | undefined;
+      // Ensure we send the chosen college id (dropdown preferred, otherwise prop)
       if (imType === IMType.university) {
-        if (!selectedCollege?.id) throw new Error("No college selected.");
+        if (!effectiveCollegeId) throw new Error("No college selected.");
         if (!selectedDepartmentId) throw new Error("Select a department.");
         if (!yearLevel) throw new Error("Enter year level.");
         const uniPayload = {
-          college_id: selectedCollege.id,
+          college_id: effectiveCollegeId,
           department_id: selectedDepartmentId,
           year_level: Number(yearLevel),
           subject_id: selectedSubjectId,
@@ -146,9 +204,9 @@ export default function CreateIMForm({
         if (uniRes?.error) throw new Error(uniRes.error);
         subtypeId = uniRes?.id;
       } else {
-        if (!selectedCollege?.id) throw new Error("No college selected.");
+        if (!effectiveCollegeId) throw new Error("No college selected.");
         const svcPayload = {
-          college_id: selectedCollege.id,
+          college_id: effectiveCollegeId,
           subject_id: selectedSubjectId,
         };
         const svcRes = await createServiceIM(svcPayload, authToken);
@@ -191,7 +249,38 @@ export default function CreateIMForm({
 
   return (
     <form onSubmit={handleCreate} className="space-y-3">
-      {/* Step 1: Subject selection (filtered by college requires backend support; using all subjects for now) */}
+      {/* Step 0: College filter for subject selection */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <span className="text-xs text-gray-500">College</span>
+          <select
+            value={selectedCollegeId as any}
+            onChange={(e) => {
+              setSelectedCollegeId(
+                e.target.value ? Number(e.target.value) : ""
+              );
+              setSelectedSubjectId("");
+              setSelectedDepartmentId("");
+            }}
+            className="mt-1 block w-full border rounded px-2 py-1"
+          >
+            {collegesLoading ? (
+              <option value="" disabled>
+                Loading colleges...
+              </option>
+            ) : (
+              <option value="">All colleges</option>
+            )}
+            {colleges.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.abbreviation ? `${c.abbreviation} — ${c.name}` : c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Step 1: Subject selection (filtered by college) */}
       <div className="flex gap-2">
         <div className="flex-1">
           <span className="text-xs text-gray-500">Subject</span>
@@ -199,10 +288,17 @@ export default function CreateIMForm({
             value={selectedSubjectId || ""}
             onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
             className="mt-1 block w-full border rounded px-2 py-1"
+            disabled={subjectsLoading}
           >
-            <option value="" disabled>
-              Select subject...
-            </option>
+            {subjectsLoading ? (
+              <option value="" disabled>
+                Loading subjects...
+              </option>
+            ) : (
+              <option value="" disabled>
+                Select subject...
+              </option>
+            )}
             {subjects.map((s: any) => (
               <option key={s.id} value={s.id}>
                 {s.code} - {s.name}
