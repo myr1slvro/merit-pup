@@ -64,3 +64,10 @@ export async function restoreSubject(subjectId: number, token: string) {
   });
   return res.json();
 }
+
+export async function getSubjectsByCollegeId(collegeId: number, token: string) {
+  const res = await fetch(`${API_URL}/college/${collegeId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
