@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { getAllUsers, updateUser, deleteUser } from "../../api/users";
+import { getAllUsers, updateUser, deleteUser } from "../../../api/users";
 import {
   getCollegesForUser,
   createAssociation,
   deleteAssociation,
-} from "../../api/collegeincluded";
-import { getCollegeById } from "../../api/college";
-import { User } from "../../types/user";
-import EditButton from "./EditButton";
-import EditModal from "./EditModal";
-import { useAuth } from "../auth/AuthProvider";
+} from "../../../api/collegeincluded";
+import { getCollegeById } from "../../../api/college";
+import { User } from "../../../types/user";
+import EditButton from "./UserEditButton";
+import EditModal from "./UserEditModal";
+import { useAuth } from "../../auth/AuthProvider";
 
 interface UserManagementTableProps {
   page: number;

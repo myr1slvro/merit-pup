@@ -35,12 +35,21 @@ export default function DepartmentAccordion({
       <td colSpan={3} className="p-3">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-sm">Departments</h3>
-          <button
-            onClick={() => onAddDepartment(collegeId)}
-            className="text-xs px-2 py-1 bg-meritRed text-white rounded hover:bg-meritDarkRed"
-          >
-            + Add Department
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href={`#/technical-admin?view=subject&college=${collegeId}`}
+              className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+              title="Manage subjects for this college"
+            >
+              Manage Subjects
+            </a>
+            <button
+              onClick={() => onAddDepartment(collegeId)}
+              className="text-xs px-2 py-1 bg-meritRed text-white rounded hover:bg-meritDarkRed"
+            >
+              + Add Department
+            </button>
+          </div>
         </div>
         <table className="w-full text-xs border border-gray-200">
           <thead>

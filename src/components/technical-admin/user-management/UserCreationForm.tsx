@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAllColleges } from "../../api/college";
+import { getAllColleges } from "../../../api/college";
 
 // Helper to get max birthdate (18 years before today)
 function getMaxBirthdate() {

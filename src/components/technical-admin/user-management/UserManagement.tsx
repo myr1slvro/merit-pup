@@ -1,14 +1,20 @@
-import UserManagementTable from "./userManagementTable";
-import Pagination from "../navigation/Pagination";
-import { useState } from "react";
+import UserManagementTable from "./UserManagementTable";
+import Pagination from "../../shared/Pagination";
+import { useState, ReactNode } from "react";
 import UserCreationForm from "./UserCreationForm";
-import { createUser } from "../../api/users";
-import { createAssociation } from "../../api/collegeincluded";
-import { useAuth } from "../auth/AuthProvider";
-import CollegeManagement from "./college-management/collegeManagement";
+import { createUser } from "../../../api/users";
+import { createAssociation } from "../../../api/collegeincluded";
+import { useAuth } from "../../auth/AuthProvider";
 
-export default function userManagement() {
-  const [showCollegeMgmt, setShowCollegeMgmt] = useState(false);
+interface UserManagementProps {
+  embedded?: boolean;
+  headLeft?: ReactNode; 
+}
+
+export default function UserManagement({
+  embedded = false,
+  headLeft,
+}: UserManagementProps) {
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrev, setHasPrev] = useState(false);
@@ -29,10 +35,6 @@ export default function userManagement() {
   const [error, setError] = useState("");
   const { authToken, user } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
-
-  if (showCollegeMgmt) {
-    return <CollegeManagement onBack={() => setShowCollegeMgmt(false)} />;
-  }
 
   function handleCreateUser() {
     setShowCreateModal(true);
@@ -130,22 +132,21 @@ export default function userManagement() {
   return (
     <div className="flex-1 flex w-full">
       <div className="flex flex-col w-full bg-white m-16 rounded-lg shadow-lg h-full">
+        {/* Header: left area shows provided slot or default title (hidden when embedded) */}
         <div className="flex items-center justify-between p-8">
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <div className="flex gap-3">
-            <button
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-semibold shadow text-sm"
-              onClick={() => setShowCollegeMgmt(true)}
-            >
-              College Management
-            </button>
-            <button
-              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
-              onClick={handleCreateUser}
-            >
-              + Create User
-            </button>
+          <div className="flex items-center gap-4">
+            {headLeft
+              ? headLeft
+              : !embedded && (
+                  <h1 className="text-3xl font-bold">User Management</h1>
+                )}
           </div>
+          <button
+            className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+            onClick={handleCreateUser}
+          >
+            + Create User
+          </button>
         </div>
         <hr className="h-1 rounded-full border-meritGray/50" />
         <div className="flex-grow">

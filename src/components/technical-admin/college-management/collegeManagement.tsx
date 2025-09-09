@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from "react";
 import { College } from "../../../types/college";
 import { Department } from "../../../types/department";
 import { useAuth } from "../../auth/AuthProvider";
@@ -17,19 +23,25 @@ import {
 import CollegeCreationForm, {
   CollegeCreationData,
 } from "./CollegeCreationForm";
-import ConfirmationModal from "../ConfirmationModal";
-import ToastContainer, { ToastMessage } from "../Toast";
+import ConfirmationModal from "../../shared/ConfirmationModal";
+import ToastContainer, { ToastMessage } from "../../shared/Toast";
 import CollegeListTable from "./CollegeListTable";
-import PaginationControls from "./PaginationControls";
-import SearchBar from "./SearchBar";
+import Pagination from "../../shared/Pagination";
+import SearchBar from "./CollegeSearchBar";
 
 interface CollegeManagementProps {
   onBack?: () => void;
+  embedded?: boolean; // when true, parent provides the main heading
+  headLeft?: ReactNode; // optional header-left slot for parent controls
 }
 
 const PAGE_SIZE = 10;
 
-export default function CollegeManagement({ onBack }: CollegeManagementProps) {
+export default function CollegeManagement({
+  onBack,
+  embedded = false,
+  headLeft,
+}: CollegeManagementProps) {
   const { authToken, user } = useAuth();
   const [colleges, setColleges] = useState<College[]>([]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -321,15 +333,23 @@ export default function CollegeManagement({ onBack }: CollegeManagementProps) {
       <div className="flex flex-col w-full bg-white m-16 rounded-lg shadow-lg h-full">
         <div className="flex flex-wrap items-center justify-between gap-4 p-8">
           <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-medium"
-              >
-                ← User Management
-              </button>
+            {headLeft ? (
+              headLeft
+            ) : (
+              <>
+                {!embedded && onBack && (
+                  <button
+                    onClick={onBack}
+                    className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-medium"
+                  >
+                    ← User Management
+                  </button>
+                )}
+                {!embedded && (
+                  <h1 className="text-3xl font-bold">College Management</h1>
+                )}
+              </>
             )}
-            <h1 className="text-3xl font-bold">College Management</h1>
           </div>
           <div className="flex items-center gap-3">
             <SearchBar value={search} onChange={setSearch} />
@@ -367,13 +387,15 @@ export default function CollegeManagement({ onBack }: CollegeManagementProps) {
             />
           )}
         </div>
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredColleges.length}
-          onPrev={() => setPage((p) => Math.max(1, p - 1))}
-          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-        />
+        <div className="pb-8 px-8">
+          <Pagination
+            page={currentPage}
+            hasPrev={currentPage > 1}
+            hasNext={currentPage < totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
+        </div>
       </div>
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
