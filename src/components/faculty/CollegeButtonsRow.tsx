@@ -26,7 +26,7 @@ export default function CollegeButtonsRow({
     );
 
   return (
-    <div className="flex flex-wrap gap-3 mb-6">
+    <div className="flex flex-wrap gap-3 mb-4">
       {colleges.map((c) => (
         <button
           key={c.id}
