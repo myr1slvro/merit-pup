@@ -1,0 +1,77 @@
+import React from "react";
+import { FaRegFileLines } from "react-icons/fa6";
+
+interface IMTableHeaderProps {
+  activeIMType: "university" | "service" | "all";
+  setActiveIMType: (type: "university" | "service" | "all") => void;
+  onCreate: () => void;
+  onRefresh: () => void;
+}
+
+export default function IMTableHeader({
+  activeIMType,
+  setActiveIMType,
+  onCreate,
+  onRefresh,
+}: IMTableHeaderProps) {
+  return (
+    <div className="flex items-center justify-between flex-wrap gap-4">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
+        <FaRegFileLines className="text-meritRed" />
+        Instructional Materials
+        <span className="ml-4 inline-flex rounded-full bg-gray-100 text-gray-700 text-xs font-semibold overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setActiveIMType("university")}
+            className={`px-3 py-1 transition-colors ${
+              activeIMType === "university"
+                ? "bg-meritRed text-white"
+                : "hover:bg-gray-200"
+            }`}
+          >
+            University IMs
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveIMType("service")}
+            className={`px-3 py-1 transition-colors border-l border-gray-300 ${
+              activeIMType === "service"
+                ? "bg-meritRed text-white"
+                : "hover:bg-gray-200"
+            }`}
+          >
+            Service IMs
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveIMType("all")}
+            className={`px-3 py-1 transition-colors border-l border-gray-300 ${
+              activeIMType === "all"
+                ? "bg-meritRed text-white"
+                : "hover:bg-gray-200"
+            }`}
+          >
+            All IMs
+          </button>
+        </span>
+      </h2>
+      <div className="flex items-center gap-2 ml-auto">
+        <button
+          className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+          onClick={onCreate}
+          type="button"
+        >
+          + Create New Instructional Material
+        </button>
+        <button
+          className="px-3 py-2 text-xs text-gray-600 hover:text-gray-900 underline"
+          type="button"
+          onClick={onRefresh}
+          title="Refresh IM lists"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+  );
+}

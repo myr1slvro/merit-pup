@@ -42,13 +42,13 @@ export default function facultyRoleContent() {
 
   return (
     <div className="flex-1 flex w-full p-8">
-      <Sidebar
+      {/* <Sidebar
         items={sidebarItems}
         onItemClick={(item) => {
           if ("name" in item) setActiveTab(item.name);
         }}
         activeTab={activeTab}
-      />
+      /> */}
       <div className="w-full">{renderContent()}</div>
     </div>
   );
