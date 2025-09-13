@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FacultyRoleContent from "./components/faculty/facultyRoleContent";
 import ManagementSwitcher from "./components/technical-admin/ManagementSwitcher";
 import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
+import EvaluatorEvaluatePage from "./components/evaluator/EvaluatorEvaluatePage";
 import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
 import { UserRole } from "./types/user";
 
@@ -64,6 +65,16 @@ export default function AppRoutes() {
             allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}
           >
             <EvaluatorRoleContent />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/evaluator/evaluate/:id"
+        element={
+          <ProtectedRoute
+            allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}
+          >
+            <EvaluatorEvaluatePage />
           </ProtectedRoute>
         }
       />

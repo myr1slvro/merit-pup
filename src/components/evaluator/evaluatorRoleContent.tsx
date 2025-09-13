@@ -42,13 +42,13 @@ export default function evaluatorRoleContent() {
 
   return (
     <div className="flex-1 flex w-full px-8 py-16">
-      <Sidebar
+      {/* <Sidebar
         items={sidebarItems}
         onItemClick={(item) => {
           if ("name" in item) setActiveTab(item.name);
         }}
         activeTab={activeTab}
-      />
+      /> */}
       <div className="w-full">{renderContent()}</div>
     </div>
   );

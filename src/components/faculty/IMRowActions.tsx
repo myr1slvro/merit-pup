@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   updateInstructionalMaterial,
   downloadInstructionalMaterial,
@@ -22,6 +23,7 @@ export default function IMRowActions({
   disabled,
 }: Props) {
   const { authToken } = useAuth();
+  const navigate = useNavigate();
   const [openUpload, setOpenUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,8 @@ export default function IMRowActions({
   const canUploadRevision =
     !disabled && row.status === STATUS_FOR_RESUBMISSION && role === "Faculty";
   const canDownload = !!row.s3_link || !!row.id;
+  const canEvaluate =
+    role === "Evaluator" && row.status === "For Evaluator Evaluation";
 
   async function handleUploadSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,6 +142,19 @@ export default function IMRowActions({
           onClick={handleDownload}
         >
           Download
+        </button>
+      )}
+      {canEvaluate && (
+        <button
+          type="button"
+          className="text-xs px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+          onClick={() =>
+            navigate(`/evaluator/evaluate/${row.id}`, {
+              state: { s3_link: row.s3_link },
+            })
+          }
+        >
+          Evaluate
         </button>
       )}
 
