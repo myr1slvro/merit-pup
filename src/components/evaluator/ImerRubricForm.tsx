@@ -10,6 +10,7 @@ interface ImerRubricFormProps {
     totalScore: number;
     totalMax: number;
     passed: boolean;
+    breakdown: { section: string; subtotal: number; max: number }[];
   }) => void;
   disabled?: boolean;
 }
@@ -56,7 +57,12 @@ export const ImerRubricForm: React.FC<ImerRubricFormProps> = ({
   }
 
   function handleSubmit() {
-    onSubmit({ totalScore, totalMax, passed });
+    const breakdown = Object.keys(grouped).map((section) => ({
+      section,
+      subtotal: sectionSubtotal(section),
+      max: sectionMax(section),
+    }));
+    onSubmit({ totalScore, totalMax, passed, breakdown });
   }
 
   return (

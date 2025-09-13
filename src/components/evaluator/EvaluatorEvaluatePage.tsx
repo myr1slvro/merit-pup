@@ -8,12 +8,13 @@ import {
 } from "../../api/instructionalmaterial";
 import PdfPreview from "./PdfPreview";
 import ImerRubricForm from "./ImerRubricForm";
+import { updateInstructionalMaterial } from "../../api/instructionalmaterial";
 
 export default function EvaluatorEvaluatePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [assumedIsModule, setAssumedIsModule] = useState(true); // toggle for hiding module-only fields
   const [scores, setScores] = useState<Record<string, number>>({});
   const [s3Link, setS3Link] = useState<string | null>(
@@ -22,6 +23,8 @@ export default function EvaluatorEvaluatePage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch IM details if s3_link not passed via state, then request presigned URL
   useEffect(() => {
@@ -72,15 +75,55 @@ export default function EvaluatorEvaluatePage() {
     }
   }
 
-  function handleSubmitEvaluation(result: {
+  async function handleSubmitEvaluation(result: {
     totalScore: number;
     totalMax: number;
     passed: boolean;
+    breakdown: { section: string; subtotal: number; max: number }[];
   }) {
-    alert(
-      `Submitted evaluation for IM #${id} with ${result.totalScore}/${result.totalMax} points.`
-    );
-    navigate("/evaluator");
+    if (!authToken || !id) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const status = result.passed
+        ? "For UTLDO Evaluation"
+        : "For Resubmission";
+      // Build notes string with breakdown
+      const lines: string[] = [];
+      lines.push(`Evaluator Score: ${result.totalScore}/${result.totalMax}`);
+      lines.push(
+        result.passed
+          ? "Threshold met; forwarded for UTLDO evaluation."
+          : "Threshold not met; returned for revision."
+      );
+      lines.push("Section Breakdown:");
+      result.breakdown.forEach((b) => {
+        lines.push(` - ${b.section}: ${b.subtotal}/${b.max}`);
+      });
+      if (!result.passed) {
+        lines.push("Action: Please address deficiencies and resubmit.");
+      }
+      const notes = lines.join("\n");
+
+      const payload: any = {
+        status,
+        notes,
+        email: user?.email,
+        updated_by: user?.email || user?.id || "evaluator",
+      };
+      const res = await updateInstructionalMaterial(
+        Number(id),
+        payload,
+        authToken
+      );
+      if (res?.error) throw new Error(res.error);
+      alert(`Evaluation submitted. Status set to ${status}.`);
+      navigate("/evaluator");
+    } catch (e: any) {
+      setSubmitError(e.message || "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -110,8 +153,12 @@ export default function EvaluatorEvaluatePage() {
           assumedIsModule={assumedIsModule}
           setAssumedIsModule={setAssumedIsModule}
           onSubmit={handleSubmitEvaluation}
+          disabled={submitting}
         />
       </div>
+      {submitError && (
+        <div className="text-xs text-meritRed">{submitError}</div>
+      )}
     </div>
   );
 }
