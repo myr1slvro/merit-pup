@@ -4,8 +4,9 @@ import { FaRegFileLines } from "react-icons/fa6";
 interface IMTableHeaderProps {
   activeIMType: "university" | "service" | "all";
   setActiveIMType: (type: "university" | "service" | "all") => void;
-  onCreate: () => void;
+  onCreate?: () => void;
   onRefresh: () => void;
+  hideCreate?: boolean; // when true, hide the create button (evaluator view)
 }
 
 export default function IMTableHeader({
@@ -13,6 +14,7 @@ export default function IMTableHeader({
   setActiveIMType,
   onCreate,
   onRefresh,
+  hideCreate,
 }: IMTableHeaderProps) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -56,13 +58,15 @@ export default function IMTableHeader({
         </span>
       </h2>
       <div className="flex items-center gap-2 ml-auto">
-        <button
-          className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
-          onClick={onCreate}
-          type="button"
-        >
-          + Create New Instructional Material
-        </button>
+        {!hideCreate && onCreate && (
+          <button
+            className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+            onClick={onCreate}
+            type="button"
+          >
+            + Create New Instructional Material
+          </button>
+        )}
         <button
           className="px-3 py-2 text-xs text-gray-600 hover:text-gray-900 underline"
           type="button"

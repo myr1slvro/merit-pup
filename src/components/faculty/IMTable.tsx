@@ -14,6 +14,7 @@ interface BaseProps {
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  actionsRole?: string; // explicitly pass role for actions instead of relying on window
   // raw list for 'all' will be generic any[] containing instructional_materials entries
 }
 
@@ -32,7 +33,7 @@ interface AllProps extends BaseProps {
 export default function IMTable(
   props: UniversityProps | ServiceProps | AllProps
 ) {
-  const { type, loading, error, onRefresh } = props;
+  const { type, loading, error, onRefresh, actionsRole } = props;
   const data = props.data as any[];
 
   if (loading)
@@ -136,7 +137,11 @@ export default function IMTable(
                   <IMRowActions
                     row={im}
                     onChanged={() => onRefresh && onRefresh()}
-                    role={(window as any)?.currentUserRole || "Faculty"}
+                    role={
+                      actionsRole ||
+                      (window as any)?.currentUserRole ||
+                      "Faculty"
+                    }
                   />
                 </td>
               </tr>

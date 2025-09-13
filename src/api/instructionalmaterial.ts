@@ -173,6 +173,17 @@ export async function getForEvaluator(token: string, page: number = 1) {
   return res.json();
 }
 
+export async function getInstructionalMaterialPresignedUrl(
+  imId: number,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/${imId}/presigned`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
 export async function getForUtldo(token: string, page: number = 1) {
   const res = await fetch(`${API_URL}/get-for-utldo?page=${page}`, {
     method: "GET",
