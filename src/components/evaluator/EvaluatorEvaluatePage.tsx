@@ -6,9 +6,10 @@ import {
   getInstructionalMaterial,
   getInstructionalMaterialPresignedUrl,
 } from "../../api/instructionalmaterial";
-import PdfPreview from "./PdfPreview";
+import PdfPreview from "../shared/evaluation/PdfPreview";
 import ImerRubricForm from "./ImerRubricForm";
 import { updateInstructionalMaterial } from "../../api/instructionalmaterial";
+import ToastContainer, { ToastMessage } from "../shared/Toast";
 
 export default function EvaluatorEvaluatePage() {
   const { id } = useParams();
@@ -25,6 +26,21 @@ export default function EvaluatorEvaluatePage() {
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  function pushToast(
+    type: ToastMessage["type"],
+    text: string,
+    duration = 4000
+  ) {
+    setToasts((t) => [
+      ...t,
+      { id: Date.now() + Math.random(), type, text, duration },
+    ]);
+  }
+  function removeToast(id: number) {
+    setToasts((t) => t.filter((m) => m.id !== id));
+  }
 
   // Fetch IM details if s3_link not passed via state, then request presigned URL
   useEffect(() => {
@@ -68,10 +84,10 @@ export default function EvaluatorEvaluatePage() {
     if (!authToken || !id) return;
     try {
       const res = await downloadInstructionalMaterial(Number(id), authToken);
-      if (res?.error) alert(res.error);
-      else alert("Download triggered");
+      if (res?.error) pushToast("error", res.error);
+      else pushToast("success", "Download started");
     } catch (e: any) {
-      alert(e.message || "Download failed");
+      pushToast("error", e.message || "Download failed");
     }
   }
 
@@ -117,10 +133,11 @@ export default function EvaluatorEvaluatePage() {
         authToken
       );
       if (res?.error) throw new Error(res.error);
-      alert(`Evaluation submitted. Status set to ${status}.`);
+      pushToast("success", `Evaluation submitted. Status: ${status}`);
       navigate("/evaluator");
     } catch (e: any) {
       setSubmitError(e.message || "Submission failed");
+      pushToast("error", e.message || "Submission failed");
     } finally {
       setSubmitting(false);
     }
@@ -159,6 +176,7 @@ export default function EvaluatorEvaluatePage() {
       {submitError && (
         <div className="text-xs text-meritRed">{submitError}</div>
       )}
+      <ToastContainer messages={toasts} remove={removeToast} />
     </div>
   );
 }

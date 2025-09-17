@@ -2,10 +2,15 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./components/auth/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FacultyRoleContent from "./components/faculty/facultyRoleContent";
-import ManagementSwitcher from "./components/technical-admin/ManagementSwitcher";
+import UserManagement from "./components/technical-admin/user-management/UserManagement";
+import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
+import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
 import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
 import EvaluatorEvaluatePage from "./components/evaluator/EvaluatorEvaluatePage";
-import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
+import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-evaluation/UtldoEvaluationDirectory";
+import UECEvaluatePage from "./components/utldo-admin/utldo-evaluation/UECEvaluatePage";
+import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
+
 import { UserRole } from "./types/user";
 
 // Placeholder for UTLDO Admin role content
@@ -90,7 +95,47 @@ export default function AppRoutes() {
         path="/technical-admin"
         element={
           <ProtectedRoute allowedRoles={["Technical Admin"]}>
-            <ManagementSwitcher />
+            <Navigate to="/technical-admin/users" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical-admin/users"
+        element={
+          <ProtectedRoute allowedRoles={["Technical Admin"]}>
+            <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical-admin/colleges"
+        element={
+          <ProtectedRoute allowedRoles={["Technical Admin"]}>
+            <CollegeManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical-admin/subjects"
+        element={
+          <ProtectedRoute allowedRoles={["Technical Admin"]}>
+            <SubjectManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/evaluation"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <UtldoEvaluationDirectory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/evaluate/:id"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <UECEvaluatePage />
           </ProtectedRoute>
         }
       />

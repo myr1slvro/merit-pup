@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaUniversity } from "react-icons/fa";
 import { useAuth } from "../auth/AuthProvider";
 import useUserColleges from "../faculty/useUserColleges";
-import CollegeButtonsRow from "../faculty/CollegeButtonsRow";
-import DepartmentFilter from "../faculty/DepartmentFilter";
-import IMTableHeader from "../faculty/IMTableHeader";
-import IMTable from "../faculty/IMTable";
+import CollegeButtonsRow from "../shared/CollegeButtonsRow";
+import DepartmentFilter from "../shared/DepartmentFilter";
+import IMTableHeader from "../shared/IMTableHeader";
+import IMTable from "../shared/IMTable";
 import useEvaluatorIMs from "./useEvaluatorIMs";
 import { getDepartmentCacheEntry } from "../../api/department";
 
@@ -66,7 +66,7 @@ export default function EvaluatorDirectory() {
   };
 
   return (
-    <div className="ml-8 p-8 bg-white rounded-2xl shadow">
+    <div className="mx-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
         <FaUniversity className="text-meritRed" /> Evaluator Colleges
       </h2>

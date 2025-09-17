@@ -7,7 +7,8 @@ import "./globals.css";
 import "./globals.css";
 
 export default function App() {
-  const { authToken } = useAuth();
+  const ctx: any = useAuth();
+  const { authToken, hydrating } = ctx;
 
   return (
     <div className="relative flex flex-col min-h-screen">
@@ -17,8 +18,18 @@ export default function App() {
         aria-hidden="true"
       />
       <Navbar />
-      <main className="flex-1 flex flex-col items-center justify-center">
-        {authToken ? <AppRoutes /> : <LoginForm />}
+      <main className="flex-1 flex flex-col items-stretch">
+        {hydrating ? (
+          <div className="flex flex-1 items-center justify-center p-8 animate-pulse text-sm text-gray-600">
+            Restoring session...
+          </div>
+        ) : authToken ? (
+          <AppRoutes />
+        ) : (
+          <div className="flex flex-1 items-center justify-center">
+            <LoginForm />
+          </div>
+        )}
       </main>
     </div>
   );

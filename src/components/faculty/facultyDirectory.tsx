@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import { FaUniversity } from "react-icons/fa";
-import IMTableHeader from "./IMTableHeader";
+import IMTableHeader from "../shared/IMTableHeader";
 
 import { useAuth } from "../auth/AuthProvider";
-import CollegeButtonsRow from "./CollegeButtonsRow";
-import DepartmentFilter from "./DepartmentFilter";
-import IMTable from "./IMTable";
+import CollegeButtonsRow from "../shared/CollegeButtonsRow";
+import DepartmentFilter from "../shared/DepartmentFilter";
+import IMTable from "../shared/IMTable";
 import CreateIMForm from "./CreateIMForm";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
@@ -20,6 +20,7 @@ import {
   getDepartmentIdFromIM,
   getDepartmentsByCollegeId,
 } from "../../api/department";
+import useDepartmentLabels from "../shared/useDepartmentLabels";
 
 import type { UniversityIM } from "../../types/universityim";
 import type { ServiceIM } from "../../types/serviceim";
@@ -38,6 +39,7 @@ export default function FacultyDirectory() {
     number | null
   >(null);
   const [departmentOptions, setDepartmentOptions] = useState<number[]>([]);
+  const { labels: deptLabels } = useDepartmentLabels(departmentOptions);
   const [activeIMType, setActiveIMType] = useState<
     "university" | "service" | "all"
   >("university");
@@ -311,7 +313,7 @@ export default function FacultyDirectory() {
   }, [selectedCollege?.id, selectedDepartmentId, filteredUniversityIMs]);
 
   return (
-    <div className="ml-8 p-8 bg-white rounded-2xl shadow">
+    <div className="mx-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
         <FaUniversity className="text-meritRed" /> My Colleges
       </h2>
@@ -332,16 +334,9 @@ export default function FacultyDirectory() {
             selectedDepartmentId={selectedDepartmentId}
             onSelect={setSelectedDepartmentId}
             getLabel={(deptId) => {
-              const cacheEntry = getDepartmentCacheEntry(deptId);
-              const cached = cacheEntry?.abbreviation || cacheEntry?.name;
-              if (cached) return cached;
-              const sample = universityIMs.find(
-                (im) => getDepartmentIdFromIM(im) === deptId
-              );
+              const entry = getDepartmentCacheEntry(deptId);
               return (
-                (sample as any)?.department?.abbreviation ||
-                (sample as any)?.department?.name ||
-                `Department #${deptId}`
+                entry?.abbreviation || entry?.name || `Department #${deptId}`
               );
             }}
           />
