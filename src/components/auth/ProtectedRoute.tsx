@@ -10,7 +10,12 @@ export default function ProtectedRoute({
   allowedRoles,
   children,
 }: ProtectedRouteProps) {
-  const { user } = useAuth();
+  const ctx: any = useAuth();
+  const { user, hydrating } = ctx;
+
+  if (hydrating) {
+    return <div className="p-6 text-sm text-gray-500">Loading session...</div>;
+  }
 
   if (user === undefined) {
     return <div>Loading...</div>;
