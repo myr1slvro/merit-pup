@@ -7,21 +7,10 @@ import SubjectManagement from "./components/technical-admin/subject-management/S
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
 import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
 import EvaluatorEvaluatePage from "./components/evaluator/EvaluatorEvaluatePage";
-import UtldoUserAnalytics from "./components/utldo-admin/utldoUserAnalytics";
-// UTLDO Evaluation placeholder (to create actual component later)
-function UtldoEvaluation() {
-  return (
-    <div className="flex-1 flex w-full px-8 py-16">
-      <div className="max-w-3xl w-full">
-        <h1 className="text-2xl font-bold mb-4">UTLDO Evaluation</h1>
-        <p className="text-sm text-gray-600">
-          Placeholder for UTLDO / UEC evaluation dashboard. Add listing of IMs
-          in status "For UTLDO Evaluation" and an Evaluate action.
-        </p>
-      </div>
-    </div>
-  );
-}
+import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-evaluation/UtldoEvaluationDirectory";
+import UECEvaluatePage from "./components/utldo-admin/utldo-evaluation/UECEvaluatePage";
+import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
+
 import { UserRole } from "./types/user";
 
 // Placeholder for UTLDO Admin role content
@@ -138,7 +127,15 @@ export default function AppRoutes() {
         path="/utldo/evaluation"
         element={
           <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <UtldoEvaluation />
+            <UtldoEvaluationDirectory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/evaluate/:id"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <UECEvaluatePage />
           </ProtectedRoute>
         }
       />
