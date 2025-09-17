@@ -1,34 +1,78 @@
 import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../auth/AuthProvider";
 
 import { UserRole } from "../../types/user";
+interface NavItem {
+  label: string;
+  to?: string;
+  children?: { label: string; to: string }[];
+}
 
-const ROLE_TABS: Record<UserRole, { label: string; to: string }[]> = {
-  Faculty: [{ label: "Faculty Directory", to: "/faculty" }],
+const ROLE_TABS: Record<UserRole, NavItem[]> = {
+  Faculty: [{ label: "Faculty", to: "/faculty" }],
   Evaluator: [
-    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Faculty", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
   ],
   "UTLDO Admin": [
-    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Faculty", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
-    { label: "User Analytics", to: "/utldo-admin" },
+    {
+      label: "UTLDO Office",
+      children: [
+        { label: "UTLDO Evaluation", to: "/utldo/evaluation" },
+        { label: "User Analytics", to: "/utldo-admin" },
+      ],
+    },
   ],
   "Technical Admin": [
-    { label: "Faculty Directory", to: "/faculty" },
+    { label: "Faculty", to: "/faculty" },
     { label: "Evaluation", to: "/evaluator" },
-    { label: "User Analytics", to: "/utldo-admin" },
-    { label: "User Management", to: "/technical-admin" },
+    {
+      label: "UTLDO Office",
+      children: [
+        { label: "UTLDO Evaluation", to: "/utldo/evaluation" },
+        { label: "User Analytics", to: "/utldo-admin" },
+      ],
+    },
+    {
+      label: "Technical Admin",
+      children: [
+        { label: "User Management", to: "/technical-admin" },
+        { label: "College Management", to: "/technical-admin/colleges" },
+        { label: "Subject Management", to: "/technical-admin/subjects" },
+      ],
+    },
   ],
 };
 
 export default function Navbar() {
   const { user, authToken, handleLogout } = useAuth();
   const location = useLocation();
-  let tabs: { label: string; to: string }[] = [];
+  let tabs: NavItem[] = [];
   if (user && user.role && ROLE_TABS[user.role as UserRole]) {
     tabs = ROLE_TABS[user.role as UserRole];
   }
+
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close dropdown when route changes
+  useEffect(() => {
+    setOpenMenu(null);
+  }, [location.pathname]);
 
   return (
     <nav
@@ -51,20 +95,63 @@ export default function Navbar() {
       </div>
 
       {authToken && tabs.length > 0 ? (
-        <div className="flex items-center gap-6 space-x-2">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.to}
-              to={tab.to}
-              className={`text-lg font-medium transition px-2 ${
-                location.pathname === tab.to
-                  ? "text-meritYellow"
-                  : "text-white hover:text-meritGray"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
+        <div ref={containerRef} className="flex items-center gap-6 space-x-2">
+          {tabs.map((tab) => {
+            if (tab.children && tab.children.length) {
+              const isOpen = openMenu === tab.label;
+              return (
+                <div key={tab.label} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenMenu(isOpen ? null : tab.label)}
+                    className={`text-lg font-medium px-2 flex items-center gap-1 transition ${
+                      isOpen ||
+                      location.pathname.startsWith(
+                        "/" + (tab.label.toLowerCase().split(" ")[0] || "")
+                      )
+                        ? "text-meritYellow"
+                        : "text-white hover:text-meritGray"
+                    }`}
+                  >
+                    {tab.label}
+                    <span className="text-xs">▾</span>
+                  </button>
+                  {isOpen && (
+                    <div className="absolute left-0 mt-2 bg-white text-sm rounded shadow-lg min-w-[220px] z-40 border border-gray-200">
+                      <div className="py-1">
+                        {tab.children.map((child) => (
+                          <Link
+                            key={child.to}
+                            to={child.to}
+                            className={`block px-4 py-2 rounded-none whitespace-nowrap transition ${
+                              location.pathname === child.to
+                                ? "bg-meritRed/10 text-meritRed font-semibold"
+                                : "text-gray-700 hover:bg-gray-100"
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={tab.to || tab.label}
+                to={tab.to || "#"}
+                className={`text-lg font-medium transition px-2 ${
+                  location.pathname === tab.to
+                    ? "text-meritYellow"
+                    : "text-white hover:text-meritGray"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
           <button
             onClick={handleLogout}
             className="ml-2 px-4 py-2 rounded bg-meritRed text-white hover:bg-meritDarkRed transition text-sm font-semibold"
