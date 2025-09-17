@@ -2,7 +2,7 @@ import React from "react";
 import type { UniversityIM } from "../../types/universityim";
 import type { ServiceIM } from "../../types/serviceim";
 import { getDepartmentCacheEntry } from "../../api/department";
-import IMRowActions from "./IMRowActions";
+import IMRowActions from "../shared/IMRowActions";
 
 // Common columns: id, subject (resolved name), year_level (only university), department (only university), actions placeholder
 // Expect parent to pass already-enriched IM objects with subject?.name present and department maybe present.
@@ -15,6 +15,7 @@ interface BaseProps {
   error?: string | null;
   onRefresh?: () => void;
   actionsRole?: string; // explicitly pass role for actions instead of relying on window
+  extraActions?: (row: any) => React.ReactNode | null;
   // raw list for 'all' will be generic any[] containing instructional_materials entries
 }
 
@@ -33,7 +34,8 @@ interface AllProps extends BaseProps {
 export default function IMTable(
   props: UniversityProps | ServiceProps | AllProps
 ) {
-  const { type, loading, error, onRefresh, actionsRole } = props;
+  const { type, loading, error, onRefresh, actionsRole, extraActions } =
+    props as any;
   const data = props.data as any[];
 
   if (loading)
@@ -133,7 +135,7 @@ export default function IMTable(
                     ? new Date(im.updated_at).toLocaleString()
                     : ""}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 flex items-center gap-2">
                   <IMRowActions
                     row={im}
                     onChanged={() => onRefresh && onRefresh()}
@@ -143,6 +145,7 @@ export default function IMTable(
                       "Faculty"
                     }
                   />
+                  {extraActions ? extraActions(im) : null}
                 </td>
               </tr>
             );
