@@ -193,3 +193,13 @@ export async function getForUtldo(token: string, page: number = 1) {
   });
   return res.json();
 }
+
+export async function getForCertification(token: string, page: number = 1) {
+  const res = await fetch(`${API_URL}/get-for-certification?page=${page}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.json();
+}

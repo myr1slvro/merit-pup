@@ -23,6 +23,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
       children: [
         { label: "UTLDO Evaluation", to: "/utldo/evaluation" },
         { label: "User Analytics", to: "/utldo-admin" },
+        { label: "Certification", to: "/utldo/certification" },
       ],
     },
   ],
@@ -34,6 +35,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
       children: [
         { label: "UTLDO Evaluation", to: "/utldo/evaluation" },
         { label: "User Analytics", to: "/utldo-admin" },
+        { label: "Certification", to: "/utldo/certification" },
       ],
     },
     {
