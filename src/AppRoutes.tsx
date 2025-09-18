@@ -10,6 +10,7 @@ import EvaluatorEvaluatePage from "./components/evaluator/EvaluatorEvaluatePage"
 import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-evaluation/UtldoEvaluationDirectory";
 import UECEvaluatePage from "./components/utldo-admin/utldo-evaluation/UECEvaluatePage";
 import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
+import CertificationPage from "./components/utldo-admin/certification/CertificationPage";
 
 import { UserRole } from "./types/user";
 
@@ -136,6 +137,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
             <UECEvaluatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/certification"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <CertificationPage />
           </ProtectedRoute>
         }
       />

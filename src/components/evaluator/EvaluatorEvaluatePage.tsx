@@ -10,6 +10,7 @@ import PdfPreview from "../shared/evaluation/PdfPreview";
 import ImerRubricForm from "./ImerRubricForm";
 import { updateInstructionalMaterial } from "../../api/instructionalmaterial";
 import ToastContainer, { ToastMessage } from "../shared/Toast";
+import { getSubjectByImID } from "../../api/subject";
 
 export default function EvaluatorEvaluatePage() {
   const { id } = useParams();
@@ -27,6 +28,9 @@ export default function EvaluatorEvaluatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [subjectName, setSubjectName] = useState<string>("");
+  const [version, setVersion] = useState<string | number | null>(null);
+  const [subjectLoading, setSubjectLoading] = useState(false);
 
   function pushToast(
     type: ToastMessage["type"],
@@ -42,16 +46,31 @@ export default function EvaluatorEvaluatePage() {
     setToasts((t) => t.filter((m) => m.id !== id));
   }
 
-  // Fetch IM details if s3_link not passed via state, then request presigned URL
+  // Fetch IM details, subject, and PDF URL
   useEffect(() => {
-    async function loadPdf() {
+    async function load() {
       if (!id || !authToken) return;
       setLoadingPdf(true);
       setPdfError(null);
+      setSubjectLoading(true);
       try {
+        // Always fetch IM for version, etc.
+        const imRes: any = await getInstructionalMaterial(
+          Number(id),
+          authToken
+        );
+        if (imRes?.version != null) setVersion(imRes.version);
+
+        // Fetch subject name via new endpoint
+        const subjRes = await getSubjectByImID(Number(id), authToken);
+        if (subjRes?.name) {
+          setSubjectName(subjRes.name);
+        } else {
+          setSubjectName("");
+        }
+
         let key = s3Link;
         if (!key) {
-          const imRes = await getInstructionalMaterial(Number(id), authToken);
           if (imRes?.s3_link) {
             key = imRes.s3_link;
             setS3Link(key);
@@ -75,9 +94,10 @@ export default function EvaluatorEvaluatePage() {
         setPdfError(e.message || "Error loading PDF");
       } finally {
         setLoadingPdf(false);
+        setSubjectLoading(false);
       }
     }
-    loadPdf();
+    load();
   }, [id, authToken]);
 
   async function handleDownloadOriginal() {
@@ -146,7 +166,18 @@ export default function EvaluatorEvaluatePage() {
   return (
     <div className="flex flex-col w-full h-full p-4 gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-meritRed">Evaluate IM #{id}</h1>
+        <h1 className="text-2xl font-bold text-meritRed leading-tight flex flex-col gap-0">
+          {subjectLoading ? (
+            <span className="">Loading subject...</span>
+          ) : (
+            (subjectName || version) && (
+              <span className="">
+                PIMEC Evaluation - {subjectName || "Subject"}
+                {version != null && ` · v${version}`}
+              </span>
+            )
+          )}
+        </h1>
         <div className="flex gap-2">
           <button
             onClick={handleDownloadOriginal}
@@ -163,7 +194,12 @@ export default function EvaluatorEvaluatePage() {
         </div>
       </div>
       <div className="flex gap-4 flex-1 min-h-[70vh]">
-        <PdfPreview url={pdfUrl} loading={loadingPdf} error={pdfError} />
+        <PdfPreview
+          url={pdfUrl}
+          loading={loadingPdf}
+          error={pdfError}
+          title={subjectName}
+        />
         <ImerRubricForm
           scores={scores}
           setScores={setScores}

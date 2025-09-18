@@ -19,6 +19,13 @@ export async function getSubjectById(subjectId: number, token: string) {
   return res.json();
 }
 
+export async function getSubjectByImID(imId: number, token: string) {
+  const res = await fetch(`${API_URL}/instructionalmaterial/${imId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
 export async function getAllSubjects(token: string, page = 1) {
   const res = await fetch(`${API_URL}/?page=${page}`, {
     headers: { Authorization: `Bearer ${token}` },

@@ -8,6 +8,7 @@ import IMTableHeader from "../shared/IMTableHeader";
 import IMTable from "../shared/IMTable";
 import useEvaluatorIMs from "./useEvaluatorIMs";
 import { getDepartmentCacheEntry } from "../../api/department";
+import useDepartmentLabels from "../shared/useDepartmentLabels";
 
 export default function EvaluatorDirectory() {
   const { authToken } = useAuth();
@@ -59,10 +60,10 @@ export default function EvaluatorDirectory() {
     );
   }, [universityRows, selectedDepartmentId]);
 
+  const { labels: deptLabels } = useDepartmentLabels(departmentIds);
   const getDeptLabel = (deptId: number) => {
-    const cacheEntry = getDepartmentCacheEntry(deptId);
-    if (cacheEntry) return cacheEntry.abbreviation || cacheEntry.name;
-    return `Dept #${deptId}`;
+    const entry = getDepartmentCacheEntry(deptId);
+    return entry?.abbreviation || entry?.name || `Dept #${deptId}`;
   };
 
   return (
