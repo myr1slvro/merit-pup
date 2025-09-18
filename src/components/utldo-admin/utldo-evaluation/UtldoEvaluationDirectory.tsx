@@ -69,9 +69,9 @@ export default function UtldoEvaluationDirectory() {
         data={rows as any}
         loading={loading}
         error={error}
-        actionsRole="UTLDO"
+        actionsRole="UTLDO, Technical Admin"
         extraActions={(row: any) => {
-          const allowed = ["UTLDO Admin"];
+          const allowed = ["UTLDO Admin", "Technical Admin"];
           const role = user?.role || "";
           if (!allowed.includes(role)) return null;
           if (row.status !== "For UTLDO Evaluation") return null;
@@ -95,7 +95,7 @@ export default function UtldoEvaluationDirectory() {
   return (
     <div className="p-8 m-16 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaUniversity className="text-meritRed" /> UTLDO / UEC Evaluation
+        <FaUniversity className="text-meritRed" /> UTLDO Evaluation
       </h2>
       <CollegeButtonsRow
         colleges={colleges}

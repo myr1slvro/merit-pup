@@ -50,13 +50,14 @@ export default function UecRubricForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-[380px] flex flex-col border rounded bg-white shadow max-h-[70vh] overflow-auto"
+      className="flex flex-col border rounded bg-white shadow max-h-[70vh] overflow-auto"
     >
-      <div className="p-3 border-b bg-gray-50 flex items-center justify-between">
+      <div
+        className="p-3 border-b bg-gray-50 flex items-center justify-between sticky top-0 z-10 shadow-sm"
+      >
         <h2 className="text-sm font-semibold text-gray-700">UEC Rubric</h2>
         <div className="text-xs text-gray-500">
-          Total: {totalScore}/{totalMax} (
-          {((totalScore / totalMax) * 100).toFixed(1)}%)
+          Total: {totalScore}/{totalMax} ({((totalScore / totalMax) * 100).toFixed(1)}%)
         </div>
       </div>
       <div className="p-3 space-y-4 text-sm">
@@ -65,9 +66,7 @@ export default function UecRubricForm({
             <div className="px-2 py-1 bg-gray-100 font-medium text-xs flex items-center justify-between">
               <span>{section.title}</span>
               <span>
-                {breakdown.find((b) => b.section === section.title)?.subtotal ||
-                  0}
-                /{section.max}
+                {breakdown.find((b) => b.section === section.title)?.subtotal || 0}/{section.max}
               </span>
             </div>
             <div className="divide-y">
@@ -83,14 +82,10 @@ export default function UecRubricForm({
                     max={item.max}
                     value={scores[item.key] ?? ""}
                     disabled={disabled}
-                    onChange={(e) =>
-                      handleChange(item.key, item.max, e.target.value)
-                    }
+                    onChange={(e) => handleChange(item.key, item.max, e.target.value)}
                     className="w-20 border rounded px-1 py-0.5 text-right text-xs"
                   />
-                  <span className="text-[10px] text-gray-500 w-8 text-right">
-                    /{item.max}
-                  </span>
+                  <span className="text-[10px] text-gray-500 w-8 text-right">/{item.max}</span>
                 </label>
               ))}
             </div>
@@ -101,9 +96,7 @@ export default function UecRubricForm({
         <div>
           Status:{" "}
           {passed ? (
-            <span className="text-green-600 font-semibold">
-              Meets Threshold
-            </span>
+            <span className="text-green-600 font-semibold">Meets Threshold</span>
           ) : (
             <span className="text-red-600 font-semibold">Below Threshold</span>
           )}
