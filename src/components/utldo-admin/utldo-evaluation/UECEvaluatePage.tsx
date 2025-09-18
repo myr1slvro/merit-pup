@@ -6,7 +6,7 @@ import {
   getInstructionalMaterialPresignedUrl,
   updateInstructionalMaterial,
 } from "../../../api/instructionalmaterial";
-import { getSubjectById } from "../../../api/subject";
+import { getSubjectByImID } from "../../../api/subject";
 import PdfPreview from "../../shared/evaluation/PdfPreview";
 import UecRubricForm from "./UecRubricForm";
 import ToastContainer, { ToastMessage } from "../../shared/Toast";
@@ -31,6 +31,8 @@ export default function UECEvaluatePage() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [subjectName, setSubjectName] = useState<string>("");
   const [version, setVersion] = useState<string | number | null>(null);
+  const [subjectLoading, setSubjectLoading] = useState(false);
+  const [im, setIm] = useState<any>(null);
 
   function pushToast(
     type: ToastMessage["type"],
@@ -51,28 +53,25 @@ export default function UECEvaluatePage() {
       if (!id || !authToken) return;
       setLoadingPdf(true);
       setPdfError(null);
+      setSubjectLoading(true);
       try {
-        let key = s3Link;
-        let imRes: any = null;
-        if (!key) {
-          imRes = await getInstructionalMaterial(Number(id), authToken);
-          if (imRes?.s3_link) {
-            key = imRes.s3_link;
-            setS3Link(key);
-          } else {
-            setPdfError("No PDF available.");
-          }
-        } else {
-          imRes = await getInstructionalMaterial(Number(id), authToken);
-        }
+        // Always fetch IM for notes, version, etc.
+        const imRes: any = await getInstructionalMaterial(
+          Number(id),
+          authToken
+        );
+        setIm(imRes);
         if (imRes?.notes) setPriorNotes(imRes.notes);
-        if (imRes) {
-          const subj =
-            (imRes.subject && (imRes.subject.name || imRes.subject.title)) ||
-            imRes.subject_name;
-          if (subj) setSubjectName(subj);
-          if (imRes.version != null) setVersion(imRes.version);
+        if (imRes?.version != null) setVersion(imRes.version);
+
+        // Fetch subject name via new endpoint
+        const subjRes = await getSubjectByImID(Number(id), authToken);
+        if (subjRes?.name) {
+          setSubjectName(subjRes.name);
+        } else {
+          setSubjectName("");
         }
+
         const presigned = await getInstructionalMaterialPresignedUrl(
           Number(id),
           authToken
@@ -83,6 +82,7 @@ export default function UECEvaluatePage() {
         setPdfError(e.message || "Error fetching PDF");
       } finally {
         setLoadingPdf(false);
+        setSubjectLoading(false);
       }
     }
     load();
@@ -147,12 +147,15 @@ export default function UECEvaluatePage() {
     <div className="flex flex-col w-full h-full p-4 gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-meritRed leading-tight flex flex-col gap-0">
-          <span>UEC Evaluate {id}</span>
-          {(subjectName || version) && (
-            <span className="text-sm font-normal text-gray-600">
-              {subjectName || "Subject"}
-              {version != null && ` · v${version}`}
-            </span>
+          {subjectLoading ? (
+            <span className="">Loading subject...</span>
+          ) : (
+            (subjectName || version) && (
+              <span className="">
+                UTLDO Evaluation - {subjectName || "Subject"}
+                {version != null && ` · v${version}`}
+              </span>
+            )
           )}
         </h1>
         <button
@@ -167,7 +170,7 @@ export default function UECEvaluatePage() {
           url={pdfUrl}
           loading={loadingPdf}
           error={pdfError}
-          title="IM PDF"
+          title={subjectName}
         />
         <div className="flex flex-col gap-3">
           <PriorPhaseSummary notes={priorNotes} />
