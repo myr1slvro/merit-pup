@@ -33,6 +33,13 @@ export async function getAllSubjects(token: string, page = 1) {
   return res.json();
 }
 
+export async function getAllSubjectsNoPagination(token: string) {
+  const res = await fetch(`${API_URL}/all`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
 export async function updateSubject(
   subjectId: number,
   data: any,

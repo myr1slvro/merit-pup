@@ -1,16 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   uploadIMPdf,
   createInstructionalMaterial,
-  checkMissingSections,
 } from "../../api/instructionalmaterial";
-import { getAllSubjects, getSubjectsByCollegeId } from "../../api/subject";
-import { getDepartmentsByCollegeId } from "../../api/department";
+import {
+  getAllDepartments,
+  getDepartmentsByCollegeId,
+} from "../../api/department";
 import { getAllColleges } from "../../api/college";
 import { createUniversityIM } from "../../api/universityim";
 import { createServiceIM } from "../../api/serviceim";
 import { useAuth } from "../auth/AuthProvider";
 import { IMType } from "../../types/instructionalmats";
+import { createAuthor } from "../../api/author";
+import AuthorsSelector from "./AuthorsSelector";
+import IMTypeFields from "./UnivIMTypeFields";
+import CollegeSelector from "./CollegeSelector";
+import SubjectSelector from "./SubjectSelector";
+import PdfUploadSection from "./PdfUploadSection";
 
 type CreateIMFormProps = {
   selectedCollege?: any | null;
@@ -25,8 +32,6 @@ export default function CreateIMForm({
 }: CreateIMFormProps) {
   const { authToken, user } = useAuth();
 
-  // Helper: normalize responses that may be an array (college endpoint)
-  // or a paginated object { subjects: [...] } (paginated endpoint).
   const normalizeList = (res: any) =>
     Array.isArray(res)
       ? res
@@ -38,7 +43,6 @@ export default function CreateIMForm({
   const [analysisNotes, setAnalysisNotes] = useState<string>("");
   const [objectKey, setObjectKey] = useState<string>("");
   const [creating, setCreating] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>("");
 
   // --- College & subject selection state ---
@@ -49,16 +53,11 @@ export default function CreateIMForm({
   );
 
   // Subjects depend on the effective college selection
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | "">("");
 
-  // Effective college id used across the form: prefer the dropdown selection,
-  // otherwise fall back to the incoming `selectedCollege` prop when present.
-  const effectiveCollegeId =
-    typeof selectedCollegeId === "number"
-      ? selectedCollegeId
-      : selectedCollege?.id;
+  // Effective college id used across the form: use the dropdown selection only.
+  // If "All colleges" is selected, this will be "" and global lists are used.
+  const effectiveCollegeId = selectedCollegeId;
 
   // Conditional fields
   const [departments, setDepartments] = useState<any[]>([]);
@@ -66,12 +65,10 @@ export default function CreateIMForm({
     ""
   );
   const [yearLevel, setYearLevel] = useState<number | "">("");
-  // Required by backend IM schema
-  const [validity, setValidity] = useState<string>(
-    String(new Date().getFullYear())
-  );
+  // Validity is now implicit; removed from the form but still sent with a sensible default
+  const defaultValidity = useMemo(() => String(new Date().getFullYear()), []);
 
-  // Load all colleges for the college dropdown
+  const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([]);
   useEffect(() => {
     if (!authToken) return;
     let cancelled = false;
@@ -91,45 +88,20 @@ export default function CreateIMForm({
     };
   }, [authToken]);
 
-  // Load subjects whenever the effective college id changes
-  useEffect(() => {
-    if (!authToken) return;
-    let cancelled = false;
-    (async function loadSubjects() {
-      setSubjectsLoading(true);
-      try {
-        const res = effectiveCollegeId
-          ? await getSubjectsByCollegeId(
-              effectiveCollegeId as number,
-              authToken
-            )
-          : await getAllSubjects(authToken);
-        if (!cancelled) setSubjects(normalizeList(res));
-      } catch {
-        if (!cancelled) setSubjects([]);
-      } finally {
-        if (!cancelled) setSubjectsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authToken, effectiveCollegeId]);
+  // Subjects now fetched by SubjectSelector for UI; parent holds only selected id.
 
   // Load departments for the effective college
   useEffect(() => {
     if (!authToken) return;
     let cancelled = false;
     (async function loadDepartments() {
-      if (!effectiveCollegeId) {
-        if (!cancelled) setDepartments([]);
-        return;
-      }
       try {
-        const res = await getDepartmentsByCollegeId(
-          effectiveCollegeId as number,
-          authToken
-        );
+        const res = effectiveCollegeId
+          ? await getDepartmentsByCollegeId(
+              effectiveCollegeId as number,
+              authToken
+            )
+          : await getAllDepartments(authToken);
         if (!cancelled) setDepartments(normalizeList(res));
       } catch {
         if (!cancelled) setDepartments([]);
@@ -140,25 +112,7 @@ export default function CreateIMForm({
     };
   }, [authToken, effectiveCollegeId]);
 
-  async function handleAnalyze() {
-    if (!authToken) return;
-    if (!file) {
-      setError("Please select a PDF file.");
-      return;
-    }
-    setError("");
-    setUploading(true);
-    try {
-      const res = await checkMissingSections(file, authToken);
-      if (res?.error) throw new Error(res.error);
-      setAnalysisNotes(res?.result || "");
-      setUploadPreview(file.name);
-    } catch (e: any) {
-      setError(e.message || "Failed to analyze PDF.");
-    } finally {
-      setUploading(false);
-    }
-  }
+  // Authors fetched within AuthorsSelector
 
   function clearUpload() {
     setFile(null);
@@ -183,9 +137,6 @@ export default function CreateIMForm({
           : "For Evaluator Evaluation";
       if (!selectedSubjectId) {
         throw new Error("Please select a subject.");
-      }
-      if (!validity) {
-        throw new Error("Please provide validity (e.g., year).");
       }
       // Create subtype record first
       let subtypeId: number | string | undefined;
@@ -224,7 +175,7 @@ export default function CreateIMForm({
       const payload: any = {
         im_type: imType,
         status: derivedStatus,
-        validity,
+        validity: defaultValidity,
         created_by: user?.staff_id || "",
         updated_by: user?.staff_id || "",
         s3_link: finalS3,
@@ -238,6 +189,23 @@ export default function CreateIMForm({
 
       const res = await createInstructionalMaterial(payload, authToken);
       if (res?.error) throw new Error(res.error);
+      const newImId = res?.id;
+
+      // Create author associations if any were selected
+      if (newImId && selectedAuthorIds.length) {
+        for (const uid of selectedAuthorIds) {
+          try {
+            await createAuthor(newImId, uid, authToken);
+          } catch (err) {
+            // Non-blocking: log and continue
+            console.warn("Failed to create author association", {
+              newImId,
+              uid,
+              err,
+            });
+          }
+        }
+      }
       onCreated?.(res?.id);
       onCancel();
     } catch (e: any) {
@@ -248,73 +216,40 @@ export default function CreateIMForm({
   }
 
   return (
-    <form onSubmit={handleCreate} className="space-y-3">
-      {/* Step 0: College filter for subject selection */}
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <span className="text-xs text-gray-500">College</span>
-          <select
-            value={selectedCollegeId as any}
-            onChange={(e) => {
-              setSelectedCollegeId(
-                e.target.value ? Number(e.target.value) : ""
-              );
-              setSelectedSubjectId("");
-              setSelectedDepartmentId("");
-            }}
-            className="mt-1 block w-full border rounded px-2 py-1"
-          >
-            {collegesLoading ? (
-              <option value="" disabled>
-                Loading colleges...
-              </option>
-            ) : (
-              <option value="">All colleges</option>
-            )}
-            {colleges.map((c: any) => (
-              <option key={c.id} value={c.id}>
-                {c.abbreviation ? `${c.abbreviation} — ${c.name}` : c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    <form
+      onSubmit={handleCreate}
+      className="space-y-5 max-h-[70vh] overflow-y-auto pr-1"
+    >
+      {/* Row 1: College (full width) with search */}
+      <div className="grid grid-cols-1 gap-2">
+        <CollegeSelector
+          value={selectedCollegeId}
+          onChange={(id) => {
+            setSelectedCollegeId(id);
+            setSelectedSubjectId("");
+            setSelectedDepartmentId("");
+            setSelectedAuthorIds([]);
+          }}
+        />
       </div>
 
-      {/* Step 1: Subject selection (filtered by college) */}
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <span className="text-xs text-gray-500">Subject</span>
-          <select
-            value={selectedSubjectId || ""}
-            onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
-            className="mt-1 block w-full border rounded px-2 py-1"
-            disabled={subjectsLoading}
-          >
-            {subjectsLoading ? (
-              <option value="" disabled>
-                Loading subjects...
-              </option>
-            ) : (
-              <option value="" disabled>
-                Select subject...
-              </option>
-            )}
-            {subjects.map((s: any) => (
-              <option key={s.id} value={s.id}>
-                {s.code} - {s.name}
-              </option>
-            ))}
-          </select>
+      {/* Row 2: Subjects (2/3) + IM Type (1/3) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="md:col-span-2 flex flex-col">
+          <SubjectSelector
+            collegeId={effectiveCollegeId as number | ""}
+            value={selectedSubjectId}
+            onChange={(id) => setSelectedSubjectId(id)}
+          />
         </div>
-      </div>
-
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <span className="text-xs text-gray-500">IM Type</span>
+        <div className="md:col-span-1">
+          <label className="block text-sm font-medium text-gray-700">
+            IM Type
+          </label>
           <select
             value={imType}
             onChange={(e) => setImType(e.target.value as IMType)}
-            className="mt-1 block w-full border rounded px-2 py-1"
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
           >
             <option value={IMType.university}>University IM</option>
             <option value={IMType.service}>Service IM</option>
@@ -322,145 +257,62 @@ export default function CreateIMForm({
         </div>
       </div>
 
-      {/* Conditional fields based on IM Type */}
-      {imType === IMType.university ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <span className="text-xs text-gray-500">Department</span>
-            <select
-              value={selectedDepartmentId || ""}
-              onChange={(e) => setSelectedDepartmentId(Number(e.target.value))}
-              className="mt-1 block w-full border rounded px-2 py-1"
-            >
-              <option value="" disabled>
-                Select department...
-              </option>
-              {departments.map((d: any) => (
-                <option key={d.id} value={d.id}>
-                  {d.abbreviation || d.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <span className="text-xs text-gray-500">Year Level</span>
-            <input
-              type="number"
-              min={1}
-              max={6}
-              value={yearLevel as number | ""}
-              onChange={(e) =>
-                setYearLevel(e.target.value ? Number(e.target.value) : "")
-              }
-              className="mt-1 block w-full border rounded px-2 py-1"
-              placeholder="e.g., 2"
-            />
-          </div>
-          <div>
-            <span className="text-xs text-gray-500">Validity</span>
-            <input
-              type="text"
-              value={validity}
-              onChange={(e) => setValidity(e.target.value)}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              placeholder="e.g., 2026"
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <span className="text-xs text-gray-500">Validity</span>
-            <input
-              type="text"
-              value={validity}
-              onChange={(e) => setValidity(e.target.value)}
-              className="mt-1 block w-full border rounded px-2 py-1"
-              placeholder="e.g., 2026"
-            />
-          </div>
-        </div>
-      )}
-
-      <div>
-        <span className="text-xs text-gray-500">PDF File</span>
-        <div className="mt-1 flex items-center gap-2">
-          <label className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded border cursor-pointer hover:bg-gray-200 text-sm">
-            Browse...
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="hidden"
-            />
+      {/* Authors (filtered by selected college) */}
+      <div className="grid grid-cols-1 gap-2">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Authors
           </label>
-          <span className="text-sm text-gray-600">
-            {file
-              ? file.name
-              : uploadPreview
-              ? uploadPreview
-              : "No file selected."}
-          </span>
-          {file || objectKey ? (
-            <button
-              type="button"
-              onClick={clearUpload}
-              className="ml-auto px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Clear
-            </button>
-          ) : null}
-        </div>
-        <div className="flex gap-2 mt-2">
-          <button
-            type="button"
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-            onClick={handleAnalyze}
-            disabled={uploading || !file}
-          >
-            {uploading ? "Analyzing..." : "Analyze PDF"}
-          </button>
-          {analysisNotes && (
-            <span
-              className={`text-xs px-2 py-1 rounded ${
-                analysisNotes.startsWith("Missing sections")
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              {analysisNotes}
-            </span>
-          )}
-        </div>
-        {analysisNotes && (
-          <div className="mt-2 text-xs text-gray-600">
-            Status on create:{" "}
-            {analysisNotes.startsWith("Missing sections") ? (
-              <span className="text-red-700 font-semibold">
-                For Resubmission
-              </span>
-            ) : (
-              <span className="text-green-700 font-semibold">
-                For Evaluator Evaluation
-              </span>
-            )}
+          <div className="mt-2">
+            <AuthorsSelector
+              collegeId={effectiveCollegeId as number | ""}
+              selectedIds={selectedAuthorIds}
+              onChange={setSelectedAuthorIds}
+              disabled={false}
+            />
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Row 3: Departments + Year Level via IMTypeFields */}
+      <div className="grid grid-cols-1 gap-3">
+        <div className="md:col-span-2">
+          <IMTypeFields
+            imType={imType}
+            departments={departments}
+            selectedDepartmentId={selectedDepartmentId}
+            onDepartmentChange={setSelectedDepartmentId}
+            yearLevel={yearLevel}
+            onYearLevelChange={setYearLevel}
+          />
+        </div>
+      </div>
+
+      {/* Row 4: Browse and upload file, analyze PDF */}
+      <PdfUploadSection
+        file={file}
+        onFileChange={(f) => {
+          setFile(f);
+          setUploadPreview(f ? f.name : "");
+          if (!f) setObjectKey("");
+        }}
+        analysisNotes={analysisNotes}
+        onAnalysisChange={setAnalysisNotes}
+      />
 
       {error && <div className="text-meritRed text-sm">{error}</div>}
 
       <div className="flex flex-row-reverse gap-2 mt-4">
         <button
           type="submit"
-          className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold"
+          className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed font-semibold shadow-sm"
           disabled={creating}
         >
           {creating ? "Creating..." : "Create"}
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-meritGray font-semibold"
+          className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-meritGray font-semibold shadow-sm"
           onClick={onCancel}
           disabled={creating}
         >

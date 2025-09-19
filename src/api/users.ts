@@ -35,6 +35,21 @@ export async function getAllUsers(
   return res.json();
 }
 
+export async function getAllUsersNoPagination(
+  token: string,
+  sort_by?: string,
+  sort_dir: "asc" | "desc" = "asc"
+) {
+  const params = new URLSearchParams();
+  if (sort_by) params.append("sort_by", sort_by);
+  if (sort_dir) params.append("sort_dir", sort_dir);
+  const qs = params.toString();
+  const res = await fetch(`${API_URL}/all${qs ? `?${qs}` : ""}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
 export async function updateUser(userId: number, data: any, token: string) {
   const res = await fetch(`${API_URL}/${userId}`, {
     method: "PUT",
