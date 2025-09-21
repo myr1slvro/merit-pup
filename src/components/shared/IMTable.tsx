@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { UniversityIM } from "../../types/universityim";
 import type { ServiceIM } from "../../types/serviceim";
 import { getDepartmentCacheEntry } from "../../api/department";
 import IMRowActions from "../shared/IMRowActions";
-
-// Common columns: id, subject (resolved name), year_level (only university), department (only university), actions placeholder
-// Expect parent to pass already-enriched IM objects with subject?.name present and department maybe present.
+import { useAuth } from "../auth/AuthProvider";
+import { getAllUsersForIM } from "../../api/author";
+import { getUserById } from "../../api/users";
 
 export type IMTableType = "university" | "service" | "all";
 
@@ -14,9 +14,9 @@ interface BaseProps {
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
-  actionsRole?: string; // explicitly pass role for actions instead of relying on window
+  actionsRole?: string;
   extraActions?: (row: any) => React.ReactNode | null;
-  // raw list for 'all' will be generic any[] containing instructional_materials entries
+  authToken?: string;
 }
 
 interface UniversityProps extends BaseProps {
@@ -34,9 +34,132 @@ interface AllProps extends BaseProps {
 export default function IMTable(
   props: UniversityProps | ServiceProps | AllProps
 ) {
-  const { type, loading, error, onRefresh, actionsRole, extraActions } =
-    props as any;
+  const {
+    type,
+    loading,
+    error,
+    onRefresh,
+    actionsRole,
+    extraActions,
+    authToken,
+  } = props as any;
   const data = props.data as any[];
+
+  const { authToken: ctxToken, user: currentUser } = useAuth();
+  const token = useMemo(() => {
+    if (authToken) return authToken;
+    if (ctxToken) return ctxToken;
+    try {
+      const ls = localStorage.getItem("authToken");
+      if (ls) return ls;
+    } catch {}
+    if (typeof window !== "undefined") {
+      return (window as any)?.authToken || (window as any)?.jwtToken;
+    }
+    return undefined;
+  }, [authToken, ctxToken]);
+  const [authorsStaffIdsByIm, setAuthorsStaffIdsByIm] = useState<
+    Record<number, string>
+  >({});
+  const [canActByIm, setCanActByIm] = useState<Record<number, boolean>>({});
+  const userCache = useRef<Map<number, any>>(new Map());
+  const seqRef = useRef(0);
+
+  const pickStaffId = (u: any): string | undefined => {
+    if (!u) return undefined;
+    return u.staff_id || undefined;
+  };
+  const pickLastName = (u: any): string | undefined => {
+    if (!u) return undefined;
+    return u.last_name || undefined;
+  };
+
+  useEffect(() => {
+    if (!data?.length || !token) return;
+    const seq = ++seqRef.current;
+    const imIds = Array.from(
+      new Set(data.map((d) => Number(d.id)).filter(Boolean))
+    );
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // 1) Fetch authors (user IDs) for all IMs in parallel
+        const imToUserIdsArr = await Promise.all(
+          imIds.map(async (imId) => {
+            try {
+              const uids = await getAllUsersForIM(imId, token);
+              const unique = Array.from(
+                new Set((uids || []).map((x: any) => Number(x)).filter(Boolean))
+              );
+              return [imId, unique] as [number, number[]];
+            } catch {
+              return [imId, []] as [number, number[]];
+            }
+          })
+        );
+
+        const imToUserIds = new Map<number, number[]>(imToUserIdsArr);
+        // 2) Build global set of user IDs to fetch
+        const allUserIds = new Set<number>();
+        for (const [, uids] of imToUserIds) {
+          for (const uid of uids) allUserIds.add(uid);
+        }
+
+        // 3) Determine which users are missing from cache
+        const missing = Array.from(allUserIds).filter(
+          (uid) => !userCache.current.has(uid)
+        );
+
+        // 4) Fetch missing users in parallel
+        await Promise.all(
+          missing.map(async (uid) => {
+            try {
+              const u = await getUserById(uid, token);
+              const userObj = u?.user || u;
+              userCache.current.set(uid, userObj);
+            } catch {
+              // Leave uncached; labels will fallback to IDs
+            }
+          })
+        );
+
+        // 5) Build labels and authorship per IM
+        const entries: Record<number, string> = {};
+        const canAct: Record<number, boolean> = {};
+        const me = Number(currentUser?.id) || undefined;
+        for (const [imId, uids] of imToUserIds) {
+          const labels = uids.map((uid) => {
+            const u = userCache.current.get(uid);
+            const staff = pickStaffId(u) || String(uid);
+            const last = pickLastName(u);
+            return last ? `${staff} – ${last}` : staff;
+          });
+          const joined = Array.from(new Set(labels.filter(Boolean))).join(", ");
+          entries[imId] = joined || "-";
+          canAct[imId] = me ? uids.includes(me) : false;
+        }
+
+        if (!cancelled && seq === seqRef.current) {
+          setAuthorsStaffIdsByIm(entries);
+          setCanActByIm(canAct);
+        }
+      } catch {
+        if (!cancelled && seq === seqRef.current) {
+          const fallback: Record<number, string> = {};
+          const fallbackCan: Record<number, boolean> = {};
+          for (const imId of imIds) fallback[imId] = "-";
+          setAuthorsStaffIdsByIm(fallback);
+          for (const imId of imIds) fallbackCan[imId] = false;
+          setCanActByIm(fallbackCan);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, token, currentUser?.id]);
 
   if (loading)
     return (
@@ -81,9 +204,10 @@ export default function IMTable(
             <th className="px-3 py-2 text-left">Status</th>
             <th className="px-3 py-2 text-left">Validity</th>
             <th className="px-3 py-2 text-left">Version</th>
+            <th className="px-3 py-2 text-left">Authors</th>
             <th className="px-3 py-2 text-left">Updated By</th>
             <th className="px-3 py-2 text-left">Updated At</th>
-            <th className="px-3 py-2 text-left">Actions</th>
+            <th className="px-3 py-2 text-center w-56">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -129,23 +253,36 @@ export default function IMTable(
                 <td className="px-3 py-2">{im.status || "-"}</td>
                 <td className="px-3 py-2">{im.validity || "-"}</td>
                 <td className="px-3 py-2">{im.version || "-"}</td>
+                <td className="px-3 py-2">
+                  {authorsStaffIdsByIm[Number(im.id)] || (token ? "…" : "-")}
+                </td>
                 <td className="px-3 py-2">{im.updated_by || "-"}</td>
                 <td className="px-3 py-2 text-xs whitespace-nowrap">
                   {im.updated_at
                     ? new Date(im.updated_at).toLocaleString()
                     : ""}
                 </td>
-                <td className="px-3 py-2 flex items-center gap-2">
-                  <IMRowActions
-                    row={im}
-                    onChanged={() => onRefresh && onRefresh()}
-                    role={
-                      actionsRole ||
-                      (window as any)?.currentUserRole ||
-                      "Faculty"
-                    }
-                  />
-                  {extraActions ? extraActions(im) : null}
+                <td className="px-3 py-2">
+                  <div className="min-w-[14rem] flex items-center justify-center gap-2 text-center">
+                    {canActByIm[Number(im.id)] ? (
+                      <>
+                        <IMRowActions
+                          row={im}
+                          onChanged={() => onRefresh && onRefresh()}
+                          role={
+                            actionsRole ||
+                            (window as any)?.currentUserRole ||
+                            "Faculty"
+                          }
+                        />
+                        {extraActions ? extraActions(im) : null}
+                      </>
+                    ) : (
+                      <span className="inline-flex items-center justify-center px-2 py-1 text-gray-600 text-xs leading-snug max-w-[13rem]">
+                        Restricted permissions for this IM
+                      </span>
+                    )}
+                  </div>
                 </td>
               </tr>
             );

@@ -17,7 +17,7 @@ export default function IMTableHeader({
   hideCreate,
 }: IMTableHeaderProps) {
   return (
-    <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="flex items-center justify-between flex-wrap gap-4 my-2">
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaRegFileLines className="text-meritRed" />
         Instructional Materials
