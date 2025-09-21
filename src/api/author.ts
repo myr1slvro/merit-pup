@@ -40,6 +40,28 @@ export async function getAuthorsForIM(im_id: number, token: string) {
   return res.json();
 }
 
+// Convenience helper: returns unique user IDs of authors for a given IM
+export async function getAllUsersForIM(im_id: number, token: string) {
+  const resp = await getAuthorsForIM(im_id, token);
+  const list = Array.isArray(resp)
+    ? resp
+    : Array.isArray(resp?.items)
+    ? resp.items
+    : Array.isArray(resp?.results)
+    ? resp.results
+    : Array.isArray(resp?.data)
+    ? resp.data
+    : [];
+  const ids = new Set<number>();
+  for (const a of list) {
+    const uid = Number(
+      a?.user_id ?? a?.userId ?? a?.user?.id ?? a?.user?.user_id
+    );
+    if (uid) ids.add(uid);
+  }
+  return Array.from(ids);
+}
+
 export async function deleteAuthor(
   im_id: number,
   user_id: number,
