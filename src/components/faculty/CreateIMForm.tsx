@@ -8,6 +8,7 @@ import {
   getDepartmentsByCollegeId,
 } from "../../api/department";
 import { getAllColleges } from "../../api/college";
+import { getCollegesForUser } from "../../api/collegeincluded";
 import { createUniversityIM } from "../../api/universityim";
 import { createServiceIM } from "../../api/serviceim";
 import { useAuth } from "../auth/AuthProvider";
@@ -48,15 +49,11 @@ export default function CreateIMForm({
   // --- College & subject selection state ---
   const [colleges, setColleges] = useState<any[]>([]);
   const [collegesLoading, setCollegesLoading] = useState(false);
-  const [selectedCollegeId, setSelectedCollegeId] = useState<number | "">(
-    selectedCollege?.id ?? ""
-  );
+  const [selectedCollegeId, setSelectedCollegeId] = useState<number | "">("");
 
   // Subjects depend on the effective college selection
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | "">("");
 
-  // Effective college id used across the form: use the dropdown selection only.
-  // If "All colleges" is selected, this will be "" and global lists are used.
   const effectiveCollegeId = selectedCollegeId;
 
   // Conditional fields
@@ -90,19 +87,54 @@ export default function CreateIMForm({
 
   // Subjects now fetched by SubjectSelector for UI; parent holds only selected id.
 
-  // Load departments for the effective college
+  // Load departments for the effective college or aggregate across user's colleges when "All colleges"
   useEffect(() => {
     if (!authToken) return;
     let cancelled = false;
     (async function loadDepartments() {
       try {
-        const res = effectiveCollegeId
-          ? await getDepartmentsByCollegeId(
-              effectiveCollegeId as number,
-              authToken
+        if (effectiveCollegeId) {
+          const res = await getDepartmentsByCollegeId(
+            effectiveCollegeId as number,
+            authToken
+          );
+          if (!cancelled) setDepartments(normalizeList(res));
+        } else if (user?.id) {
+          // Aggregate departments from all colleges the user belongs to
+          const ciRes: any = await getCollegesForUser(
+            user.id as number,
+            authToken
+          );
+          const assocList: any[] = Array.isArray(ciRes)
+            ? ciRes
+            : ciRes?.data || [];
+          const collegeIds: number[] = assocList
+            .map((a: any) =>
+              typeof a?.college_id === "string"
+                ? parseInt(a.college_id, 10)
+                : a?.college_id
             )
-          : await getAllDepartments(authToken);
-        if (!cancelled) setDepartments(normalizeList(res));
+            .filter((id: any) => Number.isFinite(id));
+          const seen = new Set<number>();
+          const agg: any[] = [];
+          for (const cid of collegeIds) {
+            try {
+              const res = await getDepartmentsByCollegeId(cid, authToken);
+              const list: any[] = normalizeList(res);
+              list.forEach((d: any) => {
+                if (Number.isFinite(d?.id) && !seen.has(d.id)) {
+                  seen.add(d.id);
+                  agg.push(d);
+                }
+              });
+            } catch {
+              // continue other colleges
+            }
+          }
+          if (!cancelled) setDepartments(agg);
+        } else {
+          if (!cancelled) setDepartments([]);
+        }
       } catch {
         if (!cancelled) setDepartments([]);
       }
@@ -110,7 +142,7 @@ export default function CreateIMForm({
     return () => {
       cancelled = true;
     };
-  }, [authToken, effectiveCollegeId]);
+  }, [authToken, effectiveCollegeId, user?.id]);
 
   // Authors fetched within AuthorsSelector
 

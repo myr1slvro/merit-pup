@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import { getCollegesForUser } from "../../api/collegeincluded";
 import {
-  getAllSubjects,
   getAllSubjectsNoPagination,
   getSubjectsByCollegeId,
 } from "../../api/subject";
@@ -19,7 +19,7 @@ export default function SubjectSelector({
   value,
   onChange,
 }: SubjectSelectorProps) {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [items, setItems] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -33,10 +33,41 @@ export default function SubjectSelector({
     (async () => {
       setLoading(true);
       try {
-        const res = collegeId
-          ? await getSubjectsByCollegeId(collegeId as number, authToken)
-          : await getAllSubjectsNoPagination(authToken);
-        if (!cancelled) setItems(normalize(res));
+        if (collegeId) {
+          const res = await getSubjectsByCollegeId(
+            collegeId as number,
+            authToken
+          );
+          if (!cancelled) setItems(normalize(res));
+        } else if (user?.id) {
+          // Aggregate subjects from all user's colleges
+          const ciRes: any = await getCollegesForUser(user.id as number, authToken);
+          const assocList: any[] = Array.isArray(ciRes) ? ciRes : ciRes?.data || [];
+          const collegeIds: number[] = assocList
+            .map((a: any) =>
+              typeof a?.college_id === "string" ? parseInt(a.college_id, 10) : a?.college_id
+            )
+            .filter((id: any) => Number.isFinite(id));
+          const seen = new Set<number>();
+          const agg: Subject[] = [];
+          for (const cid of collegeIds) {
+            try {
+              const res = await getSubjectsByCollegeId(cid, authToken);
+              const list: Subject[] = normalize(res);
+              list.forEach((s) => {
+                if (Number.isFinite(s.id) && !seen.has(s.id)) {
+                  seen.add(s.id);
+                  agg.push(s);
+                }
+              });
+            } catch {
+              // continue
+            }
+          }
+          if (!cancelled) setItems(agg);
+        } else {
+          if (!cancelled) setItems([]);
+        }
       } catch {
         if (!cancelled) setItems([]);
       } finally {
@@ -46,7 +77,7 @@ export default function SubjectSelector({
     return () => {
       cancelled = true;
     };
-  }, [authToken, collegeId]);
+  }, [authToken, collegeId, user?.id]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

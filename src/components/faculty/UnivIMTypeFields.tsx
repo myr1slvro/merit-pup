@@ -54,7 +54,7 @@ export default function UnivIMTypeFields({
           </option>
           {filteredDepartments.map((d: any) => (
             <option key={d.id} value={d.id}>
-              {d.abbreviation || d.name}
+              {d.abbreviation} - {d.name}
             </option>
           ))}
         </select>

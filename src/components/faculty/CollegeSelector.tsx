@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { getAllColleges } from "../../api/college";
+import { getCollegesForUserDetailed } from "../../api/collegeincluded";
 
 type Option = {
   id: number;
@@ -17,7 +17,7 @@ export default function CollegeSelector({
   value,
   onChange,
 }: CollegeSelectorProps) {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [items, setItems] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -26,12 +26,15 @@ export default function CollegeSelector({
     Array.isArray(res) ? res : res?.colleges || res?.data || [];
 
   useEffect(() => {
-    if (!authToken) return;
+    if (!authToken || !user?.id) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const res = await getAllColleges(authToken);
+        const res = await getCollegesForUserDetailed(
+          user.id as number,
+          authToken
+        );
         if (!cancelled) setItems(normalize(res));
       } catch {
         if (!cancelled) setItems([]);
@@ -42,7 +45,7 @@ export default function CollegeSelector({
     return () => {
       cancelled = true;
     };
-  }, [authToken]);
+  }, [authToken, user?.id]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

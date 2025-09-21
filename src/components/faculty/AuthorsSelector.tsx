@@ -1,6 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { getUsersForCollege } from "../../api/collegeincluded";
+import {
+  getCollegesForUserDetailed,
+  getUsersForCollege,
+} from "../../api/collegeincluded";
 import { getAllUsersNoPagination, getUserById } from "../../api/users";
 
 export type AuthorUser = {
@@ -25,16 +28,18 @@ export default function AuthorsSelector({
   onChange,
   disabled,
 }: AuthorsSelectorProps) {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [options, setOptions] = useState<AuthorUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<
     "All" | "Faculty" | "Evaluator" | "UTLDO Admin" | "Technical Admin"
   >("All");
   const [query, setQuery] = useState("");
+  const reqSeq = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    const myReq = ++reqSeq.current;
     (async () => {
       if (!authToken) return;
       setLoading(true);
@@ -57,26 +62,132 @@ export default function AuthorsSelector({
             const fetched = await Promise.all(pending);
             fetched.forEach((u) => u && users.push(u));
           }
-          if (!cancelled) setOptions(users);
+          if (!cancelled && reqSeq.current === myReq) setOptions(users);
         } else {
-          // All colleges mode: use non-paginated endpoint
-          const list: any[] = await getAllUsersNoPagination(
-            authToken,
-            "last_name",
-            "asc"
-          );
-          if (!cancelled) setOptions(list);
+          // All colleges mode: aggregate users across user's colleges
+          if (!user?.id) {
+            if (!cancelled && reqSeq.current === myReq) setOptions([]);
+          } else {
+            const ciRes: any = await getCollegesForUserDetailed(
+              user.id as number,
+              authToken
+            );
+            const assocList: any[] = Array.isArray(ciRes)
+              ? ciRes
+              : ciRes?.data || ciRes?.colleges || [];
+            const collegeIds: number[] = assocList
+              .map((a: any) =>
+                typeof a?.id === "string" ? parseInt(a.id, 10) : a?.id
+              )
+              .filter((id: any) => Number.isFinite(id));
+            // fetch all colleges in parallel
+            const collegeResults = await Promise.all(
+              collegeIds.map(async (cid) => {
+                try {
+                  const res = await getUsersForCollege(cid, authToken);
+                  return Array.isArray(res)
+                    ? res
+                    : res?.data || res?.users || [];
+                } catch {
+                  return [];
+                }
+              })
+            );
+            // flatten and extract unique users
+            const seenUser = new Set<number>();
+            const users: any[] = [];
+            const toFetch = new Set<number>();
+            for (const list of collegeResults) {
+              for (const item of list as any[]) {
+                if (item?.user && item.user?.id != null) {
+                  const id =
+                    typeof item.user.id === "string"
+                      ? parseInt(item.user.id, 10)
+                      : item.user.id;
+                  if (Number.isFinite(id) && !seenUser.has(id)) {
+                    seenUser.add(id);
+                    users.push({ ...item.user, id });
+                  }
+                } else if (item?.user_id != null) {
+                  const id =
+                    typeof item.user_id === "string"
+                      ? parseInt(item.user_id, 10)
+                      : item.user_id;
+                  if (Number.isFinite(id) && !seenUser.has(id)) {
+                    seenUser.add(id);
+                    toFetch.add(id);
+                  }
+                } else if (item?.id != null && item?.email) {
+                  const id =
+                    typeof item.id === "string"
+                      ? parseInt(item.id, 10)
+                      : item.id;
+                  if (Number.isFinite(id) && !seenUser.has(id)) {
+                    seenUser.add(id);
+                    users.push({ ...item, id });
+                  }
+                }
+              }
+            }
+            if (toFetch.size) {
+              try {
+                const fetched = await Promise.all(
+                  Array.from(toFetch).map((id) =>
+                    getUserById(id, authToken)
+                      .then((u) => u?.user || u)
+                      .catch(() => null)
+                  )
+                );
+                for (const u of fetched) {
+                  if (!u) continue;
+                  const id =
+                    typeof u.id === "string" ? parseInt(u.id, 10) : u.id;
+                  if (Number.isFinite(id) && !users.some((x) => x.id === id)) {
+                    users.push({ ...u, id });
+                  }
+                }
+              } catch {
+                // ignore fetch failures
+              }
+            }
+            if (!cancelled && reqSeq.current === myReq) {
+              if (users.length === 0) {
+                try {
+                  const all = await getAllUsersNoPagination(
+                    authToken,
+                    "last_name",
+                    "asc"
+                  );
+                  const list = Array.isArray(all)
+                    ? all
+                    : all?.data || all?.users || [];
+                  const normalized = list
+                    .map((u: any) => ({
+                      ...u,
+                      id:
+                        typeof u?.id === "string" ? parseInt(u.id, 10) : u?.id,
+                    }))
+                    .filter((u: any) => Number.isFinite(u.id));
+                  if (reqSeq.current === myReq) setOptions(normalized);
+                } catch {
+                  if (reqSeq.current === myReq) setOptions([]);
+                }
+              } else {
+                if (reqSeq.current === myReq) setOptions(users);
+              }
+            }
+          }
         }
       } catch {
-        if (!cancelled) setOptions([]);
+        if (!cancelled && reqSeq.current === myReq) setOptions([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && reqSeq.current === myReq) setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [authToken, collegeId]);
+  }, [authToken, collegeId, user?.id]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
