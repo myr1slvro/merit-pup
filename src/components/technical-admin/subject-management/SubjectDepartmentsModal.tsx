@@ -221,44 +221,46 @@ export default function SubjectDepartmentsModal({
           Manage Departments for {subject.code}
         </h2>
         <div className="mb-4 text-sm">
-          <label htmlFor="collegeFilter" className="block text-gray-700 mb-1">
-            College filter
-          </label>
-          <div className="flex items-center gap-2">
-            <select
-              id="collegeFilter"
-              className="border rounded px-2 py-1 text-sm min-w-[260px]"
-              value={selectedCollegeId as any}
-              onChange={(e) => {
-                const v = e.target.value;
-                setSelectedCollegeId(v ? Number(v) : "");
-                setPick("");
-              }}
-            >
-              {collegesLoading ? (
-                <option value="" disabled>
-                  Loading colleges...
-                </option>
-              ) : (
-                <option value="">All colleges</option>
-              )}
-              {colleges.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.abbreviation ? `${c.abbreviation} — ${c.name}` : c.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="text-xs px-2 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-              onClick={() => {
-                setSelectedCollegeId("");
-                setPick("");
-              }}
-              disabled={selectedCollegeId === ""}
-            >
-              Clear
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="collegeFilter" className="block text-gray-700 mb-1">
+              College filter
+            </label>
+            <div className="flex gap-x-2">
+              <select
+                id="collegeFilter"
+                className="border rounded px-2 py-1 text-sm min-w-[260px]"
+                value={selectedCollegeId as any}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSelectedCollegeId(v ? Number(v) : "");
+                  setPick("");
+                }}
+              >
+                {collegesLoading ? (
+                  <option value="" disabled>
+                    Loading colleges...
+                  </option>
+                ) : (
+                  <option value="">All colleges</option>
+                )}
+                {colleges.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.abbreviation ? `${c.abbreviation} — ${c.name}` : c.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="text-xs px-2 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                onClick={() => {
+                  setSelectedCollegeId("");
+                  setPick("");
+                }}
+                disabled={selectedCollegeId === ""}
+              >
+                Clear
+              </button>
+            </div>
           </div>
           <p className="text-gray-500 mt-1">
             Only departments from the selected college are available to link.
