@@ -1,8 +1,4 @@
-export type UserRole =
-  | "Faculty"
-  | "Evaluator"
-  | "UTLDO Admin"
-  | "Technical Admin";
+export type UserRole = "Faculty" | "PIMEC" | "UTLDO Admin" | "Technical Admin";
 
 export type User = {
   id?: number;

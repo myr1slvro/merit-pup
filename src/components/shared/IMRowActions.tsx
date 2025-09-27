@@ -36,7 +36,7 @@ export default function IMRowActions({
     !disabled && row.status === STATUS_FOR_RESUBMISSION && role === "Faculty";
   const canDownload = !!row.s3_link || !!row.id;
   const canEvaluate =
-    role === "Evaluator" && row.status === "For Evaluator Evaluation";
+    role === "pimec" && row.status === "For PIMEC Evaluation";
 
   async function handleUploadSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +52,7 @@ export default function IMRowActions({
         analysisNotes.startsWith("Missing sections");
       const nextStatus = analysisIndicatesMissing
         ? STATUS_FOR_RESUBMISSION
-        : "For Evaluator Evaluation";
+        : "For PIMEC Evaluation";
       const payload: any = {
         pdf_file: file,
         status: nextStatus,
@@ -149,7 +149,7 @@ export default function IMRowActions({
           type="button"
           className="text-xs px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
           onClick={() =>
-            navigate(`/evaluator/evaluate/${row.id}`, {
+            navigate(`/pimec/evaluate/${row.id}`, {
               state: { s3_link: row.s3_link },
             })
           }
@@ -232,7 +232,7 @@ export default function IMRowActions({
                   </span>
                 ) : (
                   <span className="text-green-700 font-semibold">
-                    For Evaluator Evaluation
+                    For PIMEC Evaluation
                   </span>
                 )}
               </div>

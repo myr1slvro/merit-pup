@@ -69,7 +69,7 @@ export default function EvaluatorDirectory() {
   return (
     <div className="mx-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaUniversity className="text-meritRed" /> Evaluator Colleges
+        <FaUniversity className="text-meritRed" />  Evaluator Colleges
       </h2>
       <CollegeButtonsRow
         colleges={colleges}
@@ -108,7 +108,7 @@ export default function EvaluatorDirectory() {
                   data={filteredUniversity as any}
                   loading={loading}
                   error={error}
-                  actionsRole="Evaluator"
+                  actionsRole="PIMEC"
                 />
               ) : activeIMType === "service" ? (
                 <IMTable
@@ -116,7 +116,7 @@ export default function EvaluatorDirectory() {
                   data={serviceRows as any}
                   loading={loading}
                   error={error}
-                  actionsRole="Evaluator"
+                  actionsRole="PIMEC"
                 />
               ) : (
                 <IMTable
@@ -124,7 +124,7 @@ export default function EvaluatorDirectory() {
                   data={allRows as any}
                   loading={loading}
                   error={error}
-                  actionsRole="Evaluator"
+                  actionsRole="PIMEC"
                 />
               )}
             </div>

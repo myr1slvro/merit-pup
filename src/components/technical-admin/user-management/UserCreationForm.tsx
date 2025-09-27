@@ -178,7 +178,7 @@ export default function UserCreationForm({
           >
             <option value="">Select Role</option>
             <option value="Faculty">Faculty</option>
-            <option value="Evaluator">Evaluator</option>
+            <option value="PIMEC">PIMEC</option>
             <option value="UTLDO Admin">UTLDO Admin</option>
             <option value="Technical Admin">Technical Admin</option>
           </select>

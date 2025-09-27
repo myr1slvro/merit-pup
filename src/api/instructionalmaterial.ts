@@ -163,8 +163,8 @@ export async function downloadInstructionalMaterial(
   return res.json();
 }
 
-export async function getForEvaluator(token: string, page: number = 1) {
-  const res = await fetch(`${API_URL}/get-for-evaluator?page=${page}`, {
+export async function getForPIMEC(token: string, page: number = 1) {
+  const res = await fetch(`${API_URL}/get-for-pimec?page=${page}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
