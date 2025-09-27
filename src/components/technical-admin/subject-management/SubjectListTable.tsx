@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getAllSubjects, getSubjectsByCollegeId } from "../../../api/subject";
+import {
+  getAllSubjects,
+  getSubjectsByCollegeId,
+  getAllSubjectsNoPagination,
+} from "../../../api/subject";
 import { Subject } from "../../../types/subject";
 import SubjectRow from "./SubjectRow";
 import { useAuth } from "../../auth/AuthProvider";
@@ -10,6 +14,7 @@ interface Props {
   setHasPrev: (v: boolean) => void;
   refreshKey?: number;
   collegeFilterId?: number;
+  search?: string;
 }
 
 export default function SubjectListTable({
@@ -18,6 +23,7 @@ export default function SubjectListTable({
   setHasPrev,
   refreshKey = 0,
   collegeFilterId,
+  search = "",
 }: Props) {
   const { authToken } = useAuth();
   const [list, setList] = useState<Subject[]>([]);
@@ -35,22 +41,51 @@ export default function SubjectListTable({
     try {
       let res: any;
       let items: Subject[] = [];
-      if (typeof collegeFilterId === "number") {
-        res = await getSubjectsByCollegeId(collegeFilterId, authToken);
-        items = res?.subjects ?? res?.data ?? res ?? [];
+
+      const activeSearch = search.trim().length > 0;
+
+      if (activeSearch) {
+        // For search we pull full dataset (respect college filter if provided)
+        if (typeof collegeFilterId === "number") {
+          res = await getSubjectsByCollegeId(collegeFilterId, authToken);
+          items = res?.subjects ?? res?.data ?? res ?? [];
+        } else {
+          res = await getAllSubjectsNoPagination(authToken);
+          items = res?.subjects ?? res?.data ?? res ?? [];
+        }
       } else {
-        res = await getAllSubjects(authToken, page);
-        items = res?.subjects ?? res?.data ?? res ?? [];
+        if (typeof collegeFilterId === "number") {
+          res = await getSubjectsByCollegeId(collegeFilterId, authToken);
+          items = res?.subjects ?? res?.data ?? res ?? [];
+        } else {
+          res = await getAllSubjects(authToken, page);
+          items = res?.subjects ?? res?.data ?? res ?? [];
+        }
       }
+
+      // Client-side search filtering
+      if (activeSearch) {
+        const q = search.toLowerCase();
+        items = items.filter(
+          (s) =>
+            s.code?.toLowerCase().includes(q) ||
+            s.name?.toLowerCase().includes(q)
+        );
+      }
+
       setList(items);
-      // When filtering by college, we treat it as a single page list
-      setHasNext(
-        typeof collegeFilterId === "number"
-          ? false
-          : !!res?.has_next ||
-              (Array.isArray(items) && items.length === (res?.per_page ?? 10))
-      );
-      setHasPrev(page > 1);
+
+      if (activeSearch || typeof collegeFilterId === "number") {
+        // treat as single page when searching or filtered
+        setHasNext(false);
+        setHasPrev(false);
+      } else {
+        setHasNext(
+          !!res?.has_next ||
+            (Array.isArray(items) && items.length === (res?.per_page ?? 10))
+        );
+        setHasPrev(page > 1);
+      }
     } catch {
       setList([]);
       setHasNext(false);
@@ -58,7 +93,7 @@ export default function SubjectListTable({
     } finally {
       setLoading(false);
     }
-  }, [authToken, page, setHasNext, setHasPrev, collegeFilterId]);
+  }, [authToken, page, collegeFilterId, search, setHasNext, setHasPrev]);
 
   useEffect(() => {
     fetchSubjects();

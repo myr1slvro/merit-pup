@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/AuthProvider";
 import { useEffect } from "react";
 import { getAllColleges } from "../../../api/college";
 import type { College } from "../../../types/college";
+import SubjectFilters from "./SubjectFilters";
 
 interface SubjectManagementProps {
   embedded?: boolean;
@@ -29,6 +30,7 @@ export default function SubjectManagement({
   );
   const [colleges, setColleges] = useState<College[]>([]);
   const [collegesLoading, setCollegesLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   // Keep internal selection in sync with prop from deep-link
   useEffect(() => {
@@ -63,10 +65,10 @@ export default function SubjectManagement({
     };
   }, [authToken]);
 
-  // Reset to first page when filter changes
+  // Reset pagination when search or college changes
   useEffect(() => {
     setPage(1);
-  }, [selectedCollegeId]);
+  }, [selectedCollegeId, search]);
 
   return (
     <div className="flex-1 flex w-full">
@@ -79,48 +81,21 @@ export default function SubjectManagement({
                   <h1 className="text-3xl font-bold">Subject Management</h1>
                 )}
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm">
-              <label
-                htmlFor="subjectCollegeFilter"
-                className="block text-gray-700 mb-1"
+          <div className="flex flex-col md:flex-row md:items-end gap-4">
+            <SubjectFilters
+              collegeId={selectedCollegeId}
+              onCollegeChange={setSelectedCollegeId}
+              search={search}
+              onSearchChange={setSearch}
+            />
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow h-fit"
+                onClick={() => setShowCreate(true)}
               >
-                College filter
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  id="subjectCollegeFilter"
-                  className="border rounded px-2 py-1 text-sm min-w-[260px]"
-                  value={selectedCollegeId as any}
-                  onChange={(e) =>
-                    setSelectedCollegeId(
-                      e.target.value ? Number(e.target.value) : ""
-                    )
-                  }
-                >
-                  {collegesLoading ? (
-                    <option value="" disabled>
-                      Loading colleges...
-                    </option>
-                  ) : (
-                    <option value="">All colleges</option>
-                  )}
-                  {colleges.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.abbreviation
-                        ? `${c.abbreviation} — ${c.name}`
-                        : c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                + Create Subject
+              </button>
             </div>
-            <button
-              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
-              onClick={() => setShowCreate(true)}
-            >
-              + Create Subject
-            </button>
           </div>
         </div>
         <hr className="h-1 rounded-full border-meritGray/50" />
@@ -135,6 +110,7 @@ export default function SubjectManagement({
                 ? selectedCollegeId
                 : undefined
             }
+            search={search}
           />
         </div>
         <div className="pb-8 px-8">
@@ -161,6 +137,11 @@ export default function SubjectManagement({
               </button>
               <h2 className="text-xl font-bold mb-4">Create Subject</h2>
               <SubjectCreationForm
+                initialCollegeFilterId={
+                  typeof selectedCollegeId === "number"
+                    ? selectedCollegeId
+                    : undefined
+                }
                 onCreated={() => {
                   setShowCreate(false);
                   setRefreshKey((k) => k + 1);
