@@ -9,10 +9,14 @@ import {
 import PdfPreview from "../shared/evaluation/PdfPreview";
 import ImerRubricForm from "./ImerRubricForm";
 import { updateInstructionalMaterial } from "../../api/instructionalmaterial";
+import {
+  createIMERPIMEC,
+  buildIMERPIMECPayloadFromScores,
+} from "../../api/imerpimec";
 import ToastContainer, { ToastMessage } from "../shared/Toast";
 import { getSubjectByImID } from "../../api/subject";
 
-export default function EvaluatorEvaluatePage() {
+export default function PimecEvalPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,6 +125,21 @@ export default function EvaluatorEvaluatePage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      // Persist raw section subtotals into IMERPIMEC aggregate object (a-e) if at least 5 sections present.
+      // This is optional and won't block evaluation if it fails.
+      if (result.breakdown?.length) {
+        const orderedScores = result.breakdown.map((b) => b.subtotal);
+        try {
+          const actor = (user?.email ||
+            String(user?.id) ||
+            "pimec") as string;
+          const payload = buildIMERPIMECPayloadFromScores(orderedScores, actor);
+          await createIMERPIMEC(payload, authToken);
+        } catch (e) {
+          // Non-fatal: silently ignore or log to console for now.
+          console.warn("IMERPIMEC creation failed", e);
+        }
+      }
       const status = result.passed
         ? "For UTLDO Evaluation"
         : "For Resubmission";
@@ -145,7 +164,7 @@ export default function EvaluatorEvaluatePage() {
         status,
         notes,
         email: user?.email,
-        updated_by: user?.email || user?.id || "evaluator",
+        updated_by: user?.email || user?.id || "pimec",
       };
       const res = await updateInstructionalMaterial(
         Number(id),
@@ -154,7 +173,7 @@ export default function EvaluatorEvaluatePage() {
       );
       if (res?.error) throw new Error(res.error);
       pushToast("success", `Evaluation submitted. Status: ${status}`);
-      navigate("/evaluator");
+      navigate("/pimec");
     } catch (e: any) {
       setSubmitError(e.message || "Submission failed");
       pushToast("error", e.message || "Submission failed");

@@ -107,7 +107,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           const roleToRoute: Record<string, string> = {
             "Technical Admin": "/technical-admin",
             "UTLDO Admin": "/utldo-admin",
-            Evaluator: "/evaluator",
+            PIMEC: "/pimec",
             Faculty: "/faculty",
           };
           if (userProfile?.role && roleToRoute[userProfile.role]) {

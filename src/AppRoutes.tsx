@@ -5,8 +5,8 @@ import FacultyRoleContent from "./components/faculty/facultyRoleContent";
 import UserManagement from "./components/technical-admin/user-management/UserManagement";
 import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
-import EvaluatorRoleContent from "./components/evaluator/evaluatorRoleContent";
-import EvaluatorEvaluatePage from "./components/evaluator/EvaluatorEvaluatePage";
+import EvaluatorRoleContent from "./components/pimec/evaluatorRoleContent";
+import PimecEvalPage from "./components/pimec/PimecEvalPage";
 import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-evaluation/UtldoEvaluationDirectory";
 import UECEvaluatePage from "./components/utldo-admin/utldo-evaluation/UECEvaluatePage";
 import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
@@ -28,7 +28,7 @@ export default function AppRoutes() {
   const roleToRoute: Record<UserRole, string> = {
     "Technical Admin": "/technical-admin",
     "UTLDO Admin": "/utldo-admin",
-    Evaluator: "/evaluator",
+    PIMEC: "/pimec",
     Faculty: "/faculty",
   };
   return (
@@ -55,7 +55,7 @@ export default function AppRoutes() {
           <ProtectedRoute
             allowedRoles={[
               "Faculty",
-              "Evaluator",
+              "PIMEC",
               "UTLDO Admin",
               "Technical Admin",
             ]}
@@ -65,22 +65,22 @@ export default function AppRoutes() {
         }
       />
       <Route
-        path="/evaluator"
+        path="/pimec"
         element={
           <ProtectedRoute
-            allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}
+            allowedRoles={["PIMEC", "UTLDO Admin", "Technical Admin"]}
           >
             <EvaluatorRoleContent />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/evaluator/evaluate/:id"
+        path="/pimec/evaluate/:id"
         element={
           <ProtectedRoute
-            allowedRoles={["Evaluator", "UTLDO Admin", "Technical Admin"]}
+            allowedRoles={["PIMEC", "UTLDO Admin", "Technical Admin"]}
           >
-            <EvaluatorEvaluatePage />
+            <PimecEvalPage />
           </ProtectedRoute>
         }
       />

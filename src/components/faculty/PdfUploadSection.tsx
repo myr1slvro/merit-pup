@@ -99,7 +99,7 @@ export default function PdfUploadSection({
             <span className="text-red-700 font-semibold">For Resubmission</span>
           ) : (
             <span className="text-green-700 font-semibold">
-              For Evaluator Evaluation
+              For PIMEC Evaluation
             </span>
           )}
         </div>

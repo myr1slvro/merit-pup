@@ -32,7 +32,7 @@ export default function AuthorsSelector({
   const [options, setOptions] = useState<AuthorUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<
-    "All" | "Faculty" | "Evaluator" | "UTLDO Admin" | "Technical Admin"
+    "All" | "Faculty" | "PIMEC" | "UTLDO Admin" | "Technical Admin"
   >("All");
   const [query, setQuery] = useState("");
   const reqSeq = useRef(0);
@@ -220,7 +220,7 @@ export default function AuthorsSelector({
         >
           <option value="All">All Roles</option>
           <option value="Faculty">Faculty</option>
-          <option value="Evaluator">Evaluator</option>
+          <option value="PIMEC">PIMEC</option>
           <option value="UTLDO Admin">UTLDO Admin</option>
           <option value="Technical Admin">Technical Admin</option>
         </select>

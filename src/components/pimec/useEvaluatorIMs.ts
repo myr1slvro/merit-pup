@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { getForEvaluator } from "../../api/instructionalmaterial";
+import { getForPIMEC } from "../../api/instructionalmaterial";
 import { getDepartmentsByCollegeId } from "../../api/department";
 import { getSubjectById } from "../../api/subject";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 
-// Hook to fetch instructional materials available to the evaluator using getForEvaluator endpoint
-// Then provides helpers to filter by college & department similar to facultyDirectory patterns.
 export default function useEvaluatorIMs(
   selectedCollege: any,
   reloadTick: number
@@ -26,7 +24,7 @@ export default function useEvaluatorIMs(
     if (!authToken) return;
     setLoading(true);
     setError(null);
-    getForEvaluator(authToken, 1)
+    getForPIMEC(authToken, 1)
       .then((res) => {
         const list = Array.isArray(res)
           ? res

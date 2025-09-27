@@ -6,7 +6,7 @@ interface IMTableHeaderProps {
   setActiveIMType: (type: "university" | "service" | "all") => void;
   onCreate?: () => void;
   onRefresh: () => void;
-  hideCreate?: boolean; // when true, hide the create button (evaluator view)
+  hideCreate?: boolean; 
 }
 
 export default function IMTableHeader({

@@ -166,7 +166,7 @@ export default function CreateIMForm({
       const derivedStatus =
         analysisNotes && analysisNotes.startsWith("Missing sections")
           ? "For Resubmission"
-          : "For Evaluator Evaluation";
+          : "For PIMEC Evaluation";
       if (!selectedSubjectId) {
         throw new Error("Please select a subject.");
       }

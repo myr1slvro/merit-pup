@@ -10,14 +10,14 @@ interface NavItem {
 }
 
 const ROLE_TABS: Record<UserRole, NavItem[]> = {
-  Faculty: [{ label: "Faculty", to: "/faculty" }],
-  Evaluator: [
+  "Faculty": [{ label: "Faculty", to: "/faculty" }],
+  "PIMEC": [
     { label: "Faculty", to: "/faculty" },
-    { label: "Evaluation", to: "/evaluator" },
+    { label: "PIMEC", to: "/pimec" },
   ],
   "UTLDO Admin": [
     { label: "Faculty", to: "/faculty" },
-    { label: "Evaluation", to: "/evaluator" },
+    { label: "PIMEC", to: "/pimec" },
     {
       label: "UTLDO Office",
       children: [
@@ -29,7 +29,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
   ],
   "Technical Admin": [
     { label: "Faculty", to: "/faculty" },
-    { label: "Evaluation", to: "/evaluator" },
+    { label: "PIMEC", to: "/pimec" },
     {
       label: "UTLDO Office",
       children: [

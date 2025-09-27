@@ -21,7 +21,7 @@ interface UserManagementTableProps {
 type CollegeMap = Record<number, string[]>;
 
 // Role ordering used for sorting
-const roleOrder = ["Technical Admin", "UTLDO Admin", "Evaluator", "Faculty"];
+const roleOrder = ["Technical Admin", "UTLDO Admin", "PIMEC", "Faculty"];
 
 const sortableColumns = [
   "last_name",
