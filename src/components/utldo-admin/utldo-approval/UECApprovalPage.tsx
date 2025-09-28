@@ -8,31 +8,31 @@ import {
 } from "../../../api/instructionalmaterial";
 import { getSubjectByImID } from "../../../api/subject";
 import PdfPreview from "../../shared/evaluation/PdfPreview";
-import UecRubricForm from "./UecRubricForm";
 import ToastContainer, { ToastMessage } from "../../shared/Toast";
-import PriorPhaseSummary from "./PriorPhaseSummary";
+import UECApprovalActions from "./UECApprovalActions";
 
-export default function UECEvaluatePage() {
+export default function UECApprovalPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { authToken, user } = useAuth();
 
-  const [scores, setScores] = useState<Record<string, number>>({});
+  // (Scores removed for UTLDO phase - placeholder left if needed for future rubric)
+  // const [scores, setScores] = useState<Record<string, number>>({});
   const [s3Link, setS3Link] = useState<string | null>(
     () => (location.state as any)?.s3_link || null
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  // Removed local submit states; handled in child actions component
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [subjectName, setSubjectName] = useState<string>("");
   const [version, setVersion] = useState<string | number | null>(null);
   const [subjectLoading, setSubjectLoading] = useState(false);
   const [im, setIm] = useState<any>(null);
+  // Action state moved to child component
 
   function pushToast(
     type: ToastMessage["type"],
@@ -90,58 +90,7 @@ export default function UECEvaluatePage() {
 
   // Prior phase parsing moved into PriorPhaseSummary component
 
-  async function handleSubmit(result: {
-    totalScore: number;
-    totalMax: number;
-    passed: boolean;
-    breakdown: { section: string; subtotal: number; max: number }[];
-  }) {
-    if (!authToken || !id) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      // UEC threshold; if passed -> For Certification else For Resubmission
-      const status = result.passed ? "For Certification" : "For Resubmission";
-      const lines: string[] = [];
-      lines.push(`UEC Score: ${result.totalScore}/${result.totalMax}`);
-      lines.push(
-        result.passed
-          ? "Passed UEC quality review."
-          : "Below UEC threshold; requires revision."
-      );
-      lines.push("UEC Section Breakdown:");
-      result.breakdown.forEach((b) =>
-        lines.push(` - ${b.section}: ${b.subtotal}/${b.max}`)
-      );
-      if (!result.passed)
-        lines.push("Action: Address deficiencies before certification.");
-      if (priorNotes) {
-        lines.push("--- Prior Phase Notes ---");
-        lines.push(priorNotes);
-      }
-      const notes = lines.join("\n");
-
-      const payload: any = {
-        status,
-        notes,
-        email: user?.email,
-        updated_by: user?.email || user?.id || "utldo-admin",
-      };
-      const res = await updateInstructionalMaterial(
-        Number(id),
-        payload,
-        authToken
-      );
-      if (res?.error) throw new Error(res.error);
-      pushToast("success", `UEC evaluation submitted. Status: ${status}`);
-      navigate("/utldo/evaluation");
-    } catch (e: any) {
-      setSubmitError(e.message || "Submission failed");
-      pushToast("error", e.message || "Submission failed");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  // Status change logic moved to UECApprovalActions
 
   return (
     <div className="flex flex-col w-full h-full p-4 gap-4">
@@ -172,19 +121,18 @@ export default function UECEvaluatePage() {
           error={pdfError}
           title={subjectName}
         />
-        <div className="flex flex-col gap-3">
-          <PriorPhaseSummary notes={priorNotes} />
-          <UecRubricForm
-            scores={scores}
-            setScores={setScores}
-            onSubmit={handleSubmit}
-            disabled={submitting}
-          />
-        </div>
+        <UECApprovalActions
+          imId={Number(id)}
+          imStatus={im?.status}
+          priorNotes={priorNotes}
+          authToken={authToken as string}
+          userEmail={user?.email}
+          userId={user?.id}
+          pushToast={pushToast}
+          onDone={() => navigate("/utldo/evaluation")}
+        />
       </div>
-      {submitError && (
-        <div className="text-xs text-meritRed">{submitError}</div>
-      )}
+      {/* Error display removed; child handles inline errors */}
       <ToastContainer messages={toasts} remove={removeToast} />
     </div>
   );
