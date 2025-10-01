@@ -62,12 +62,19 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
   }, [selectedCollege?.id, authToken, reloadTick]);
 
   useEffect(() => {
-    if (!authToken || !rawIMs.length) return;
-    const ids = Array.from(
-      new Set(
-        rawIMs.map((im) => im.subject_id).filter((id) => typeof id === "number")
-      )
-    );
+    if (!authToken) return;
+    // Aggregate subject IDs from raw IMs plus base university & service IMs
+    const idSet = new Set<number>();
+    rawIMs.forEach((im) => {
+      if (typeof im.subject_id === "number") idSet.add(im.subject_id);
+    });
+    baseUniversityIMs.forEach((u: any) => {
+      if (typeof u?.subject_id === "number") idSet.add(u.subject_id);
+    });
+    baseServiceIMs.forEach((s: any) => {
+      if (typeof s?.subject_id === "number") idSet.add(s.subject_id);
+    });
+    const ids = Array.from(idSet.values());
     if (!ids.length) return;
     Promise.all(
       ids.map(async (id) => {
@@ -82,7 +89,7 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
       pairs.forEach(([id, name]) => (map[id] = name));
       setSubjectsMap(map);
     });
-  }, [authToken, rawIMs]);
+  }, [authToken, rawIMs, baseUniversityIMs, baseServiceIMs]);
 
   useEffect(() => {
     if (!selectedCollege?.id || !authToken) {

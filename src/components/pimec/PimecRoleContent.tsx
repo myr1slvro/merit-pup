@@ -1,4 +1,4 @@
-import EvaluatorDirectory from "./evaluatorDirectory";
+import PimecDirectory from "./PimecDirectory";
 import EvaluatorRecent from "./evaluatorRecent";
 import EvaluatorRecBin from "./evaluatorRecBin";
 import Sidebar from "../navigation/Sidebar";
@@ -30,13 +30,13 @@ export default function evaluatorRoleContent() {
   function renderContent() {
     switch (activeTab) {
       case "Directory":
-        return <EvaluatorDirectory />;
+        return <PimecDirectory />;
       case "Recent":
         return <EvaluatorRecent />;
       case "Recycle Bin":
         return <EvaluatorRecBin />;
       default:
-        return <EvaluatorDirectory />;
+        return <PimecDirectory />;
     }
   }
 

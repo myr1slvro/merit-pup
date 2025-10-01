@@ -7,7 +7,6 @@ import { useAuth } from "../auth/AuthProvider";
 import CollegeButtonsRow from "../shared/CollegeButtonsRow";
 import DepartmentFilter from "../shared/DepartmentFilter";
 import IMTable from "../shared/IMTable";
-import CreateIMForm from "./CreateIMForm";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 import { getSubjectById } from "../../api/subject";
@@ -33,7 +32,8 @@ export default function FacultyDirectory() {
   const [serviceIMs, setServiceIMs] = useState<ServiceIM[]>([]); // base service IM entities
   const [imsLoading, setIMsLoading] = useState(false);
   const [imsError, setIMsError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  // Faculty can no longer create IMs; creation modal removed
+  const [showCreateModal, setShowCreateModal] = useState(false); // retained (unused) to minimize cascading changes
   const [reloadTick, setReloadTick] = useState(0);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<
     number | null
@@ -345,8 +345,8 @@ export default function FacultyDirectory() {
             <IMTableHeader
               activeIMType={activeIMType}
               setActiveIMType={setActiveIMType}
-              onCreate={() => setShowCreateModal(true)}
               onRefresh={() => setReloadTick((n) => n + 1)}
+              hideCreate
             />
             <div>
               {imsLoading ? (
@@ -380,29 +380,7 @@ export default function FacultyDirectory() {
               )}
             </div>
           </div>
-          {showCreateModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <div className="relative bg-white rounded-lg shadow-lg p-6 min-w-1/2 max-w-9/10 z-10">
-                <button
-                  className="absolute top-0 right-0 p-4 text-gray-500 hover:text-gray-800 text-2xl font-bold focus:outline-none"
-                  onClick={() => setShowCreateModal(false)}
-                  aria-label="Close"
-                  type="button"
-                >
-                  &times;
-                </button>
-                <h2 className="text-xl font-bold mb-4">
-                  Create Instructional Material
-                </h2>
-                <CreateIMForm
-                  selectedCollege={selectedCollege}
-                  onCancel={() => setShowCreateModal(false)}
-                  onCreated={() => setReloadTick((n) => n + 1)}
-                />
-              </div>
-            </div>
-          )}
+          {/* Creation modal removed for Faculty workflow */}
         </div>
       )}
     </div>

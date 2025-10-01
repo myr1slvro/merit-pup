@@ -93,19 +93,21 @@ import type { Department } from "../types/department";
 
 const __departmentCache: Record<
   number,
-  { name: string; abbreviation?: string }
+  { name: string; abbreviation?: string; college_id?: number }
 > = {};
 
 export function getDepartmentCacheEntry(
   id: number
-): { name: string; abbreviation?: string } | undefined {
+): { name: string; abbreviation?: string; college_id?: number } | undefined {
   return __departmentCache[id];
 }
 
 export async function getDepartmentsByIdsCached(
   ids: number[],
   authToken: string
-): Promise<Record<number, { name: string; abbreviation?: string }>> {
+): Promise<
+  Record<number, { name: string; abbreviation?: string; college_id?: number }>
+> {
   const unique = Array.from(new Set(ids.filter((x) => Number.isFinite(x))));
   const missing = unique.filter((id) => __departmentCache[id] === undefined);
   if (missing.length) {
@@ -118,18 +120,21 @@ export async function getDepartmentsByIdsCached(
     );
     results.forEach((r) => {
       if (r && r.dep) {
-        const d: Department =
-          (r.dep as any).department || (r.dep as Department);
+        const d: any = (r.dep as any).department || r.dep; // backend may wrap in {department: {...}}
         if (d && d.id != null) {
           __departmentCache[d.id] = {
             name: d.name,
-            abbreviation: (d as any).abbreviation,
+            abbreviation: d.abbreviation,
+            college_id: d.college_id || d.college?.id,
           };
         }
       }
     });
   }
-  const out: Record<number, { name: string; abbreviation?: string }> = {};
+  const out: Record<
+    number,
+    { name: string; abbreviation?: string; college_id?: number }
+  > = {};
   unique.forEach((id) => {
     const c = __departmentCache[id];
     if (c) out[id] = { ...c };
