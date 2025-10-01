@@ -7,8 +7,8 @@ import SubjectManagement from "./components/technical-admin/subject-management/S
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
 import EvaluatorRoleContent from "./components/pimec/evaluatorRoleContent";
 import PimecEvalPage from "./components/pimec/PimecEvalPage";
-import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-evaluation/UtldoEvaluationDirectory";
-import UECEvaluatePage from "./components/utldo-admin/utldo-evaluation/UECEvaluatePage";
+import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-approval/UtldoEvaluationDirectory";
+import UECApprovalPage from "./components/utldo-admin/utldo-approval/UECApprovalPage";
 import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
 import CertificationPage from "./components/utldo-admin/certification/CertificationPage";
 
@@ -125,7 +125,7 @@ export default function AppRoutes() {
         }
       />
       <Route
-        path="/utldo/evaluation"
+        path="/utldo/approval"
         element={
           <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
             <UtldoEvaluationDirectory />
@@ -133,10 +133,10 @@ export default function AppRoutes() {
         }
       />
       <Route
-        path="/utldo/evaluate/:id"
+        path="/utldo/approval/:id"
         element={
           <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <UECEvaluatePage />
+            <UECApprovalPage />
           </ProtectedRoute>
         }
       />

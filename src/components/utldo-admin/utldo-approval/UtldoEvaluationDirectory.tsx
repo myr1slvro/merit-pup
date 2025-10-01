@@ -78,7 +78,7 @@ export default function UtldoEvaluationDirectory() {
           return (
             <button
               onClick={() =>
-                navigate(`/utldo/evaluate/${row.id}`, {
+                navigate(`/utldo/approval/${row.id}`, {
                   state: { s3_link: row.s3_link },
                 })
               }
