@@ -84,7 +84,7 @@ export default function UtldoEvaluationDirectory() {
               }
               className="px-2 py-1 rounded text-xs bg-meritRed text-white hover:bg-meritDarkRed"
             >
-              Evaluate
+              Approval
             </button>
           );
         }}

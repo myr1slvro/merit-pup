@@ -137,25 +137,43 @@ export default function IMTable(
           });
           const joined = Array.from(new Set(labels.filter(Boolean))).join(", ");
           entries[imId] = joined || "-";
+
           // Permission logic:
-          // 1. If user is an author -> can act.
-          // 2. If role is PIMEC (case-insensitive) and IM status is For PIMEC Evaluation -> can act.
-          // 3. (Future) Could add department-level check if needed.
+          // 1. Author always can act.
+          // 2. PIMEC can act when status is For PIMEC Evaluation.
+          // 3. UTLDO Admin can act when status is For UTLDO Evaluation.
+          // 4. Technical Admin can always act.
+          // 5. Support comma or slash separated roles passed via actionsRole prop.
           let has = me ? uids.includes(me) : false;
           if (!has) {
-            const role = (
+            const rawRoles = (
               actionsRole ||
+              currentUser?.role ||
               (window as any)?.currentUserRole ||
               ""
-            ).toLowerCase();
-            if (role === "pimec") {
-              const row = data.find((d) => Number(d.id) === imId);
-              if (
-                row &&
-                String(row.status).toLowerCase() === "for pimec evaluation"
-              ) {
-                has = true;
-              }
+            )
+              .toString()
+              .toLowerCase();
+            const rolesSet = new Set(
+              rawRoles
+                .split(/[,/]/)
+                .map((r: string) => r.trim())
+                .filter(Boolean)
+            );
+            const row = data.find((d) => Number(d.id) === imId);
+            const statusNorm = String(row?.status || "").toLowerCase();
+            if (rolesSet.has("technical admin")) {
+              has = true; // global power
+            } else if (
+              rolesSet.has("pimec") &&
+              statusNorm === "for pimec evaluation"
+            ) {
+              has = true;
+            } else if (
+              (rolesSet.has("utldo admin") || rolesSet.has("utldo")) &&
+              statusNorm === "for utldo evaluation"
+            ) {
+              has = true;
             }
           }
           canAct[imId] = has;

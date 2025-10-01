@@ -17,6 +17,7 @@ interface Props {
   onChanged: () => void;
   role?: string;
   disabled?: boolean;
+  evaluateLabel?: string; // override label (e.g., Approval)
 }
 
 const STATUS_FOR_RESUBMISSION = "For Resubmission";
@@ -26,6 +27,7 @@ export default function IMRowActions({
   onChanged,
   role,
   disabled,
+  evaluateLabel = "Evaluate",
 }: Props) {
   const { authToken } = useAuth();
   const navigate = useNavigate();
@@ -211,7 +213,7 @@ export default function IMRowActions({
             })
           }
         >
-          Evaluate
+          {evaluateLabel}
         </button>
       )}
       {canEditAuthors && (
