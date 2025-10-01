@@ -163,8 +163,14 @@ export async function downloadInstructionalMaterial(
   return res.json();
 }
 
-export async function getForPIMEC(token: string, page: number = 1) {
-  const res = await fetch(`${API_URL}/get-for-pimec?page=${page}`, {
+export async function getForPIMEC(
+  token: string,
+  page: number = 1,
+  departmentId?: number
+) {
+  const params = new URLSearchParams({ page: String(page) });
+  if (departmentId) params.append("department_id", String(departmentId));
+  const res = await fetch(`${API_URL}/get-for-pimec?${params.toString()}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

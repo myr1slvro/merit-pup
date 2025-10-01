@@ -137,7 +137,28 @@ export default function IMTable(
           });
           const joined = Array.from(new Set(labels.filter(Boolean))).join(", ");
           entries[imId] = joined || "-";
-          canAct[imId] = me ? uids.includes(me) : false;
+          // Permission logic:
+          // 1. If user is an author -> can act.
+          // 2. If role is PIMEC (case-insensitive) and IM status is For PIMEC Evaluation -> can act.
+          // 3. (Future) Could add department-level check if needed.
+          let has = me ? uids.includes(me) : false;
+          if (!has) {
+            const role = (
+              actionsRole ||
+              (window as any)?.currentUserRole ||
+              ""
+            ).toLowerCase();
+            if (role === "pimec") {
+              const row = data.find((d) => Number(d.id) === imId);
+              if (
+                row &&
+                String(row.status).toLowerCase() === "for pimec evaluation"
+              ) {
+                has = true;
+              }
+            }
+          }
+          canAct[imId] = has;
         }
 
         if (!cancelled && seq === seqRef.current) {

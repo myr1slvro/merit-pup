@@ -5,7 +5,7 @@ import FacultyRoleContent from "./components/faculty/facultyRoleContent";
 import UserManagement from "./components/technical-admin/user-management/UserManagement";
 import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
-import EvaluatorRoleContent from "./components/pimec/evaluatorRoleContent";
+import PimecRoleContent from "./components/pimec/PimecRoleContent";
 import PimecEvalPage from "./components/pimec/PimecEvalPage";
 import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-approval/UtldoEvaluationDirectory";
 import UECApprovalPage from "./components/utldo-admin/utldo-approval/UECApprovalPage";
@@ -70,7 +70,7 @@ export default function AppRoutes() {
           <ProtectedRoute
             allowedRoles={["PIMEC", "UTLDO Admin", "Technical Admin"]}
           >
-            <EvaluatorRoleContent />
+            <PimecRoleContent />
           </ProtectedRoute>
         }
       />

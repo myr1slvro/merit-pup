@@ -8,7 +8,9 @@ import { getServiceIMsByCollege } from "../../api/serviceim";
 
 export default function useEvaluatorIMs(
   selectedCollege: any,
-  reloadTick: number
+  reloadTick: number,
+  departmentId?: number | null,
+  needsOnly?: boolean
 ) {
   const { authToken } = useAuth();
   const [rawIMs, setRawIMs] = useState<any[]>([]); // raw instructional_material entries
@@ -24,16 +26,19 @@ export default function useEvaluatorIMs(
     if (!authToken) return;
     setLoading(true);
     setError(null);
-    getForPIMEC(authToken, 1)
+    getForPIMEC(authToken, 1, departmentId || undefined)
       .then((res) => {
         const list = Array.isArray(res)
           ? res
           : res?.instructional_materials || [];
-        setRawIMs(list);
+        const filtered = needsOnly
+          ? list.filter((im: any) => im.status === "For PIMEC Evaluation")
+          : list;
+        setRawIMs(filtered);
       })
       .catch(() => setError("Failed to load evaluator IMs."))
       .finally(() => setLoading(false));
-  }, [authToken, reloadTick]);
+  }, [authToken, reloadTick, departmentId, needsOnly]);
 
   // Fetch base University & Service IMs for selected college (needed to derive college + dept + subject info)
   useEffect(() => {
@@ -58,15 +63,22 @@ export default function useEvaluatorIMs(
       });
   }, [selectedCollege?.id, authToken, reloadTick]);
 
-  // Collect subject ids and fetch names
+  // Collect subject ids and fetch names (merge raw IM subject_ids + base University/Service IMs)
   useEffect(() => {
-    if (!authToken || !rawIMs.length) return;
-    const ids = Array.from(
-      new Set(
-        rawIMs.map((im) => im.subject_id).filter((id) => typeof id === "number")
-      )
-    );
+    if (!authToken) return;
+    const candidateIds = new Set<number>();
+    rawIMs.forEach((im) => {
+      if (typeof im.subject_id === "number") candidateIds.add(im.subject_id);
+    });
+    baseUniversityIMs.forEach((u: any) => {
+      if (typeof u.subject_id === "number") candidateIds.add(u.subject_id);
+    });
+    baseServiceIMs.forEach((s: any) => {
+      if (typeof s.subject_id === "number") candidateIds.add(s.subject_id);
+    });
+    const ids = Array.from(candidateIds).filter((id) => Number.isFinite(id));
     if (!ids.length) return;
+    let cancelled = false;
     Promise.all(
       ids.map(async (id) => {
         try {
@@ -76,11 +88,15 @@ export default function useEvaluatorIMs(
         return [id, `Subject #${id}`] as const;
       })
     ).then((pairs) => {
+      if (cancelled) return;
       const map: Record<number, string> = {};
       pairs.forEach(([id, name]) => (map[id] = name));
       setSubjectsMap(map);
     });
-  }, [authToken, rawIMs]);
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, rawIMs, baseUniversityIMs, baseServiceIMs]);
   // (fields above were accidentally inserted here during patch; corrected below)
 
   // Department ids for selected college (used for filter pills)
@@ -150,6 +166,19 @@ export default function useEvaluatorIMs(
       };
     });
 
+  // Department counts from currently loaded rawIMs (university only with department_id after enrichment below)
+  const deptCounts: Record<number, number> = {};
+  baseUniversityIMs.forEach((u: any) => {
+    const deptId = u.department_id;
+    if (!Number.isFinite(deptId)) return;
+    // count how many rawIMs reference this base university IM and have evaluation status
+    const count = rawIMs.filter(
+      (im) =>
+        im.university_im_id === u.id && im.status === "For PIMEC Evaluation"
+    ).length;
+    if (count) deptCounts[deptId] = (deptCounts[deptId] || 0) + count;
+  });
+
   return {
     loading,
     error,
@@ -159,5 +188,6 @@ export default function useEvaluatorIMs(
     collegeFiltered: enrichRows(collegeFiltered),
     baseUniversityIMs,
     baseServiceIMs,
+    deptCounts,
   } as const;
 }

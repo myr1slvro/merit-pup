@@ -1,10 +1,15 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   updateInstructionalMaterial,
   downloadInstructionalMaterial,
   checkMissingSections,
+  deleteInstructionalMaterial,
 } from "../../api/instructionalmaterial";
+import { getAllUsersForIM } from "../../api/author";
+// Removed broad getAllUsers usage in favor of department-based filtering
+import EditAuthorsModal from "./EditAuthorsModal";
+import DeleteIMModal from "./DeleteIMModal";
 import { useAuth } from "../auth/AuthProvider";
 
 interface Props {
@@ -31,12 +36,64 @@ export default function IMRowActions({
   const [file, setFile] = useState<File | null>(null);
   const [analysisNotes, setAnalysisNotes] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [showAuthorsModal, setShowAuthorsModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [authorIds, setAuthorIds] = useState<number[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
+  const roleNorm = (role || "").toLowerCase();
+
+  const statusNorm = String(row.status || "").toLowerCase();
   const canUploadRevision =
-    !disabled && row.status === STATUS_FOR_RESUBMISSION && role === "Faculty";
+    !disabled &&
+    statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
+    role === "Faculty";
+  const canInitialUpload =
+    !disabled &&
+    !row.s3_link &&
+    (roleNorm === "pimec" || roleNorm === "technical admin");
   const canDownload = !!row.s3_link || !!row.id;
   const canEvaluate =
-    role === "pimec" && row.status === "For PIMEC Evaluation";
+    roleNorm === "pimec" &&
+    String(row.status).toLowerCase() === "for pimec evaluation";
+  const canEditAuthors =
+    roleNorm === "pimec" ||
+    roleNorm === "technical admin" ||
+    roleNorm === "utldo admin";
+  const canDelete = roleNorm === "technical admin"; // tighten if needed
+
+  useEffect(() => {
+    if (!showAuthorsModal || !authToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const ids = await getAllUsersForIM(row.id, authToken);
+        if (!cancelled) setAuthorIds(ids);
+      } catch {
+        if (!cancelled) setAuthorIds([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showAuthorsModal, authToken, row.id]);
+
+  // Author save logic moved into EditAuthorsModal component
+
+  async function confirmDelete() {
+    if (!authToken) return;
+    setDeleting(true);
+    try {
+      const res = await deleteInstructionalMaterial(row.id, authToken);
+      if (res?.error) throw new Error(res.error);
+      setShowDeleteConfirm(false);
+      onChanged();
+    } catch (e: any) {
+      alert(e.message || "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleUploadSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -126,13 +183,13 @@ export default function IMRowActions({
 
   return (
     <div className="flex items-center gap-2">
-      {canUploadRevision && (
+      {(canUploadRevision || canInitialUpload) && (
         <button
           type="button"
           onClick={() => setOpenUpload(true)}
           className="text-xs px-2 py-1 rounded bg-meritRed text-white hover:bg-meritDarkRed"
         >
-          Upload Revision
+          {canInitialUpload ? "Upload PDF" : "Upload Revision"}
         </button>
       )}
       {canDownload && (
@@ -155,6 +212,24 @@ export default function IMRowActions({
           }
         >
           Evaluate
+        </button>
+      )}
+      {canEditAuthors && (
+        <button
+          type="button"
+          className="text-xs px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+          onClick={() => setShowAuthorsModal(true)}
+        >
+          Edit Authors
+        </button>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          Delete
         </button>
       )}
 
@@ -265,6 +340,21 @@ export default function IMRowActions({
           </form>
         </div>
       )}
+      <EditAuthorsModal
+        imId={row.id}
+        departmentId={row.department_id || row.department?.id}
+        isOpen={showAuthorsModal}
+        onClose={() => setShowAuthorsModal(false)}
+        onSaved={() => {
+          onChanged();
+        }}
+      />
+      <DeleteIMModal
+        isOpen={showDeleteConfirm}
+        deleting={deleting}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
