@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ConfirmationModal from "../../shared/ConfirmationModal";
+import UECApprovalModal from "./UECApprovalModal";
 import UECRejectionModal from "./UECRejectionModal";
 import { updateInstructionalMaterial } from "../../../api/instructionalmaterial";
 import PriorPhaseSummary from "./PriorPhaseSummary";
@@ -100,19 +100,11 @@ export default function UECApprovalActions({
         </button>
       </div>
       {error && <div className="text-xs text-meritRed">{error}</div>}
-      <ConfirmationModal
+      <UECApprovalModal
         open={showApproveModal}
-        title="Confirm Approval"
-        message={
-          imStatus === "For UTLDO Evaluation"
-            ? "Approve this instructional material and advance it to 'For Certification'?"
-            : "Approve this instructional material?"
-        }
-        confirmText={
-          actionLoading === "approve" ? "Working..." : "Yes, Approve"
-        }
-        cancelText="Cancel"
         loading={actionLoading === "approve"}
+        imStatus={imStatus}
+        authToken={authToken}
         onCancel={() => !actionLoading && setShowApproveModal(false)}
         onConfirm={() =>
           performStatusChange(
