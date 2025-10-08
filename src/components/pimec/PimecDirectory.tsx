@@ -51,11 +51,17 @@ export default function PimecDirectory() {
     );
 
   const universityRows = useMemo(
-    () => collegeFiltered.filter((im) => im.im_type === "University"),
+    () =>
+      collegeFiltered.filter(
+        (im) => (im.im_type || "").toLowerCase() === "university"
+      ),
     [collegeFiltered]
   );
   const serviceRows = useMemo(
-    () => collegeFiltered.filter((im) => im.im_type === "Service"),
+    () =>
+      collegeFiltered.filter(
+        (im) => (im.im_type || "").toLowerCase() === "service"
+      ),
     [collegeFiltered]
   );
   const allRows = collegeFiltered; // already filtered by college
@@ -132,15 +138,6 @@ export default function PimecDirectory() {
                   }}
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={needsOnly}
-                  onChange={() => setNeedsOnly((v) => !v)}
-                  className="h-4 w-4 text-meritRed border-gray-300 rounded focus:ring-meritRed/40"
-                />
-                Needs Evaluation Only
-              </label>
             </div>
           </div>
           <div className="border-t border-gray-300 my-4" />

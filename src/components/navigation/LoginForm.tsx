@@ -16,7 +16,7 @@ export default function LoginForm() {
     setLoading(true);
     try {
       await handleLogin(email, password);
-      console.log("Login successful for email:", email);
+      // removed debug log
     } catch (err: any) {
       let message = "Login failed";
       if (err instanceof Error && err.message) {

@@ -101,7 +101,7 @@ export async function downloadRecommendationLetterToBrowser(
 
     return true;
   } catch (error) {
-    console.error("Download failed:", error);
+    // removed debug log
     throw error;
   }
 }
@@ -113,7 +113,7 @@ export async function openRecommendationLetterInNewTab(token: string) {
     window.open(response.url, "_blank", "noopener,noreferrer");
     return true;
   } catch (error) {
-    console.error("Failed to open PDF:", error);
+    // removed debug log
     throw error;
   }
 }

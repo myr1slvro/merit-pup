@@ -3,12 +3,14 @@ import UECApprovalModal from "./UECApprovalModal";
 import UECRejectionModal from "./UECRejectionModal";
 import { updateInstructionalMaterial } from "../../../api/instructionalmaterial";
 import PriorPhaseSummary from "./PriorPhaseSummary";
+import { getIMERPIMECById } from "../../../api/imerpimec";
+
 import { ToastMessage } from "../../shared/Toast";
 
 interface Props {
   imId: number;
   imStatus?: string;
-  priorNotes?: string | null;
+  priorIMERPIMECId?: number | null;
   authToken: string;
   userEmail?: string;
   userId?: string | number;
@@ -19,7 +21,7 @@ interface Props {
 export default function UECApprovalActions({
   imId,
   imStatus,
-  priorNotes,
+  priorIMERPIMECId,
   authToken,
   userEmail,
   userId,
@@ -35,13 +37,28 @@ export default function UECApprovalActions({
     "approve" | "reject" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+  const [priorIMERPIMEC, setPriorIMERPIMEC] = useState<any | null>(null);
+
+  // Fetch prior IMERPIMEC details if id is provided
+  React.useEffect(() => {
+    if (priorIMERPIMECId && authToken) {
+      getIMERPIMECById(priorIMERPIMECId, authToken).then((res) => {
+        if (!(res as any).error) {
+          setPriorIMERPIMEC(res);
+        }
+      });
+    } else {
+      setPriorIMERPIMEC(null);
+    }
+  }, [priorIMERPIMECId, authToken]);
 
   function buildNotes(header: string, explicit?: string) {
     if (explicit) return explicit; // already composed in rejection modal
     const lines: string[] = [header];
-    if (priorNotes) {
-      lines.push("--- Prior Phase Notes ---");
-      lines.push(priorNotes);
+    if (priorIMERPIMEC) {
+      lines.push("--- Prior Phase Rubric ---");
+      // You can use a utility to format priorIMERPIMEC as a string, or just JSON.stringify for now
+      lines.push(JSON.stringify(priorIMERPIMEC, null, 2));
     }
     return lines.join("\n");
   }
@@ -82,7 +99,7 @@ export default function UECApprovalActions({
 
   return (
     <div className="flex flex-col gap-3">
-      <PriorPhaseSummary notes={priorNotes ?? null} />
+      <PriorPhaseSummary imerpimec={priorIMERPIMEC} />
       <div className="flex gap-2">
         <button
           className="px-4 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed"
@@ -117,7 +134,6 @@ export default function UECApprovalActions({
       <UECRejectionModal
         open={showRejectModal}
         loading={actionLoading === "reject"}
-        priorNotes={priorNotes ?? null}
         baseNotesHeader="Returned by UTLDO for revision"
         onCancel={() => !actionLoading && setShowRejectModal(false)}
         onSubmit={(fullNotes) =>

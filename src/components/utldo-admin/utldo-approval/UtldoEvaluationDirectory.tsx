@@ -46,11 +46,11 @@ export default function UtldoEvaluationDirectory() {
   }, [selectedCollege?.id]);
 
   const universityRows = useMemo(
-    () => collegeFiltered.filter((im: any) => im.im_type === "University"),
+    () => collegeFiltered.filter((im: any) => im.im_type === "university"),
     [collegeFiltered]
   );
   const serviceRows = useMemo(
-    () => collegeFiltered.filter((im: any) => im.im_type === "Service"),
+    () => collegeFiltered.filter((im: any) => im.im_type === "service"),
     [collegeFiltered]
   );
   const allRows = collegeFiltered;
