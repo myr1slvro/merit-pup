@@ -8,7 +8,7 @@ import { useAuth } from "../../auth/AuthProvider";
 
 interface UserManagementProps {
   embedded?: boolean;
-  headLeft?: ReactNode; 
+  headLeft?: ReactNode;
 }
 
 export default function UserManagement({
@@ -81,10 +81,10 @@ export default function UserManagement({
       };
       // Remove colleges from payload for user creation
       const { colleges, ...userPayload } = payload;
-      console.log("Creating user with:", userPayload);
+      // removed debug log
       const response = await createUser(userPayload, authToken);
       // Debug: log response
-      console.log("Create user response:", response);
+      // removed debug log
       if (response && response.error) {
         setError(response.error || "Unknown error");
         alert(response.error || "Unknown error");
@@ -102,7 +102,7 @@ export default function UserManagement({
             );
           } catch (err) {
             // Optionally handle error
-            console.error("Failed to create association", err);
+            // removed debug log
           }
         }
       }
@@ -123,7 +123,7 @@ export default function UserManagement({
     } catch (err) {
       setError("Failed to create user");
       alert("Failed to create user");
-      console.error(err);
+      // removed debug log
     } finally {
       setSaving(false);
     }

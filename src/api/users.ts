@@ -84,3 +84,25 @@ export async function restoreUser(userId: number, token: string) {
   });
   return res.json();
 }
+
+// Change user password
+export async function changePassword(
+  userId: number,
+  oldPassword: string,
+  newPassword: string,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      old_password: oldPassword,
+      new_password: newPassword,
+    }),
+  });
+  return res.json();
+}

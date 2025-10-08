@@ -230,7 +230,7 @@ export default function CreateIMForm({
             await createAuthor(newImId, uid, authToken);
           } catch (err) {
             // Non-blocking: log and continue
-            console.warn("Failed to create author association", {
+            // removed debug log
               newImId,
               uid,
               err,

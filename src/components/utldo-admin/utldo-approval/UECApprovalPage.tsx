@@ -124,7 +124,7 @@ export default function UECApprovalPage() {
         <UECApprovalActions
           imId={Number(id)}
           imStatus={im?.status}
-          priorNotes={priorNotes}
+          priorIMERPIMECId={im?.imerpimec_id ?? null}
           authToken={authToken as string}
           userEmail={user?.email}
           userId={user?.id}

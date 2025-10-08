@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { FaDownload } from "react-icons/fa";
 import { useAuth } from "../auth/AuthProvider";
 import {
   downloadInstructionalMaterial,
@@ -11,7 +12,7 @@ import ImerRubricForm from "./ImerRubricForm";
 import { updateInstructionalMaterial } from "../../api/instructionalmaterial";
 import {
   createIMERPIMEC,
-  buildIMERPIMECPayloadFromScores,
+  buildFullIMERPIMECPayload,
 } from "../../api/imerpimec";
 import ToastContainer, { ToastMessage } from "../shared/Toast";
 import { getSubjectByImID } from "../../api/subject";
@@ -23,6 +24,10 @@ export default function PimecEvalPage() {
   const { authToken, user } = useAuth();
   const [assumedIsModule, setAssumedIsModule] = useState(true); // toggle for hiding module-only fields
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [sectionComments, setSectionComments] = useState<
+    Record<string, string>
+  >({});
+  const [overallComment, setOverallComment] = useState("");
   const [s3Link, setS3Link] = useState<string | null>(
     () => (location.state as any)?.s3_link || null
   );
@@ -119,31 +124,54 @@ export default function PimecEvalPage() {
     totalScore: number;
     totalMax: number;
     passed: boolean;
-    breakdown: { section: string; subtotal: number; max: number }[];
+    breakdown: {
+      section: string;
+      subtotal: number;
+      max: number;
+      comment?: string;
+    }[];
+    overallComment?: string;
   }) {
     if (!authToken || !id) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // Persist raw section subtotals into IMERPIMEC aggregate object (a-e) if at least 5 sections present.
-      // This is optional and won't block evaluation if it fails.
+      // Persist all rubric scores and comments into IMERPIMEC aggregate object
+      let imerpimecId: number | null = null;
       if (result.breakdown?.length) {
-        const orderedScores = result.breakdown.map((b) => b.subtotal);
         try {
-          const actor = (user?.email ||
-            String(user?.id) ||
-            "pimec") as string;
-          const payload = buildIMERPIMECPayloadFromScores(orderedScores, actor);
-          await createIMERPIMEC(payload, authToken);
+          const actor = (user?.email || String(user?.id) || "pimec") as string;
+          // Use state directly for rubricScores, sectionComments, and overallComment
+          const rubricScores = scores;
+
+          // Use result.overallComment if present, else state
+          const payload = buildFullIMERPIMECPayload(
+            rubricScores,
+            sectionComments,
+            result.overallComment ?? overallComment,
+            actor
+          );
+          // Allow any type for payload to match backend schema
+          const imerpimecRes = await createIMERPIMEC(payload as any, authToken);
+
+          // Extract IMERPIMEC ID from response if successful
+          if (imerpimecRes && !imerpimecRes.error) {
+            // Response is like: { message: 'IMERPIMEC 2 created successfully' }
+            const match = (imerpimecRes as any).message?.match(
+              /IMERPIMEC (\d+)/
+            );
+            if (match) {
+              imerpimecId = parseInt(match[1], 10);
+            }
+          }
         } catch (e) {
           // Non-fatal: silently ignore or log to console for now.
-          console.warn("IMERPIMEC creation failed", e);
         }
       }
       const status = result.passed
         ? "For UTLDO Evaluation"
         : "For Resubmission";
-      // Build notes string with breakdown
+      // Build notes string with breakdown and comments
       const lines: string[] = [];
       lines.push(`Evaluator Score: ${result.totalScore}/${result.totalMax}`);
       lines.push(
@@ -154,7 +182,12 @@ export default function PimecEvalPage() {
       lines.push("Section Breakdown:");
       result.breakdown.forEach((b) => {
         lines.push(` - ${b.section}: ${b.subtotal}/${b.max}`);
+        if (b.comment) lines.push(`   Comment: ${b.comment}`);
       });
+      if (result.overallComment) {
+        lines.push("Overall Comment:");
+        lines.push(result.overallComment);
+      }
       if (!result.passed) {
         lines.push("Action: Please address deficiencies and resubmit.");
       }
@@ -166,6 +199,12 @@ export default function PimecEvalPage() {
         email: user?.email,
         updated_by: user?.email || user?.id || "pimec",
       };
+
+      // If IMERPIMEC was created, link it to the IM
+      if (imerpimecId) {
+        payload.imerpimec_id = imerpimecId;
+      }
+
       const res = await updateInstructionalMaterial(
         Number(id),
         payload,
@@ -197,16 +236,17 @@ export default function PimecEvalPage() {
             )
           )}
         </h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 *:px-3 *:py-1 *:text-md text-white *:rounded-md *:border-2 *:border-black">
           <button
             onClick={handleDownloadOriginal}
-            className="px-3 py-1 text-xs rounded border hover:bg-gray-100"
+            className="bg-meritRed  hover:bg-meritDarkRed items-center flex"
           >
+            <FaDownload className="inline mr-2" />
             Download PDF
           </button>
           <button
             onClick={() => navigate(-1)}
-            className="px-3 py-1 text-xs rounded border hover:bg-gray-100"
+            className="bg-meritDarkRed hover:bg-meritRed"
           >
             Back
           </button>
@@ -222,6 +262,10 @@ export default function PimecEvalPage() {
         <ImerRubricForm
           scores={scores}
           setScores={setScores}
+          sectionComments={sectionComments}
+          setSectionComments={setSectionComments}
+          overallComment={overallComment}
+          setOverallComment={setOverallComment}
           assumedIsModule={assumedIsModule}
           setAssumedIsModule={setAssumedIsModule}
           onSubmit={handleSubmitEvaluation}
