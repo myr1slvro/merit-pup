@@ -14,11 +14,11 @@ import { createServiceIM } from "../../api/serviceim";
 import { useAuth } from "../auth/AuthProvider";
 import { IMType } from "../../types/instructionalmats";
 import { createAuthor } from "../../api/author";
-import AuthorsSelector from "./AuthorsSelector";
-import IMTypeFields from "./UnivIMTypeFields";
-import CollegeSelector from "./CollegeSelector";
-import SubjectSelector from "./SubjectSelector";
-import PdfUploadSection from "./PdfUploadSection";
+import AuthorsSelector from "../faculty/AuthorsSelector";
+import IMTypeFields from "../faculty/UnivIMTypeFields";
+import CollegeSelector from "../faculty/CollegeSelector";
+import SubjectSelector from "../faculty/SubjectSelector";
+import PdfUploadSection from "../faculty/PdfUploadSection";
 
 type CreateIMFormProps = {
   selectedCollege?: any | null;

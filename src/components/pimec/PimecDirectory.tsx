@@ -9,7 +9,7 @@ import useEvaluatorIMs from "./useEvaluatorIMs";
 import { getDepartmentCacheEntry } from "../../api/department";
 import useDepartmentLabels from "../shared/useDepartmentLabels";
 import PimecIncludedDepartmentFilter from "./PimecIncludedDepartmentFilter";
-import CreateIMForm from "../faculty/CreateIMForm"; // PIMEC creates initial IM (authors + optional initial upload)
+import CreateIMForm from "./CreateIMForm"; // PIMEC creates initial IM (authors + optional initial upload)
 
 export default function PimecDirectory() {
   const { authToken } = useAuth();
