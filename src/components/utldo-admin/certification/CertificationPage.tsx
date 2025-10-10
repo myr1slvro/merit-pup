@@ -210,7 +210,7 @@ export default function CertificationPage() {
         </h1>
       </div>
       <div className="flex gap-4 flex-1 min-h-[70vh]">
-        <div className="w-1/3 border rounded p-3 flex flex-col overflow-hidden bg-white">
+        <div className="w-1/3 rounded-lg shadow-lg p-8 flex flex-col overflow-hidden bg-white">
           <div className="font-semibold mb-2 text-sm flex items-center justify-between">
             <span>Awaiting Certification ({totalItems || ims.length})</span>
             {loading && (
@@ -273,7 +273,7 @@ export default function CertificationPage() {
             </button>
           </div>
         </div>
-        <div className="flex-1 flex flex-col gap-3 p-6 bg-white">
+        <div className="flex-1 flex flex-col rounded-lg shadow-lg gap-3 p-8 bg-white">
           {!selected && (
             <div className="flex items-center justify-center h-full text-sm text-gray-500 border rounded">
               Select an IM to review and certify.

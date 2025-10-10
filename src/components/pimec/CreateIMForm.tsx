@@ -18,7 +18,7 @@ import AuthorsSelector from "../faculty/AuthorsSelector";
 import IMTypeFields from "../faculty/UnivIMTypeFields";
 import CollegeSelector from "../faculty/CollegeSelector";
 import SubjectSelector from "../faculty/SubjectSelector";
-import PdfUploadSection from "../faculty/PdfUploadSection";
+import PdfUploadSection from "./PdfUploadSection";
 
 type CreateIMFormProps = {
   selectedCollege?: any | null;
@@ -245,7 +245,7 @@ export default function CreateIMForm({
   return (
     <form
       onSubmit={handleCreate}
-      className="space-y-5 max-h-[70vh] overflow-y-auto pr-1"
+      className="space-y-5 max-h-[75vh] overflow-y-auto pr-1"
     >
       {/* Row 1: College (full width) with search */}
       <div className="grid grid-cols-1 gap-2">
@@ -329,11 +329,18 @@ export default function CreateIMForm({
 
       {error && <div className="text-meritRed text-sm">{error}</div>}
 
-      <div className="flex flex-row-reverse gap-2 mt-4">
+      <div className="flex flex-row-reverse gap-2 mt-4 items-center">
+        <div className="flex-1 text-sm text-gray-600">
+          {!analysisNotes ? (
+            <span className="text-xs text-yellow-700">
+              Please analyze the uploaded PDF before creating the IM.
+            </span>
+          ) : null}
+        </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed font-semibold shadow-sm"
-          disabled={creating}
+          className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={creating || !analysisNotes}
         >
           {creating ? "Creating..." : "Create"}
         </button>

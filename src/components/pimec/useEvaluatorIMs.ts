@@ -127,44 +127,59 @@ export default function useEvaluatorIMs(
   const collegeFiltered = useMemo(() => {
     if (!selectedCollege) return [] as any[];
     return rawIMs.filter((im) => {
-      if (im.university_im_id) return uniIdSet.has(im.university_im_id);
-      if (im.service_im_id) return servIdSet.has(im.service_im_id);
-      return false; // skip if cannot associate
+      // Validate im_type matches the ID field present
+      const imType = (im.im_type || "").toLowerCase();
+      if (im.university_im_id && imType === "university") {
+        return uniIdSet.has(im.university_im_id);
+      }
+      if (im.service_im_id && imType === "service") {
+        return servIdSet.has(im.service_im_id);
+      }
+      return false; // skip if type doesn't match or cannot associate
     });
   }, [rawIMs, selectedCollege, uniIdSet, servIdSet]);
 
-  const enrichRows = (ims: any[]) =>
-    ims.map((im) => {
-      const baseU = im.university_im_id
-        ? baseUniversityIMs.find((b) => b.id === im.university_im_id)
-        : null;
-      const baseS = im.service_im_id
-        ? baseServiceIMs.find((b) => b.id === im.service_im_id)
-        : null;
-      const subject_id =
-        im.subject_id || baseU?.subject_id || baseS?.subject_id || null;
-      const subject_name =
-        (subject_id && subjectsMap[subject_id]) ||
-        baseU?.subject?.name ||
-        baseS?.subject?.name ||
-        (subject_id ? `Subject #${subject_id}` : "-");
-      return {
-        id: im.id,
-        im_type: im.im_type,
-        department_id: baseU?.department_id ?? im.department_id ?? null,
-        year_level: baseU?.year_level ?? im.year_level ?? null,
-        subject_id,
-        subject_name,
-        status: im.status,
-        validity: im.validity,
-        version: im.version,
-        updated_by: im.updated_by,
-        updated_at: im.updated_at,
-        s3_link: im.s3_link || baseU?.s3_link || baseS?.s3_link || null,
-        university_im_id: im.university_im_id || null,
-        service_im_id: im.service_im_id || null,
-      };
-    });
+  const enrichRows = (ims: any[]) => {
+    const seen = new Set<number>();
+    return ims
+      .map((im) => {
+        const baseU = im.university_im_id
+          ? baseUniversityIMs.find((b) => b.id === im.university_im_id)
+          : null;
+        const baseS = im.service_im_id
+          ? baseServiceIMs.find((b) => b.id === im.service_im_id)
+          : null;
+        const subject_id =
+          im.subject_id || baseU?.subject_id || baseS?.subject_id || null;
+        const subject_name =
+          (subject_id && subjectsMap[subject_id]) ||
+          baseU?.subject?.name ||
+          baseS?.subject?.name ||
+          (subject_id ? `Subject #${subject_id}` : "-");
+        return {
+          id: im.id,
+          im_type: im.im_type,
+          department_id: baseU?.department_id ?? im.department_id ?? null,
+          year_level: baseU?.year_level ?? im.year_level ?? null,
+          subject_id,
+          subject_name,
+          status: im.status,
+          validity: im.validity,
+          version: im.version,
+          updated_by: im.updated_by,
+          updated_at: im.updated_at,
+          s3_link: im.s3_link || baseU?.s3_link || baseS?.s3_link || null,
+          university_im_id: im.university_im_id || null,
+          service_im_id: im.service_im_id || null,
+        };
+      })
+      .filter((row) => {
+        // Deduplicate by id (just in case)
+        if (seen.has(row.id)) return false;
+        seen.add(row.id);
+        return true;
+      });
+  };
 
   // Department counts from currently loaded rawIMs (university only with department_id after enrichment below)
   const deptCounts: Record<number, number> = {};

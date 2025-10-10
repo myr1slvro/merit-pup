@@ -221,8 +221,8 @@ export default function IMTable(
           ? "University"
           : type === "service"
           ? "Service"
-          : "Instructional"}{" "}
-        IMs.
+          : ""}{" "}
+        Instructional Materials found.
       </div>
     );
 

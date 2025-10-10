@@ -3,7 +3,7 @@ import { FaUniversity } from "react-icons/fa";
 import { useAuth } from "../auth/AuthProvider";
 import useUserColleges from "../faculty/useUserColleges";
 import CollegeButtonsRow from "../shared/CollegeButtonsRow";
-import IMTableHeader from "../shared/IMTableHeader";
+import PIMECIMTableHeader from "./PIMECIMTableHeader";
 import IMTable from "../shared/IMTable";
 import useEvaluatorIMs from "./useEvaluatorIMs";
 import { getDepartmentCacheEntry } from "../../api/department";
@@ -21,7 +21,7 @@ export default function PimecDirectory() {
   >(null);
   const [activeIMType, setActiveIMType] = useState<
     "university" | "service" | "all"
-  >("university");
+  >("all");
   const [reloadTick, setReloadTick] = useState(0);
   const [needsOnly, setNeedsOnly] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,6 +50,7 @@ export default function PimecDirectory() {
       needsOnly
     );
 
+  // Split rows by IM type
   const universityRows = useMemo(
     () =>
       collegeFiltered.filter(
@@ -57,6 +58,7 @@ export default function PimecDirectory() {
       ),
     [collegeFiltered]
   );
+
   const serviceRows = useMemo(
     () =>
       collegeFiltered.filter(
@@ -64,9 +66,8 @@ export default function PimecDirectory() {
       ),
     [collegeFiltered]
   );
-  const allRows = collegeFiltered; // already filtered by college
 
-  // Department filtering applies only to university rows (service IMs have no department)
+  // Apply department filter to university IMs
   const filteredUniversity = useMemo(() => {
     if (selectedDepartmentId == null) return universityRows;
     return universityRows.filter(
@@ -74,11 +75,15 @@ export default function PimecDirectory() {
     );
   }, [universityRows, selectedDepartmentId]);
 
-  const { labels: deptLabels } = useDepartmentLabels(departmentIds);
-  const getDeptLabel = (deptId: number) => {
-    const entry = getDepartmentCacheEntry(deptId);
-    return entry?.abbreviation || entry?.name || `Dept #${deptId}`;
-  };
+  // Apply department filter to all IMs (exclude Service IMs when department is selected)
+  const filteredAll = useMemo(() => {
+    if (selectedDepartmentId == null) return collegeFiltered;
+    return collegeFiltered.filter((im) => {
+      const isService = (im.im_type || "").toLowerCase() === "service";
+      if (isService) return false; // Service IMs have no department
+      return im.department_id === selectedDepartmentId;
+    });
+  }, [collegeFiltered, selectedDepartmentId]);
 
   return (
     <div className="mx-8 p-8 bg-white rounded-2xl shadow">
@@ -88,61 +93,51 @@ export default function PimecDirectory() {
       {selectedCollege && (
         <div className="flex flex-col">
           <div className="flex flex-col gap-3 mb-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex flex-col gap-3 w-full">
-                <CollegeButtonsRow
-                  colleges={colleges?.filter((c: any) =>
-                    derivedCollegeIds.includes(c.id)
-                  )}
-                  selectedCollege={selectedCollege}
-                  loading={false}
-                  error={""}
-                  onSelect={(c: any) => {
-                    setSelectedCollege(c);
-                    setSelectedDepartmentId(null);
-                    setReloadTick((n) => n + 1);
-                  }}
-                />
-                <PimecIncludedDepartmentFilter
-                  selectedDepartmentId={selectedDepartmentId}
-                  counts={deptCounts}
-                  filterCollegeId={selectedCollege?.id || null}
-                  onDepartmentsLoaded={(assocs) => {
-                    const uniq = new Set<number>();
-                    assocs.forEach((a: any) => {
-                      const entry = getDepartmentCacheEntry(
-                        a.department_id
-                      ) as any;
-                      if (entry?.college_id) uniq.add(entry.college_id);
-                    });
-                    const arr = Array.from(uniq);
-                    setDerivedCollegeIds(arr);
-                    if (!selectedCollege && arr.length) {
-                      const first = colleges?.find((c: any) =>
-                        arr.includes(c.id)
-                      );
-                      if (first) setSelectedCollege(first);
-                    }
-                  }}
-                  onSelect={(deptId, collegeId) => {
-                    setSelectedDepartmentId(deptId);
-                    if (
-                      collegeId &&
-                      (!selectedCollege || selectedCollege.id !== collegeId)
-                    ) {
-                      const found = colleges?.find(
-                        (c: any) => c.id === collegeId
-                      );
-                      if (found) setSelectedCollege(found);
-                    }
-                  }}
-                />
-              </div>
-            </div>
+            <CollegeButtonsRow
+              colleges={colleges?.filter((c: any) =>
+                derivedCollegeIds.includes(c.id)
+              )}
+              selectedCollege={selectedCollege}
+              loading={false}
+              error={""}
+              onSelect={(c: any) => {
+                setSelectedCollege(c);
+                setSelectedDepartmentId(null);
+                setReloadTick((n) => n + 1);
+              }}
+            />
+            <PimecIncludedDepartmentFilter
+              selectedDepartmentId={selectedDepartmentId}
+              counts={deptCounts}
+              filterCollegeId={selectedCollege?.id || null}
+              onDepartmentsLoaded={(assocs) => {
+                const uniq = new Set<number>();
+                assocs.forEach((a: any) => {
+                  const entry = getDepartmentCacheEntry(a.department_id) as any;
+                  if (entry?.college_id) uniq.add(entry.college_id);
+                });
+                const arr = Array.from(uniq);
+                setDerivedCollegeIds(arr);
+                if (!selectedCollege && arr.length) {
+                  const first = colleges?.find((c: any) => arr.includes(c.id));
+                  if (first) setSelectedCollege(first);
+                }
+              }}
+              onSelect={(deptId, collegeId) => {
+                setSelectedDepartmentId(deptId);
+                if (
+                  collegeId &&
+                  (!selectedCollege || selectedCollege.id !== collegeId)
+                ) {
+                  const found = colleges?.find((c: any) => c.id === collegeId);
+                  if (found) setSelectedCollege(found);
+                }
+              }}
+            />
           </div>
           <div className="border-t border-gray-300 my-4" />
           <div className="flex flex-col gap-2 mb-2">
-            <IMTableHeader
+            <PIMECIMTableHeader
               activeIMType={activeIMType}
               setActiveIMType={setActiveIMType}
               onCreate={() => setShowCreateModal(true)}
@@ -192,13 +187,7 @@ export default function PimecDirectory() {
                 <>
                   <IMTable
                     type="all"
-                    data={
-                      (selectedDepartmentId == null
-                        ? allRows
-                        : allRows.filter(
-                            (im) => im.department_id === selectedDepartmentId
-                          )) as any
-                    }
+                    data={filteredAll as any}
                     loading={loading}
                     error={error}
                     actionsRole="PIMEC"
@@ -206,9 +195,7 @@ export default function PimecDirectory() {
                   {!loading &&
                     !error &&
                     selectedDepartmentId != null &&
-                    allRows.filter(
-                      (im) => im.department_id === selectedDepartmentId
-                    ).length === 0 && (
+                    filteredAll.length === 0 && (
                       <div className="mt-3 text-xs text-gray-500">
                         No IMs for this department. Switch to All Departments or
                         refresh.
@@ -231,7 +218,7 @@ export default function PimecDirectory() {
                   &times;
                 </button>
                 <h2 className="text-xl font-bold mb-4">
-                  Create Instructional Material
+                  Upload Instructional Material
                 </h2>
                 <CreateIMForm
                   selectedCollege={selectedCollege}

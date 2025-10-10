@@ -42,7 +42,7 @@ export default function FacultyDirectory() {
   const { labels: deptLabels } = useDepartmentLabels(departmentOptions);
   const [activeIMType, setActiveIMType] = useState<
     "university" | "service" | "all"
-  >("university");
+  >("all");
   const [allIMs, setAllIMs] = useState<any[]>([]); // full instructional materials (versions)
   const [allIMsLoading, setAllIMsLoading] = useState(false);
   const [allIMsError, setAllIMsError] = useState<string | null>(null);
@@ -146,7 +146,11 @@ export default function FacultyDirectory() {
   const latestUniversityIMMeta = useMemo(() => {
     const map = new Map<number, any>();
     allIMs
-      .filter((im: any) => im.university_im_id)
+      .filter(
+        (im: any) =>
+          im.university_im_id &&
+          (im.im_type || "").toLowerCase() === "university"
+      )
       .forEach((im: any) => {
         const key = im.university_im_id;
         const prev = map.get(key);
@@ -161,10 +165,14 @@ export default function FacultyDirectory() {
       });
     return map;
   }, [allIMs]);
+
   const latestServiceIMMeta = useMemo(() => {
     const map = new Map<number, any>();
     allIMs
-      .filter((im: any) => im.service_im_id)
+      .filter(
+        (im: any) =>
+          im.service_im_id && (im.im_type || "").toLowerCase() === "service"
+      )
       .forEach((im: any) => {
         const key = im.service_im_id;
         const prev = map.get(key);
@@ -183,11 +191,11 @@ export default function FacultyDirectory() {
   // Enriched rows for University toggle
   const universityRows = useMemo(() => {
     if (!selectedCollege) return [] as any[];
-    return filteredUniversityIMs.map((base) => {
+    const rows = filteredUniversityIMs.map((base) => {
       const meta = latestUniversityIMMeta.get(base.id);
       return {
-        id: meta?.id || base.id, // prefer real IM id
-        im_type: "University",
+        id: meta?.id || base.id,
+        im_type: meta?.im_type || "University",
         department_id: (base as any).department_id,
         year_level: (base as any).year_level,
         subject_id: (base as any).subject_id,
@@ -199,16 +207,24 @@ export default function FacultyDirectory() {
         updated_at: meta?.updated_at || null,
       };
     });
+
+    // Deduplicate by id
+    const seen = new Set<number>();
+    return rows.filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    });
   }, [filteredUniversityIMs, latestUniversityIMMeta, selectedCollege?.id]);
 
   // Enriched rows for Service toggle
   const serviceRows = useMemo(() => {
     if (!selectedCollege) return [] as any[];
-    return filteredServiceIMs.map((base) => {
+    const rows = filteredServiceIMs.map((base) => {
       const meta = latestServiceIMMeta.get(base.id);
       return {
         id: meta?.id || base.id,
-        im_type: "Service",
+        im_type: meta?.im_type || "Service",
         department_id: null,
         year_level: null,
         subject_id: (base as any).subject_id,
@@ -220,12 +236,21 @@ export default function FacultyDirectory() {
         updated_at: meta?.updated_at || null,
       };
     });
+
+    // Deduplicate by id
+    const seen = new Set<number>();
+    return rows.filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    });
   }, [filteredServiceIMs, latestServiceIMMeta, selectedCollege?.id]);
 
   // Rows for All toggle (each instructional material entry) filtered by currently selected college
   const allRows = useMemo(() => {
     if (!selectedCollege) return [] as any[];
-    return allIMs
+
+    const rows = allIMs
       .filter((im: any) => {
         if (im.university_im_id) {
           const u = universityIMs.find((x) => x.id === im.university_im_id);
@@ -259,7 +284,31 @@ export default function FacultyDirectory() {
           updated_at: im.updated_at,
         };
       });
-  }, [allIMs, selectedCollege?.id, universityIMs, serviceIMs]);
+
+    // Apply department filter: exclude Service IMs when department is selected
+    const filtered =
+      selectedDepartmentId != null
+        ? rows.filter(
+            (row) =>
+              (row.im_type || "").toLowerCase() !== "service" &&
+              row.department_id === selectedDepartmentId
+          )
+        : rows;
+
+    // Deduplicate by id
+    const seen = new Set<number>();
+    return filtered.filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    });
+  }, [
+    allIMs,
+    selectedCollege?.id,
+    universityIMs,
+    serviceIMs,
+    selectedDepartmentId,
+  ]);
 
   // Fetch all instructional materials when toggled to 'all'
   useEffect(() => {

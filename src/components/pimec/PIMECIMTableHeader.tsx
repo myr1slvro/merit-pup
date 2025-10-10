@@ -1,7 +1,7 @@
 import React from "react";
 import { FaRegFileLines } from "react-icons/fa6";
 
-interface IMTableHeaderProps {
+interface PIMECIMTableHeaderProps {
   activeIMType: "university" | "service" | "all";
   setActiveIMType: (type: "university" | "service" | "all") => void;
   onCreate?: () => void;
@@ -9,13 +9,13 @@ interface IMTableHeaderProps {
   hideCreate?: boolean;
 }
 
-export default function IMTableHeader({
+export default function PIMECIMTableHeader({
   activeIMType,
   setActiveIMType,
   onCreate,
   onRefresh,
   hideCreate,
-}: IMTableHeaderProps) {
+}: PIMECIMTableHeaderProps) {
   const buttonClasses = (isActive: boolean) =>
     `px-3 py-1 transition-colors ${
       isActive ? "bg-meritRed text-white" : "hover:bg-gray-200"
@@ -25,7 +25,7 @@ export default function IMTableHeader({
     <div className="flex items-center justify-between flex-wrap gap-4 my-2">
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaRegFileLines className="text-meritRed" />
-        Instructional Materials
+        Instructional Materials for Evaluation
         <span className="ml-4 inline-flex rounded-full bg-gray-100 text-gray-700 text-xs font-semibold overflow-hidden">
           <button
             type="button"

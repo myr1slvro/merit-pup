@@ -45,11 +45,11 @@ export default function PdfUploadSection({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-black">
         PDF File
       </label>
       <div className="mt-1 flex items-center gap-2">
-        <label className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md border border-gray-300 cursor-pointer hover:bg-gray-200 text-sm shadow-sm">
+        <label className="inline-flex items-center px-3 py-2 bg-gray-100 text-black rounded-md border border-gray-300 cursor-pointer hover:bg-gray-200 text-sm shadow-sm">
           Browse...
           <input
             type="file"
@@ -58,7 +58,7 @@ export default function PdfUploadSection({
             className="hidden"
           />
         </label>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-black">
           {file ? file.name : "No file selected."}
         </span>
         {file ? (
@@ -82,7 +82,7 @@ export default function PdfUploadSection({
         </button>
         {analysisNotes && (
           <span
-            className={`text-xs px-2 py-1 rounded ${
+            className={`text-md font-medium px-2 py-1 rounded ${
               analysisNotes.startsWith("Missing sections")
                 ? "bg-red-100 text-red-700"
                 : "bg-green-100 text-green-700"
@@ -93,7 +93,7 @@ export default function PdfUploadSection({
         )}
       </div>
       {analysisNotes && (
-        <div className="mt-2 text-xs text-gray-600">
+        <div className="mt-2 text-sm text-black">
           Status on create:{" "}
           {analysisNotes.startsWith("Missing sections") ? (
             <span className="text-red-700 font-semibold">For Resubmission</span>
