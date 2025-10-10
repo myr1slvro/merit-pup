@@ -27,26 +27,19 @@ export default function PriorPhaseSummary({ imerpimec }: Props) {
   });
 
   return (
-    <div className="border rounded bg-white shadow-sm overflow-hidden text-xs">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-meritRed/10 hover:bg-meritRed/20 transition-colors text-meritRed font-semibold"
-      >
-        <span>Prior Phase Summary</span>
-        <span className="text-[10px] font-normal">
-          {open ? "Hide" : "Show"}
-        </span>
-      </button>
+    <div className="border rounded-lg shadow-lg overflow-hidden text-lg">
+      <span className="w-full flex items-center justify-between px-3 py-2 bg-linear-to-r from-meritRed to-meritDarkRed  transition-colors text-white font-semibold">
+        Prior Phase Summary
+      </span>
       {open && (
-        <div className="p-3 leading-snug flex flex-col gap-4 w-full">
+        <div className="p-3 leading-snug flex flex-col gap-4 w-full bg-gray-100">
           {hasAnyScore ? (
             Object.keys(grouped).map((section) => (
               <div
                 key={section}
-                className="border rounded w-full flex flex-col"
+                className="border rounded w-full flex flex-col bg-white"
               >
-                <div className="px-2 py-1 bg-gray-100 text-xs font-semibold flex justify-between">
+                <div className="px-2 py-1 bg-linear-to-r from-meritRed to-meritDarkRed text-white text-xs font-semibold flex justify-between">
                   <span>{SECTION_TITLES[section]}</span>
                 </div>
                 <div className="divide-y">
@@ -59,14 +52,14 @@ export default function PriorPhaseSummary({ imerpimec }: Props) {
                       <span className="font-mono min-w-[2ch] text-right">
                         {imerpimec[item.id.toLowerCase()] ?? "-"}
                       </span>
-                      <span className="text-gray-500">/ {item.max}</span>
+                      <span className="text-aquamarine">/ {item.max}</span>
                     </div>
                   ))}
                 </div>
                 {/* Section comments */}
                 {imerpimec[section.toLowerCase() + "_comment"] && (
-                  <div className="p-2 border-t bg-gray-50">
-                    <div className="text-xs text-gray-700 whitespace-pre-wrap">
+                  <div className="p-2 border-t ">
+                    <div className="text-xs text-black whitespace-pre-wrap">
                       <span className="font-semibold">Comments: </span>
                       {imerpimec[section.toLowerCase() + "_comment"]}
                     </div>
@@ -75,17 +68,18 @@ export default function PriorPhaseSummary({ imerpimec }: Props) {
               </div>
             ))
           ) : (
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+            <pre className="text-xs text-black whitespace-pre-wrap">
               {formatIMERPIMECToRubricSummary(imerpimec)}
             </pre>
           )}
           {/* Overall comments */}
           {imerpimec.overall_comment && (
-            <div className="border rounded p-2 bg-gray-50 w-full">
+            <div className="border rounded p-2  bg-white w-full">
               <span className="block text-xs font-semibold mb-1">
-                Overall Comments
+                Overall Comments:
               </span>
-              <div className="text-xs text-gray-700 whitespace-pre-wrap">
+              <div className="border-t border-gray-300 my-1" />
+              <div className="text-xs text-black whitespace-pre-wrap">
                 {imerpimec.overall_comment}
               </div>
             </div>

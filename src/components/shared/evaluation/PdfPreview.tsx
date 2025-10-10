@@ -17,11 +17,11 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({
 }) => {
   return (
     <div
-      className={`flex-1 border rounded bg-white shadow overflow-hidden flex flex-col ${
+      className={`flex-1 border rounded-lg bg-white shadow-lg overflow-hidden flex flex-col ${
         className || ""
       }`}
     >
-      <div className="p-2 border-b text-sm font-semibold bg-gray-50 flex items-center justify-between">
+      <div className="px-4 py-2 border-b text-md font-semibold bg-gray-50 flex items-center justify-between">
         <span>{title}</span>
       </div>
       {url ? (
