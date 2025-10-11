@@ -209,3 +209,56 @@ export async function getForCertification(token: string, page: number = 1) {
   });
   return res.json();
 }
+
+// Send certificate of appreciation to IM authors (with file upload)
+export async function sendCertsOfAppreciation(
+  imId: number,
+  file: File,
+  token: string,
+  opts?: { subject?: string; text_body?: string; html_body?: string }
+) {
+  const form = new FormData();
+  form.append("file", file);
+  if (opts?.subject) form.append("subject", opts.subject);
+  if (opts?.text_body) form.append("text_body", opts.text_body);
+  if (opts?.html_body) form.append("html_body", opts.html_body);
+  const res = await fetch(`${API_URL}/send-certs-of-appreciation/${imId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: form,
+  });
+  return res.json();
+}
+
+// Download the certificate of appreciation DOCX template
+export async function getCertOfAppreciation(token: string) {
+  const url = `${API_URL}/cert-of-appreciation`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to download certificate");
+  }
+
+  // Get the blob from the response
+  const blob = await res.blob();
+
+  // Create a download link and trigger it
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = downloadUrl;
+  a.download = "cert-of-appreciation.docx";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(downloadUrl);
+
+  return { success: true };
+}

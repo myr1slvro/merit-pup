@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from "react";
+import { BsCheckCircleFill } from "react-icons/bs";
+import { IoIosWarning } from "react-icons/io";
+import { MdDownload } from "react-icons/md";
 import { useAuth } from "../../auth/AuthProvider";
 import {
   getInstructionalMaterialPresignedUrl,
   updateInstructionalMaterial,
   getForCertification,
+  sendCertsOfAppreciation,
+  getCertOfAppreciation,
 } from "../../../api/instructionalmaterial";
 import ToastContainer, { ToastMessage } from "../../shared/Toast";
 import PdfPreview from "../../shared/evaluation/PdfPreview";
 import { getSubjectByImID } from "../../../api/subject";
+import CertificationsSidebar from "./CertificationsSidebar";
+import CertificationDetail from "./CertificationDetail";
 
 interface CertificationIM {
   id: number;
@@ -44,6 +51,8 @@ export default function CertificationPage() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [perPage, setPerPage] = useState<number>(0);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
   function pushToast(
     type: ToastMessage["type"],
@@ -129,6 +138,7 @@ export default function CertificationPage() {
     setPdfUrl(null);
     setPdfError(null);
     setSubjectName("");
+    setCertFile(null); // Reset certificate file when selecting new IM
     // Subject resolution
     const subjImmediate =
       (im.subject && (im.subject.name || im.subject.title)) || im.subject_name;
@@ -168,10 +178,48 @@ export default function CertificationPage() {
     }
   }
 
-  async function act(status: "Certified" | "For Resubmission") {
+  async function act(status: "Published" | "For Resubmission") {
     if (!selected || !authToken) return;
+
+    // If marking as Published, ensure certificate file is uploaded
+    if (status === "Published" && !certFile) {
+      pushToast(
+        "error",
+        "Please upload a certificate file before marking as certified"
+      );
+      return;
+    }
+
     setActionLoading(true);
     try {
+      // If marking as published, send certificate emails first
+      if (status === "Published" && certFile) {
+        try {
+          const certResult = await sendCertsOfAppreciation(
+            selected.id,
+            certFile,
+            authToken
+          );
+          if (certResult?.error) {
+            throw new Error(`Failed to send certificates: ${certResult.error}`);
+          }
+          pushToast(
+            "success",
+            `Certificates sent to ${
+              certResult.recipients?.length || 0
+            } author(s)`
+          );
+        } catch (certError: any) {
+          pushToast(
+            "error",
+            certError.message || "Failed to send certificates"
+          );
+          // Don't proceed with status update if certificate sending failed
+          setActionLoading(false);
+          return;
+        }
+      }
+
       const notesLines: string[] = [];
       notesLines.push(`Action: ${status}`);
       if (selected.notes) {
@@ -195,10 +243,24 @@ export default function CertificationPage() {
       setIMs((prev) => prev.filter((p) => p.id !== selected.id));
       setSelected(null);
       setPdfUrl(null);
+      setCertFile(null);
     } catch (e: any) {
       pushToast("error", e.message || "Update failed");
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleDownloadTemplate() {
+    if (!authToken) return;
+    setDownloadingTemplate(true);
+    try {
+      await getCertOfAppreciation(authToken);
+      pushToast("success", "Certificate template downloaded successfully");
+    } catch (e: any) {
+      pushToast("error", e.message || "Failed to download template");
+    } finally {
+      setDownloadingTemplate(false);
     }
   }
 
@@ -210,130 +272,36 @@ export default function CertificationPage() {
         </h1>
       </div>
       <div className="flex gap-4 flex-1 min-h-[70vh]">
-        <div className="w-1/3 rounded-lg shadow-lg p-8 flex flex-col overflow-hidden bg-white">
-          <div className="font-semibold mb-2 text-sm flex items-center justify-between">
-            <span>Awaiting Certification ({totalItems || ims.length})</span>
-            {loading && (
-              <span className="text-xs text-gray-500">Loading...</span>
-            )}
-          </div>
-          {error && <div className="text-xs text-meritRed mb-2">{error}</div>}
-          <div className="flex-1 overflow-auto divide-y">
-            {ims.map((im) => {
-              const immediate =
-                (im.subject && (im.subject.name || im.subject.title)) ||
-                im.subject_name;
-              const subj = subjectMap[im.id] || immediate || "Subject";
-              const imType =
-                im.im_type ||
-                (im as any).type ||
-                im.material_type ||
-                im.category ||
-                im.format ||
-                "IM";
-              return (
-                <button
-                  key={im.id}
-                  onClick={() => selectIM(im)}
-                  className={`w-full text-left px-2 py-2 text-sm hover:bg-gray-100 transition flex flex-col gap-0 ${
-                    selected?.id === im.id ? "bg-gray-100" : ""
-                  }`}
-                >
-                  <span className="font-medium">
-                    {subj}
-                    {im.version != null && ` - v${im.version}`}
-                  </span>
-                  <span className="text-xs text-gray-600 truncate">
-                    IM Type: {imType}
-                  </span>
-                </button>
-              );
-            })}
-            {!loading && ims.length === 0 && (
-              <div className="text-xs text-gray-500 p-2">None pending.</div>
-            )}
-          </div>
-          <div className="pt-2 flex items-center justify-between text-xs">
-            <button
-              className="px-2 py-1 rounded border disabled:opacity-50"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={loading || page <= 1}
-            >
-              Prev
-            </button>
-            <span className="text-gray-600">
-              Page {page} / {totalPages}
-            </span>
-            <button
-              className="px-2 py-1 rounded border disabled:opacity-50"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={loading || page >= totalPages}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col rounded-lg shadow-lg gap-3 p-8 bg-white">
+        <CertificationsSidebar
+          ims={ims}
+          selectedId={selected?.id}
+          onSelect={(im) => selectIM(im as any)}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          loading={loading}
+        />
+        <div className="flex-1">
           {!selected && (
-            <div className="flex items-center justify-center h-full text-sm text-gray-500 border rounded">
+            <div className="flex items-center justify-center h-full text-sm text-gray-500 border rounded p-4">
               Select an IM to review and certify.
             </div>
           )}
           {selected && (
-            <>
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col">
-                  <h2 className="text-lg font-semibold text-meritRed">
-                    {subjectLoading && !subjectName
-                      ? "Loading subject..."
-                      : subjectName || "Subject"}
-                    {selected.version != null && ` - v${selected.version}`}
-                  </h2>
-                  <div className="text-xs text-gray-600">
-                    {selected.im_type ||
-                      (selected as any).type ||
-                      selected.material_type ||
-                      selected.category ||
-                      selected.format ||
-                      "IM"}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => act("Certified")}
-                    disabled={actionLoading}
-                    className="px-3 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-                  >
-                    Mark Certified
-                  </button>
-                  <button
-                    onClick={() => act("For Resubmission")}
-                    disabled={actionLoading}
-                    className="px-3 py-1 text-xs rounded bg-meritRed text-white hover:bg-red-700 disabled:opacity-50"
-                  >
-                    Request Resubmission
-                  </button>
-                </div>
-              </div>
-              <div className="flex gap-4 flex-1 min-h-[60vh]">
-                <PdfPreview
-                  url={pdfUrl}
-                  loading={pdfLoading}
-                  error={pdfError}
-                  title="IM PDF"
-                />
-                <div className="w-1/3 border rounded p-2 flex flex-col text-xs gap-2 bg-white">
-                  <div className="font-semibold">UEC / Prior Notes</div>
-                  <div className="flex-1 overflow-auto whitespace-pre-wrap">
-                    {selected.notes ? (
-                      selected.notes
-                    ) : (
-                      <span className="text-gray-500">No notes</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
+            <CertificationDetail
+              im={selected}
+              subjectName={subjectName}
+              subjectLoading={subjectLoading}
+              pdfUrl={pdfUrl}
+              pdfLoading={pdfLoading}
+              pdfError={pdfError}
+              certFile={certFile}
+              setCertFile={setCertFile}
+              downloadingTemplate={downloadingTemplate}
+              handleDownloadTemplate={handleDownloadTemplate}
+              onAct={act}
+              actionLoading={actionLoading}
+            />
           )}
         </div>
       </div>
