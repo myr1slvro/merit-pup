@@ -28,7 +28,6 @@ interface CertificationIM {
   // Possible type fields coming from backend
   im_type?: string;
   type?: string;
-  material_type?: string;
   category?: string;
   format?: string;
 }

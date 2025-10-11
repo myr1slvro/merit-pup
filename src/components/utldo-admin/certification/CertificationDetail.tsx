@@ -43,10 +43,6 @@ export default function CertificationDetail({
 }: Props) {
   const imType =
     im.im_type ||
-    (im as any).type ||
-    im.material_type ||
-    im.category ||
-    im.format ||
     "IM";
 
   if (!im) return null;
