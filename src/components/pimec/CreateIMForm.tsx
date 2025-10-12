@@ -1,8 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  uploadIMPdf,
-  createInstructionalMaterial,
-} from "../../api/instructionalmaterial";
+import { createInstructionalMaterial } from "../../api/instructionalmaterial";
 import {
   getAllDepartments,
   getDepartmentsByCollegeId,
@@ -18,7 +15,6 @@ import AuthorsSelector from "../faculty/AuthorsSelector";
 import IMTypeFields from "../faculty/UnivIMTypeFields";
 import CollegeSelector from "../faculty/CollegeSelector";
 import SubjectSelector from "../faculty/SubjectSelector";
-import PdfUploadSection from "./PdfUploadSection";
 
 type CreateIMFormProps = {
   selectedCollege?: any | null;
@@ -39,10 +35,6 @@ export default function CreateIMForm({
       : res?.subjects || res?.departments || res?.colleges || res?.data || [];
 
   const [imType, setImType] = useState<IMType>(IMType.university);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string>("");
-  const [analysisNotes, setAnalysisNotes] = useState<string>("");
-  const [objectKey, setObjectKey] = useState<string>("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -146,27 +138,16 @@ export default function CreateIMForm({
 
   // Authors fetched within AuthorsSelector
 
-  function clearUpload() {
-    setFile(null);
-    setUploadPreview("");
-    setAnalysisNotes("");
-    setObjectKey("");
-  }
-
-  async function handleCreate(e: React.FormEvent) {
+  async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
     if (!authToken) return;
-    if (!file) {
-      setError("Please select a PDF file to upload.");
+    if (selectedAuthorIds.length === 0) {
+      setError("Please select at least one author to assign the IM.");
       return;
     }
     setError("");
     setCreating(true);
     try {
-      const derivedStatus =
-        analysisNotes && analysisNotes.startsWith("Missing sections")
-          ? "For Resubmission"
-          : "For PIMEC Evaluation";
       if (!selectedSubjectId) {
         throw new Error("Please select a subject.");
       }
@@ -197,21 +178,16 @@ export default function CreateIMForm({
         subtypeId = svcRes?.id;
       }
 
-      // Upload PDF now
-      const up = await uploadIMPdf(file as File, authToken);
-      if (up?.error) throw new Error(up.error);
-      setObjectKey(up.s3_link || up.object_key || "");
-      const finalS3 = up.s3_link || up.object_key;
-
-      // Create master IM
+      // Create master IM without s3_link (assignment mode)
       const payload: any = {
         im_type: imType,
-        status: derivedStatus,
+        status: "Assigned to Faculty", // Will be set automatically in backend
         validity: defaultValidity,
         created_by: user?.staff_id || "",
         updated_by: user?.staff_id || "",
-        s3_link: finalS3,
-        notes: analysisNotes || up.notes || "",
+        s3_link: null, // No file uploaded yet
+        notes: "IM assigned to authors. Awaiting initial upload.",
+        author_ids: selectedAuthorIds, // Send author IDs for email notifications
       };
       if (imType === IMType.university) {
         payload.university_im_id = subtypeId;
@@ -236,7 +212,7 @@ export default function CreateIMForm({
       onCreated?.(res?.id);
       onCancel();
     } catch (e: any) {
-      setError(e.message || "Failed to create IM.");
+      setError(e.message || "Failed to assign IM.");
     } finally {
       setCreating(false);
     }
@@ -244,7 +220,7 @@ export default function CreateIMForm({
 
   return (
     <form
-      onSubmit={handleCreate}
+      onSubmit={handleAssign}
       className="space-y-5 max-h-[75vh] overflow-y-auto pr-1"
     >
       {/* Row 1: College (full width) with search */}
@@ -288,7 +264,7 @@ export default function CreateIMForm({
       <div className="grid grid-cols-1 gap-2">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700">
-            Authors
+            Authors <span className="text-meritRed">*</span>
           </label>
           <div className="mt-2">
             <AuthorsSelector
@@ -315,34 +291,21 @@ export default function CreateIMForm({
         </div>
       </div>
 
-      {/* Row 4: Browse and upload file, analyze PDF */}
-      <PdfUploadSection
-        file={file}
-        onFileChange={(f) => {
-          setFile(f);
-          setUploadPreview(f ? f.name : "");
-          if (!f) setObjectKey("");
-        }}
-        analysisNotes={analysisNotes}
-        onAnalysisChange={setAnalysisNotes}
-      />
-
       {error && <div className="text-meritRed text-sm">{error}</div>}
 
       <div className="flex flex-row-reverse gap-2 mt-4 items-center">
         <div className="flex-1 text-sm text-gray-600">
-          {!analysisNotes ? (
-            <span className="text-xs text-yellow-700">
-              Please analyze the uploaded PDF before creating the IM.
-            </span>
-          ) : null}
+          <span className="text-xs text-gray-600">
+            Assigning will notify the selected authors via email to upload the
+            IM.
+          </span>
         </div>
         <button
           type="submit"
           className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={creating || !analysisNotes}
+          disabled={creating || selectedAuthorIds.length === 0}
         >
-          {creating ? "Creating..." : "Create"}
+          {creating ? "Assigning..." : "Assign IM"}
         </button>
         <button
           type="button"

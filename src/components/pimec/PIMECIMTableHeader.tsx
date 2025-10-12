@@ -61,7 +61,7 @@ export default function PIMECIMTableHeader({
             onClick={onCreate}
             type="button"
           >
-            + Upload Instructional Material
+            + Assign Instructional Material
           </button>
         )}
         <button
