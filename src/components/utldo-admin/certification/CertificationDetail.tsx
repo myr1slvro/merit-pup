@@ -1,6 +1,9 @@
 import React from "react";
 import CertificateUpload from "./CertificateUpload";
 import PdfPreview from "../../shared/evaluation/PdfPreview";
+import PriorPhaseSummary from "../utldo-approval/PriorPhaseSummary";
+import { useAuth } from "../../auth/AuthProvider";
+import { getIMERPIMECById } from "../../../api/imerpimec";
 
 interface CertificationIM {
   id: number;
@@ -41,9 +44,33 @@ export default function CertificationDetail({
   onAct,
   actionLoading,
 }: Props) {
-  const imType =
-    im.im_type ||
-    "IM";
+  const imType = im.im_type || "IM";
+  const { authToken } = useAuth();
+  const [priorIMERPIMEC, setPriorIMERPIMEC] = React.useState<any | null>(
+    (im as any).imerpimec ?? null
+  );
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadPrior() {
+      if (!authToken) return;
+      const priorId = (im as any).imerpimec_id ?? (im as any).imerpimec?.id;
+      if (!priorId) {
+        setPriorIMERPIMEC((im as any).imerpimec ?? null);
+        return;
+      }
+      try {
+        const res = await getIMERPIMECById(priorId, authToken);
+        if (!cancelled && !(res as any).error) setPriorIMERPIMEC(res);
+      } catch {
+        if (!cancelled) setPriorIMERPIMEC((im as any).imerpimec ?? null);
+      }
+    }
+    loadPrior();
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, im]);
 
   if (!im) return null;
 
@@ -92,9 +119,9 @@ export default function CertificationDetail({
           title="IM PDF"
         />
         <div className="w-1/3 border rounded p-2 flex flex-col text-xs gap-2 bg-white">
-          <div className="font-semibold">UEC / Prior Notes</div>
-          <div className="flex-1 overflow-auto whitespace-pre-wrap">
-            {im.notes || <span className="text-gray-500">No notes</span>}
+          <div className="font-semibold">Prior Phase Summary</div>
+          <div className="flex-1 overflow-auto">
+            <PriorPhaseSummary imerpimec={priorIMERPIMEC} />
           </div>
         </div>
       </div>
