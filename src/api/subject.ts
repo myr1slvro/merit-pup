@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/subjects";
+const API_URL = "http://127.0.0.1:8080/subjects";
 
 export async function createSubject(subject: any, token: string) {
   const res = await fetch(`${API_URL}/`, {

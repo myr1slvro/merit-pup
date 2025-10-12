@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/subject-departments";
+const API_URL = "http://127.0.0.1:8080/subject-departments";
 
 export async function createSubjectDepartment(
   subjectId: number,

@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/instructionalmaterials";
+const API_URL = "http://127.0.0.1:8080/instructionalmaterials";
 
 export async function uploadIMPdf(file: File, token: string) {
   const form = new FormData();

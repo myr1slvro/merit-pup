@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/college-included";
+const API_URL = "http://127.0.0.1:8080/college-included";
 
 export async function createAssociation(data: any, token: string) {
   const res = await fetch(`${API_URL}/`, {

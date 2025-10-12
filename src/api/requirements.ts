@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/requirements";
+const API_URL = "http://127.0.0.1:8080/requirements";
 
 export async function downloadRecommendationLetter(token: string) {
   const res = await fetch(`${API_URL}/recommendation-letter/download`, {
