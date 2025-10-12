@@ -46,14 +46,22 @@ export default function IMRowActions({
   const roleNorm = (role || "").toLowerCase();
 
   const statusNorm = String(row.status || "").toLowerCase();
+
+  // Faculty can upload revision when status is "For Resubmission"
   const canUploadRevision =
     !disabled &&
     statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
     role === "Faculty";
-  const canInitialUpload =
+
+  // Faculty can upload IM for the first time when s3_link is null (assigned but not yet uploaded)
+  const canInitialUpload = !disabled && !row.s3_link && roleNorm === "faculty";
+
+  // PIMEC/Admin can upload if no s3_link exists (override upload)
+  const canAdminUpload =
     !disabled &&
     !row.s3_link &&
     (roleNorm === "pimec" || roleNorm === "technical admin");
+
   const canDownload = !!row.s3_link || !!row.id;
   const canEvaluate =
     roleNorm === "pimec" &&
@@ -185,13 +193,17 @@ export default function IMRowActions({
 
   return (
     <div className="flex items-center gap-2">
-      {(canUploadRevision || canInitialUpload) && (
+      {(canUploadRevision || canInitialUpload || canAdminUpload) && (
         <button
           type="button"
           onClick={() => setOpenUpload(true)}
           className="text-xs px-2 py-1 rounded bg-meritRed text-white hover:bg-meritDarkRed"
         >
-          {canInitialUpload ? "Upload PDF" : "Upload Revision"}
+          {canInitialUpload
+            ? "Upload IM"
+            : canUploadRevision
+            ? "Upload Revision"
+            : "Upload PDF"}
         </button>
       )}
       {canDownload && (
@@ -245,7 +257,9 @@ export default function IMRowActions({
             onSubmit={handleUploadSubmit}
             className="relative bg-white rounded shadow-lg p-6 w-full max-w-lg z-10 flex flex-col gap-4"
           >
-            <h3 className="text-lg font-semibold">Upload Revised PDF</h3>
+            <h3 className="text-lg font-semibold">
+              {canInitialUpload ? "Upload IM" : "Upload Revised PDF"}
+            </h3>
             <div className="flex items-center gap-2">
               <label className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded border cursor-pointer hover:bg-gray-200 text-sm">
                 Browse...

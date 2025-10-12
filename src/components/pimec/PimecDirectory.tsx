@@ -218,7 +218,7 @@ export default function PimecDirectory() {
                   &times;
                 </button>
                 <h2 className="text-xl font-bold mb-4">
-                  Upload Instructional Material
+                  Assign Instructional Material
                 </h2>
                 <CreateIMForm
                   selectedCollege={selectedCollege}
