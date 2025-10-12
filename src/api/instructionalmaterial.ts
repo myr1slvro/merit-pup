@@ -1,9 +1,10 @@
 const API_URL = "http://127.0.0.1:8080/instructionalmaterials";
 
-export async function uploadIMPdf(file: File, token: string) {
+export async function uploadIMPdf(file: File, token: string, imId?: number) {
   const form = new FormData();
   form.append("pdf_file", file);
-  const res = await fetch(`${API_URL}/upload`, {
+  if (imId) form.append("im_id", String(imId));
+  const res = await fetch(`${API_URL}/upload${imId ? `?im_id=${imId}` : ""}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

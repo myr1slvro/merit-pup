@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  uploadIMPdf,
   updateInstructionalMaterial,
   downloadInstructionalMaterial,
   checkMissingSections,
@@ -120,15 +121,20 @@ export default function IMRowActions({
       const nextStatus = analysisIndicatesMissing
         ? STATUS_FOR_RESUBMISSION
         : "For PIMEC Evaluation";
-      const payload: any = {
-        pdf_file: file,
+      // First, upload the PDF and persist the s3_link for this IM
+      const uploadRes = await uploadIMPdf(file, authToken, row.id);
+      if (uploadRes?.error) throw new Error(uploadRes.error);
+
+      // Then update metadata (status / updated_by). Notes may already be persisted by upload,
+      // but include it to be safe.
+      const metaPayload: any = {
         status: nextStatus,
         notes: analysisNotes,
         updated_by: "system",
       };
       const updateRes = await updateInstructionalMaterial(
         row.id,
-        payload,
+        metaPayload,
         authToken
       );
       if (updateRes.error) throw new Error(updateRes.error);
