@@ -31,6 +31,9 @@ export default function useEvaluatorIMs(
         const list = Array.isArray(res)
           ? res
           : res?.instructional_materials || [];
+        // Backend now returns all relevant IMs based on status
+        // If needsOnly is true, filter to only "For PIMEC Evaluation"
+        // Otherwise show all (Assigned to Faculty, For PIMEC Evaluation, etc.)
         const filtered = needsOnly
           ? list.filter((im: any) => im.status === "For PIMEC Evaluation")
           : list;

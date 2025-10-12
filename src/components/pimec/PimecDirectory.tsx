@@ -23,7 +23,7 @@ export default function PimecDirectory() {
     "university" | "service" | "all"
   >("all");
   const [reloadTick, setReloadTick] = useState(0);
-  const [needsOnly, setNeedsOnly] = useState(true);
+  const [needsOnly, setNeedsOnly] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Auto-select first college (hidden in UI, but needed for hook)
