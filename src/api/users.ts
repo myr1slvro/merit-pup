@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/users";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/users`;
 
 export async function createUser(user: any, token: string) {
   const res = await fetch(`${API_URL}/`, {

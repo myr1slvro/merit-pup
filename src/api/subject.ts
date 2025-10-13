@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/subjects";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/subjects`;
 
 export async function createSubject(subject: any, token: string) {
   const res = await fetch(`${API_URL}/`, {

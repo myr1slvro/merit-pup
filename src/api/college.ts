@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/colleges";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/colleges`;
 
 export async function createCollege(college: any, token: string) {
   const res = await fetch(`${API_URL}/`, {

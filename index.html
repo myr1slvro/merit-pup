@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
+    <!-- <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; connect-src 'self' http://127.0.0.1:8080 http://localhost:5000 ws://localhost:5173 ws://127.0.0.1:5173; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; frame-src 'self' https://*.s3.amazonaws.com blob: data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self';"
-    />
+    /> -->
     <link rel="icon" type="image/svg+xml" href="/pup-logo.svg" />
     <link href="/src/globals.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,6 +19,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window._env_ = {};
+      fetch("/config.json")
+        .then((res) => res.json())
+        .then((config) => {
+          window._env_ = config;
+        });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

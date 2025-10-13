@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/departments";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/departments`;
 
 export const getCollegeIdFromIM = (im: any): number | undefined => {
   const raw = im?.college?.id ?? im?.college_id;

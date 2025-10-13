@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/subject-departments";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/subject-departments`;
 
 export async function createSubjectDepartment(
   subjectId: number,

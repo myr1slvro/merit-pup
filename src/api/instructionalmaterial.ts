@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/instructionalmaterials";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/instructionalmaterials`;
 
 export async function uploadIMPdf(file: File, token: string, imId?: number) {
   const form = new FormData();

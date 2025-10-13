@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8080/department-included";
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/department-included`;
 
 export async function createAssociation(
   department_id: number,

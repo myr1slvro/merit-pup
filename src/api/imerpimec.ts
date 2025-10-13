@@ -4,7 +4,8 @@ import {
   UpdateIMERPIMECPayload,
 } from "../types/imerpimec";
 
-const API_URL = "http://127.0.0.1:8080/imerpimec"; // Matches blueprint url_prefix
+import { API_BASE_URL } from "./config";
+const API_URL = `${API_BASE_URL}/imerpimec`; // Matches blueprint url_prefix
 
 async function jsonOrText(res: Response) {
   const ct = res.headers.get("content-type") || "";
