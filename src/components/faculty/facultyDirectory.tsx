@@ -73,7 +73,12 @@ export default function FacultyDirectory() {
           : univ?.universityims || [];
         const sims: any[] = Array.isArray(serv) ? serv : serv?.serviceims || [];
 
-        // Collect all unique subject_ids from both IM arrays
+        // Show IMs immediately
+        setUniversityIMs(uims);
+        setServiceIMs(sims);
+        setIMsLoading(false);
+
+        // Load subject names in background
         const allIMs = [...uims, ...sims];
         const subjectIds = Array.from(
           new Set(
@@ -85,38 +90,43 @@ export default function FacultyDirectory() {
 
         // Fetch all subject names in parallel
         const subjectMap: Record<number, string> = {};
-        await Promise.all(
+        Promise.all(
           subjectIds.map(async (id) => {
             try {
               const subj = await getSubjectById(id, authToken);
               if (subj && subj.name) subjectMap[id] = subj.name;
             } catch {}
           })
-        );
+        ).then(() => {
+          // Attach subject name to each IM
+          const attachSubjectName = (ims: any[]) =>
+            ims.map((im) =>
+              im.subject_id && subjectMap[im.subject_id]
+                ? {
+                    ...im,
+                    subject: {
+                      ...(im.subject || {}),
+                      name: subjectMap[im.subject_id],
+                    },
+                  }
+                : im
+            );
 
-        // Attach subject name to each IM
-        const attachSubjectName = (ims: any[]) =>
-          ims.map((im) =>
-            im.subject_id && subjectMap[im.subject_id]
-              ? {
-                  ...im,
-                  subject: {
-                    ...(im.subject || {}),
-                    name: subjectMap[im.subject_id],
-                  },
-                }
-              : im
-          );
-
-        setUniversityIMs(attachSubjectName(uims));
-        setServiceIMs(attachSubjectName(sims));
+          setUniversityIMs(attachSubjectName(uims));
+          setServiceIMs(attachSubjectName(sims));
+        });
       })
       .catch((e) => {
         setIMsError("Failed to load IMs for this college.");
         setUniversityIMs([]);
         setServiceIMs([]);
       })
-      .finally(() => setIMsLoading(false));
+      .catch((e) => {
+        setIMsError("Failed to load IMs for this college.");
+        setUniversityIMs([]);
+        setServiceIMs([]);
+        setIMsLoading(false);
+      });
   }, [selectedCollege?.id, authToken, reloadTick]);
 
   // Always fetch all instructional materials (first page) so we can enrich per-toggle tables with status/version metadata

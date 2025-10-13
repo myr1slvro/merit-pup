@@ -89,6 +89,7 @@ export default function UserManagementTable({
 
   const [users, setUsers] = useState<User[]>([]);
   const [collegeMap, setCollegeMap] = useState<CollegeMap>({});
+  const [collegeLoading, setCollegeLoading] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -103,11 +104,14 @@ export default function UserManagementTable({
 
   // Derive string of colleges for a user (memoized per user id map)
   const getCollegesString = useCallback(
-    (user: User) =>
-      typeof user.id === "number" && collegeMap[user.id]
-        ? collegeMap[user.id].join(", ")
-        : "",
-    [collegeMap]
+    (user: User) => {
+      if (typeof user.id === "number") {
+        if (collegeLoading[user.id]) return "Loading...";
+        if (collegeMap[user.id]) return collegeMap[user.id].join(", ");
+      }
+      return "";
+    },
+    [collegeMap, collegeLoading]
   );
 
   // Server-side sorted list already comes sorted; just pass through
@@ -157,9 +161,17 @@ export default function UserManagementTable({
               res?.users?.length === (res?.per_page ?? 10))
         );
         setHasPrev(currentPage > 1);
+        setLoading(false);
 
+        // Load colleges in background
         const map: CollegeMap = {};
-        await Promise.all(
+        const loadingMap: Record<number, boolean> = {};
+        userList.forEach(u => {
+          if (u.id != null) loadingMap[u.id] = true;
+        });
+        setCollegeLoading(loadingMap);
+        
+        Promise.all(
           userList.map(async (u) => {
             if (u.id == null) return;
             try {
@@ -195,14 +207,15 @@ export default function UserManagementTable({
               map[u.id] = [];
             }
           })
-        );
-        setCollegeMap(map);
+        ).then(() => {
+          setCollegeMap(map);
+          setCollegeLoading({});
+        });
       } catch {
         setUsers([]);
         setCollegeMap({});
         setHasNext(false);
         setHasPrev(false);
-      } finally {
         setLoading(false);
       }
     },
