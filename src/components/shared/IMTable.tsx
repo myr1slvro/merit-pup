@@ -6,6 +6,7 @@ import IMRowActions from "../shared/IMRowActions";
 import { useAuth } from "../auth/AuthProvider";
 import { getAllUsersForIM } from "../../api/author";
 import { getUserById } from "../../api/users";
+import useUserColleges from "../faculty/useUserColleges";
 
 export type IMTableType = "university" | "service" | "all";
 
@@ -65,6 +66,12 @@ export default function IMTable(
   const userCache = useRef<Map<number, any>>(new Map());
   const seqRef = useRef(0);
 
+  const { colleges: userColleges } = useUserColleges();
+  const userCollegeIds = useMemo(
+    () => (userColleges || []).map((c: any) => Number(c.id)).filter(Boolean),
+    [userColleges]
+  );
+
   const pickStaffId = (u: any): string | undefined => {
     if (!u) return undefined;
     return u.staff_id || undefined;
@@ -83,9 +90,9 @@ export default function IMTable(
     let cancelled = false;
 
     (async () => {
+      // Fetch authors for each IM, fetch missing users and compute labels + canAct map
       try {
-        // 1) Fetch authors (user IDs) for all IMs in parallel
-        const imToUserIdsArr = await Promise.all(
+        const imToUserIdsArr: Array<[number, number[]]> = await Promise.all(
           imIds.map(async (imId) => {
             try {
               const uids = await getAllUsersForIM(imId, token);
@@ -93,41 +100,38 @@ export default function IMTable(
                 new Set((uids || []).map((x: any) => Number(x)).filter(Boolean))
               );
               return [imId, unique] as [number, number[]];
-            } catch {
+            } catch (err) {
               return [imId, []] as [number, number[]];
             }
           })
         );
 
         const imToUserIds = new Map<number, number[]>(imToUserIdsArr);
-        // 2) Build global set of user IDs to fetch
-        const allUserIds = new Set<number>();
-        for (const [, uids] of imToUserIds) {
-          for (const uid of uids) allUserIds.add(uid);
-        }
 
-        // 3) Determine which users are missing from cache
+        // collect all user ids and fetch missing
+        const allUserIds = new Set<number>();
+        for (const [, uids] of imToUserIds)
+          for (const uid of uids) allUserIds.add(uid);
+
         const missing = Array.from(allUserIds).filter(
           (uid) => !userCache.current.has(uid)
         );
-
-        // 4) Fetch missing users in parallel
         await Promise.all(
           missing.map(async (uid) => {
             try {
               const u = await getUserById(uid, token);
               const userObj = u?.user || u;
               userCache.current.set(uid, userObj);
-            } catch {
-              // Leave uncached; labels will fallback to IDs
+            } catch (err) {
+              // ignore
             }
           })
         );
 
-        // 5) Build labels and authorship per IM
         const entries: Record<number, string> = {};
         const canAct: Record<number, boolean> = {};
         const me = Number(currentUser?.id) || undefined;
+
         for (const [imId, uids] of imToUserIds) {
           const labels = uids.map((uid) => {
             const u = userCache.current.get(uid);
@@ -135,15 +139,9 @@ export default function IMTable(
             const last = pickLastName(u);
             return last ? `${staff} – ${last}` : staff;
           });
-          const joined = Array.from(new Set(labels.filter(Boolean))).join(", ");
-          entries[imId] = joined || "-";
+          entries[imId] =
+            Array.from(new Set(labels.filter(Boolean))).join(", ") || "-";
 
-          // Permission logic:
-          // 1. Author always can act.
-          // 2. PIMEC can act when status is For PIMEC Evaluation.
-          // 3. UTLDO Admin can act when status is For UTLDO Evaluation.
-          // 4. Technical Admin can always act.
-          // 5. Support comma or slash separated roles passed via actionsRole prop.
           let has = me ? uids.includes(me) : false;
           if (!has) {
             const rawRoles = (
@@ -160,20 +158,42 @@ export default function IMTable(
                 .map((r: string) => r.trim())
                 .filter(Boolean)
             );
+
             const row = data.find((d) => Number(d.id) === imId);
-            const statusNorm = String(row?.status || "").toLowerCase();
-            if (rolesSet.has("technical admin")) {
-              has = true; // global power
-            } else if (
+            let imCollegeId: number | undefined = undefined;
+            if (row) {
+              imCollegeId =
+                Number(row.college_id || row.college?.id) || undefined;
+              const depId = row.department_id || row.department?.id;
+              if (!imCollegeId && depId) {
+                const depCache = getDepartmentCacheEntry(depId);
+                if (depCache?.college_id)
+                  imCollegeId = Number(depCache.college_id);
+              }
+            }
+
+            // Grant PIMEC elevated view within their own colleges
+            if (
               rolesSet.has("pimec") &&
-              statusNorm === "for pimec evaluation"
+              imCollegeId &&
+              userCollegeIds.includes(imCollegeId)
             ) {
               has = true;
-            } else if (
-              (rolesSet.has("utldo admin") || rolesSet.has("utldo")) &&
-              statusNorm === "for utldo evaluation"
-            ) {
-              has = true;
+            } else {
+              const statusNorm = String(row?.status || "").toLowerCase();
+              if (rolesSet.has("technical admin")) {
+                has = true;
+              } else if (
+                rolesSet.has("pimec") &&
+                statusNorm === "for pimec evaluation"
+              ) {
+                has = true;
+              } else if (
+                (rolesSet.has("utldo admin") || rolesSet.has("utldo")) &&
+                statusNorm === "for utldo evaluation"
+              ) {
+                has = true;
+              }
             }
           }
           canAct[imId] = has;
@@ -183,7 +203,7 @@ export default function IMTable(
           setAuthorsStaffIdsByIm(entries);
           setCanActByIm(canAct);
         }
-      } catch {
+      } catch (err) {
         if (!cancelled && seq === seqRef.current) {
           const fallback: Record<number, string> = {};
           const fallbackCan: Record<number, boolean> = {};
@@ -198,7 +218,14 @@ export default function IMTable(
     return () => {
       cancelled = true;
     };
-  }, [data, token, currentUser?.id]);
+  }, [
+    data,
+    token,
+    currentUser?.id,
+    userCollegeIds,
+    actionsRole,
+    currentUser?.role,
+  ]);
 
   if (loading)
     return (
@@ -305,17 +332,51 @@ export default function IMTable(
                   <div className="min-w-[14rem] flex items-center justify-center gap-2 text-center">
                     {canActByIm[Number(im.id)] ? (
                       <>
-                        <IMRowActions
-                          row={im}
-                          onChanged={() => onRefresh && onRefresh()}
-                          role={
+                        {
+                          // compute im's college for this row so we can decide
+                          // whether to temporarily elevate PIMEC to Technical Admin
+                        }
+                        {(() => {
+                          let imCollegeId: number | undefined = undefined;
+                          imCollegeId =
+                            Number(im.college_id || im.college?.id) ||
+                            undefined;
+                          const depId = im.department_id || im.department?.id;
+                          if (!imCollegeId && depId) {
+                            const depCache = getDepartmentCacheEntry(depId);
+                            if (depCache?.college_id)
+                              imCollegeId = Number(depCache.college_id);
+                          }
+                          const rawRole = (
                             actionsRole ||
                             currentUser?.role ||
                             (window as any)?.currentUserRole ||
-                            "Faculty"
-                          }
-                        />
-                        {extraActions ? extraActions(im) : null}
+                            ""
+                          ).toString();
+                          const isPimec = rawRole
+                            .toLowerCase()
+                            .includes("pimec");
+                          const roleForRow =
+                            isPimec &&
+                            imCollegeId &&
+                            userCollegeIds.includes(imCollegeId)
+                              ? "Technical Admin"
+                              : actionsRole ||
+                                currentUser?.role ||
+                                (window as any)?.currentUserRole ||
+                                "Faculty";
+
+                          return (
+                            <>
+                              <IMRowActions
+                                row={im}
+                                onChanged={() => onRefresh && onRefresh()}
+                                role={roleForRow}
+                              />
+                              {extraActions ? extraActions(im) : null}
+                            </>
+                          );
+                        })()}
                       </>
                     ) : (
                       <span className="inline-flex items-center justify-center px-2 py-1 text-gray-600 text-xs leading-snug max-w-[13rem]">

@@ -44,6 +44,8 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
   const [authorIds, setAuthorIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [initialAuthorIds, setInitialAuthorIds] = useState<number[]>([]);
+  const searchRef = React.useRef<HTMLInputElement | null>(null);
 
   // Load current authors + department users
   useEffect(() => {
@@ -54,7 +56,10 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
       setError(null);
       try {
         const existingIds = await getAllUsersForIM(imId, authToken);
-        if (!cancelled) setAuthorIds(existingIds);
+        if (!cancelled) {
+          setAuthorIds(existingIds);
+          setInitialAuthorIds(existingIds);
+        }
         // Pull department users
         if (departmentId) {
           const resp: any = await getUsersForDepartment(
@@ -90,6 +95,27 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
               )
             );
             for (const f of fetched) {
+              if (f && typeof f.id === "number") users.push(f as any);
+            }
+          }
+          // Ensure any currently linked authors (existingIds) are included
+          // in the list even if they are not present in the department users.
+          const missingExisting = (existingIds || []).filter(
+            (id: number) => !users.some((u) => u.id === id)
+          );
+          if (missingExisting.length) {
+            const fetchedExisting = await Promise.all(
+              missingExisting.map((id) =>
+                getUserById(id, authToken)
+                  .then((u) =>
+                    u?.user
+                      ? { ...u.user, id: Number(u.user.id) }
+                      : { ...u, id: Number(u.id) }
+                  )
+                  .catch(() => null)
+              )
+            );
+            for (const f of fetchedExisting) {
               if (f && typeof f.id === "number") users.push(f as any);
             }
           }
@@ -129,17 +155,49 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
     };
   }, [isOpen, authToken, imId, departmentId]);
 
+  useEffect(() => {
+    if (isOpen) {
+      // focus search for quick filtering
+      setTimeout(() => searchRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
+
   function toggleAuthor(id: number) {
     setAuthorIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   }
 
+  // Show linked authors at the top: preserve their current order from `authorIds`,
+  // then show remaining users sorted by display name. Apply filtering after ordering.
+  const orderedUsers = React.useMemo(() => {
+    if (!allUsers || allUsers.length === 0) return [] as UserLike[];
+    const byId = new Map<number, UserLike>();
+    for (const u of allUsers) if (u.id != null) byId.set(u.id, u);
+
+    const top: UserLike[] = [];
+    // Use authorIds (current selection) to place already-linked authors first.
+    for (const id of authorIds) {
+      const u = byId.get(id);
+      if (u) {
+        top.push(u);
+        byId.delete(id);
+      }
+    }
+
+    // Remaining users sorted by formatted name
+    const rest = Array.from(byId.values()).sort((a, b) =>
+      formatUser(a).localeCompare(formatUser(b))
+    );
+
+    return [...top, ...rest];
+  }, [allUsers, authorIds]);
+
   const filtered = query.trim()
-    ? allUsers.filter((u) =>
+    ? orderedUsers.filter((u) =>
         formatUser(u).toLowerCase().includes(query.trim().toLowerCase())
       )
-    : allUsers;
+    : orderedUsers;
 
   async function handleSave() {
     if (!authToken) return;
@@ -169,6 +227,13 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
     }
   }
 
+  const hasChanged = () => {
+    if (initialAuthorIds.length !== authorIds.length) return true;
+    const setA = new Set(initialAuthorIds);
+    for (const id of authorIds) if (!setA.has(id)) return true;
+    return false;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -178,28 +243,40 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
         onClick={() => !saving && onClose()}
       />
       <div className="relative bg-white rounded shadow-lg p-6 w-full max-w-xl z-10 flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Edit Authors</h3>
+        <div className="flex items-start justify-between">
+          <h3 className="text-lg font-semibold">Edit Authors</h3>
+          <div className="text-sm text-gray-600">
+            Selected: <span className="font-medium">{authorIds.length}</span>
+          </div>
+        </div>
+
         {error && <div className="text-sm text-red-600">{error}</div>}
+
         <input
+          ref={searchRef}
           type="text"
           className="w-full rounded border px-3 py-2 text-sm"
           placeholder="Search users..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={loading || saving}
+          aria-label="Search users"
         />
-        <div className="max-h-64 overflow-auto border rounded p-2 space-y-1 text-sm">
+
+        <div className="max-h-64 overflow-auto border rounded p-2 divide-y text-sm">
           {loading ? (
-            <div className="text-gray-500">Loading...</div>
+            <div className="p-2 text-gray-500">Loading users…</div>
           ) : filtered.length === 0 ? (
-            <div className="text-gray-500">No users found for department.</div>
+            <div className="p-2 text-gray-500">
+              No users found for department.
+            </div>
           ) : (
             filtered.map((u) => {
               const checked = authorIds.includes(u.id);
               return (
                 <label
                   key={u.id}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-3 p-2 cursor-pointer hover:bg-gray-50"
                 >
                   <input
                     type="checkbox"
@@ -207,12 +284,20 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
                     onChange={() => toggleAuthor(u.id)}
                     disabled={saving}
                   />
-                  <span>{formatUser(u)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {formatUser(u)}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {u.email || ""}
+                    </div>
+                  </div>
                 </label>
               );
             })
           )}
         </div>
+
         <div className="flex justify-end gap-2">
           <button
             type="button"
@@ -224,9 +309,9 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
           </button>
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || !hasChanged()}
             onClick={handleSave}
-            className="px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+            className="px-4 py-1 text-sm bg-gradient-to-r from-meritRed to-meritDarkRed text-white rounded disabled:opacity-50 disabled:bg-meritRed"
           >
             {saving ? "Saving..." : "Save"}
           </button>
