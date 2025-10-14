@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getAllColleges } from "../../../api/college";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 // Helper to get max birthdate (18 years before today)
 function getMaxBirthdate() {
@@ -65,7 +67,40 @@ export default function UserCreationForm({
     }
     fetchAllColleges();
   }, []);
+
+  // Auto-select and lock all colleges for Technical Admin and UTLDO Admin
+  useEffect(() => {
+    const roleNorm = (form.role || "").toLowerCase();
+    const isAdminRole =
+      roleNorm === "technical admin" || roleNorm === "utldo admin";
+
+    if (isAdminRole && colleges.length > 0) {
+      // Select all colleges
+      const allCollegeIds = colleges.map((c) => c.id);
+      const currentSelection = form.colleges || [];
+
+      // Only update if not already all selected
+      if (
+        currentSelection.length !== allCollegeIds.length ||
+        !allCollegeIds.every((id) => currentSelection.includes(id))
+      ) {
+        onChange({
+          target: { name: "colleges", value: allCollegeIds },
+        } as any);
+      }
+    }
+  }, [form.role, colleges, form.colleges, onChange]);
+
   function handleCollegeCheck(id: number) {
+    // Prevent changing colleges for admin roles
+    const roleNorm = (form.role || "").toLowerCase();
+    const isAdminRole =
+      roleNorm === "technical admin" || roleNorm === "utldo admin";
+
+    if (isAdminRole) {
+      return; // Don't allow changes
+    }
+
     const selected = Array.isArray(form.colleges) ? form.colleges : [];
     let newValue: number[];
     if (selected.includes(id)) {
@@ -85,11 +120,20 @@ export default function UserCreationForm({
   const passwordPattern =
     /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
+  function handlePhoneChange(value: string) {
+    // PhoneInput provides the value with country code
+    onChange({
+      target: { name: "phone_number", value },
+    } as any);
+    // Clear error when typing
+    if (phoneError) setPhoneError("");
+  }
+
   function handlePhoneBlur() {
-    if (form.phone_number && !phonePattern.test(form.phone_number)) {
-      setPhoneError(
-        "Phone number must be 10 to 15 digits, numbers only, may start with +."
-      );
+    // Validate phone number (basic check - at least 10 digits)
+    const digitsOnly = (form.phone_number || "").replace(/\D/g, "");
+    if (form.phone_number && digitsOnly.length < 10) {
+      setPhoneError("Phone number must have at least 10 digits.");
     } else {
       setPhoneError("");
     }
@@ -108,12 +152,14 @@ export default function UserCreationForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     let valid = true;
-    if (form.phone_number && !phonePattern.test(form.phone_number)) {
-      setPhoneError(
-        "Phone number must be 10 to 15 digits, numbers only, may start with +."
-      );
+
+    // Validate phone number
+    const digitsOnly = (form.phone_number || "").replace(/\D/g, "");
+    if (form.phone_number && digitsOnly.length < 10) {
+      setPhoneError("Phone number must have at least 10 digits.");
       valid = false;
     }
+
     if (form.password && !passwordPattern.test(form.password)) {
       setPasswordError(
         "Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character."
@@ -139,30 +185,49 @@ export default function UserCreationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <span className="text-xs text-gray-500">Colleges</span>
+        <span className="text-xs text-gray-500">
+          Colleges
+          {((form.role || "").toLowerCase() === "technical admin" ||
+            (form.role || "").toLowerCase() === "utldo admin") && (
+            <span className="ml-2 text-xs text-meritRed font-semibold">
+              (All colleges auto-selected for this role)
+            </span>
+          )}
+        </span>
         {collegesLoading ? (
           <div className="text-sm text-gray-400">Loading colleges...</div>
         ) : (
           <div className="flex flex-wrap gap-2 mt-1">
-            {colleges.map((college) => (
-              <label
-                key={college.id}
-                className="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={!!(form.colleges || []).includes(college.id)}
-                  onChange={() => handleCollegeCheck(college.id)}
-                  className="accent-meritRed"
-                />
-                <span className="text-sm">
-                  {college.name}{" "}
-                  <span className="text-xs text-gray-500">
-                    ({college.abbreviation})
+            {colleges.map((college) => {
+              const roleNorm = (form.role || "").toLowerCase();
+              const isLocked =
+                roleNorm === "technical admin" || roleNorm === "utldo admin";
+
+              return (
+                <label
+                  key={college.id}
+                  className={`flex items-center gap-1 border rounded px-2 py-1 ${
+                    isLocked
+                      ? "bg-gray-100 cursor-not-allowed opacity-75"
+                      : "cursor-pointer hover:border-meritRed"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!(form.colleges || []).includes(college.id)}
+                    onChange={() => handleCollegeCheck(college.id)}
+                    disabled={isLocked}
+                    className="accent-meritRed"
+                  />
+                  <span className="text-sm">
+                    {college.name}{" "}
+                    <span className="text-xs text-gray-500">
+                      ({college.abbreviation})
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
         )}
       </div>
@@ -258,15 +323,20 @@ export default function UserCreationForm({
       <div className="flex gap-2">
         <div className="flex-1">
           <span className="text-xs text-gray-500">Phone</span>
-          <input
-            type="tel"
-            name="phone_number"
+          <PhoneInput
+            country={"ph"}
             value={form.phone_number ?? ""}
-            onChange={onChange}
+            onChange={handlePhoneChange}
             onBlur={handlePhoneBlur}
-            className="mt-1 block w-full border rounded px-2 py-1"
-            inputMode="tel"
-            required
+            inputClass="!w-full"
+            containerClass="mt-1"
+            inputStyle={{
+              width: "100%",
+              height: "36px",
+              borderRadius: "4px",
+            }}
+            enableSearch
+            disableSearchIcon
           />
           {phoneError && (
             <div className="text-xs text-red-600 mt-1">{phoneError}</div>
