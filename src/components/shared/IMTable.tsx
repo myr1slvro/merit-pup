@@ -310,6 +310,7 @@ export default function IMTable(
                           onChanged={() => onRefresh && onRefresh()}
                           role={
                             actionsRole ||
+                            currentUser?.role ||
                             (window as any)?.currentUserRole ||
                             "Faculty"
                           }
