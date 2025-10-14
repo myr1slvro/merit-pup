@@ -406,7 +406,7 @@ function applyDepartmentFilter(
 }
 
 function filterByFacultyStatuses(rows: any[]): any[] {
-  const ALLOWED_FACULTY_STATUSES = ["assigned to faculty", "for resubmission"];
+  const ALLOWED_FACULTY_STATUSES = ["assigned to faculty", "for resubmission", "for certification", "certified", "published"];
 
   return rows.filter((row) => {
     const statusNorm = String(row.status || "").toLowerCase();
