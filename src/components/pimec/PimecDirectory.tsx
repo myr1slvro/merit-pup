@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaUniversity } from "react-icons/fa";
 import useUserColleges from "../faculty/useUserColleges";
 import CollegeButtonsRow from "../shared/CollegeButtonsRow";
-import PIMECIMTableHeader from "./PIMECIMTableHeader";
+import IMTableHeader from "../shared/IMTableHeader";
 import IMTable from "../shared/IMTable";
 import useEvaluatorIMs from "./useEvaluatorIMs";
 import PimecIncludedDepartmentFilter from "./PimecIncludedDepartmentFilter";
@@ -20,6 +20,7 @@ export default function PimecDirectory() {
   const [reloadTick, setReloadTick] = useState(0);
   const [needsOnly, setNeedsOnly] = useState(true); // Show only "For PIMEC Evaluation" IMs
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Auto-select first college
   useEffect(() => {
@@ -54,23 +55,52 @@ export default function PimecDirectory() {
     [collegeFiltered]
   );
 
+  // Helper to apply subject name search (case-insensitive) to a list of IMs
+  const applySearch = (rows: any[]) => {
+    const q = (searchTerm || "").trim().toLowerCase();
+    if (!q) return rows;
+    return (rows || []).filter((im: any) => {
+      const subjectName = (
+        im.subject_name ||
+        (im.subject && im.subject.name) ||
+        ""
+      ).toString();
+      return subjectName.toLowerCase().includes(q);
+    });
+  };
+
   // Apply department filter to university IMs
   const filteredUniversity = useMemo(() => {
-    if (selectedDepartmentId === null) return universityRows;
-    return universityRows.filter(
-      (im: any) => im.department_id === selectedDepartmentId
-    );
+    let rows = universityRows;
+    if (selectedDepartmentId !== null) {
+      rows = rows.filter(
+        (im: any) => im.department_id === selectedDepartmentId
+      );
+    }
+    return applySearch(rows);
   }, [universityRows, selectedDepartmentId]);
 
   // Apply department filter to all IMs (exclude service IMs when department selected)
   const filteredAll = useMemo(() => {
-    if (selectedDepartmentId === null) return collegeFiltered || [];
-    return (collegeFiltered || []).filter((im: any) => {
+    // Start with collegeFiltered and apply department/service rules
+    const base = (collegeFiltered || []).filter((im: any) => {
       const isService = (im.im_type || "").toLowerCase() === "service";
+      if (selectedDepartmentId === null) {
+        // When no department selected, exclude service IMs for the "All" view
+        return !isService;
+      }
       if (isService) return false;
       return im.department_id === selectedDepartmentId;
     });
-  }, [collegeFiltered, selectedDepartmentId]);
+
+    return applySearch(base);
+  }, [collegeFiltered, selectedDepartmentId, searchTerm]);
+
+  // Apply search to service rows when viewing service IMs
+  const displayedServiceRows = useMemo(
+    () => applySearch(serviceRows),
+    [serviceRows, searchTerm]
+  );
 
   function handleCollegeSelect(c: any) {
     setSelectedCollege(c);
@@ -121,11 +151,13 @@ export default function PimecDirectory() {
         <div className="border-t border-gray-300 my-4" />
 
         <div className="flex flex-col gap-2 mb-2">
-          <PIMECIMTableHeader
+          <IMTableHeader
             activeIMType={activeIMType}
             setActiveIMType={setActiveIMType}
             onCreate={() => setShowCreateModal(true)}
             onRefresh={() => setReloadTick((n) => n + 1)}
+            onSearch={setSearchTerm}
+            searchTerm={searchTerm}
           />
 
           <div>
@@ -156,7 +188,7 @@ export default function PimecDirectory() {
             ) : activeIMType === "service" ? (
               <IMTable
                 type="service"
-                data={serviceRows as any}
+                data={displayedServiceRows as any}
                 loading={loading}
                 error={error}
                 actionsRole="PIMEC"

@@ -79,9 +79,7 @@ export default function LoginForm() {
                 <input type="checkbox" className="accent-meritRed" />
                 Remember Me
               </label>
-              <button type="button" className="text-meritRed hover:underline">
-                Forgot Password?
-              </button>
+             
             </div>
             {error && (
               <div className="text-meritRed text-sm text-center">{error}</div>
