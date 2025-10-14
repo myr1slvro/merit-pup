@@ -3,16 +3,11 @@ import { FaUniversity } from "react-icons/fa";
 import { useAuth } from "../../auth/AuthProvider";
 import useUserColleges from "../../faculty/useUserColleges";
 import CollegeButtonsRow from "../../shared/CollegeButtonsRow";
-import DepartmentFilter from "../../shared/DepartmentFilter";
 import IMTableHeader from "../../shared/IMTableHeader";
 import IMTable from "../../shared/IMTable";
 import useUecIMs from "./useUecIMs";
 import { useNavigate } from "react-router-dom";
-import useDepartmentLabels from "../../shared/useDepartmentLabels";
-import {
-  getDepartmentCacheEntry,
-  getDepartmentsByIdsCached,
-} from "../../../api/department";
+import UtldoIncludedDepartmentFilter from "./UtldoIncludedDepartmentFilter";
 
 export default function UtldoEvaluationDirectory() {
   const { user } = useAuth();
@@ -35,11 +30,12 @@ export default function UtldoEvaluationDirectory() {
     if (colleges?.length && !selectedCollege) setSelectedCollege(colleges[0]);
   }, [colleges, selectedCollege]);
 
-  const { loading, error, departmentIds, collegeFiltered } = useUecIMs(
-    selectedCollege,
+  const effectiveSelectedCollege = selectedCollege || colleges?.[0] || null;
+
+  const { loading, error, collegeFiltered, deptCounts } = useUecIMs(
+    effectiveSelectedCollege,
     reloadTick
   );
-  const { labels: deptLabels } = useDepartmentLabels(departmentIds);
 
   useEffect(() => {
     setSelectedDepartmentId(null);
@@ -61,6 +57,33 @@ export default function UtldoEvaluationDirectory() {
       (im: any) => im.department_id === selectedDepartmentId
     );
   }, [universityRows, selectedDepartmentId]);
+
+  // Apply department filter to all IMs (exclude service IMs when department selected)
+  const filteredAll = useMemo(() => {
+    if (selectedDepartmentId === null) return allRows;
+    return allRows.filter((im: any) => {
+      const isService = (im.im_type || "").toLowerCase() === "service";
+      if (isService) return false;
+      return im.department_id === selectedDepartmentId;
+    });
+  }, [allRows, selectedDepartmentId]);
+
+  function handleCollegeSelect(c: any) {
+    setSelectedCollege(c);
+    setSelectedDepartmentId(null);
+    setReloadTick((n) => n + 1);
+  }
+
+  function handleDepartmentSelect(
+    deptId: number | null,
+    collegeId?: number | null
+  ) {
+    setSelectedDepartmentId(deptId);
+    if (collegeId && (!selectedCollege || selectedCollege.id !== collegeId)) {
+      const found = colleges?.find((c: any) => c.id === collegeId);
+      if (found) setSelectedCollege(found);
+    }
+  }
 
   function renderTable(rows: any[]) {
     return (
@@ -97,31 +120,31 @@ export default function UtldoEvaluationDirectory() {
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
         <FaUniversity className="text-meritRed" /> UTLDO Evaluation
       </h2>
-      <CollegeButtonsRow
-        colleges={colleges}
-        selectedCollege={selectedCollege}
-        loading={collegesLoading}
-        error={collegesError}
-        onSelect={setSelectedCollege}
-      />
+
+      <div className="flex flex-col gap-3 mb-4">
+        <CollegeButtonsRow
+          colleges={colleges}
+          selectedCollege={selectedCollege}
+          loading={collegesLoading}
+          error={collegesError}
+          onSelect={handleCollegeSelect}
+        />
+
+        <UtldoIncludedDepartmentFilter
+          selectedDepartmentId={selectedDepartmentId}
+          counts={deptCounts}
+          filterCollegeId={effectiveSelectedCollege?.id || null}
+          onSelect={handleDepartmentSelect}
+        />
+      </div>
+
+      <div className="border-t border-gray-300 my-4" />
+
       {selectedCollege && (
         <div className="flex flex-col">
           <h3 className="text-xl font-semibold mb-2 text-meritRed">
             {selectedCollege.name}
           </h3>
-          <DepartmentFilter
-            departmentIds={departmentIds}
-            selectedDepartmentId={selectedDepartmentId}
-            onSelect={setSelectedDepartmentId}
-            getLabel={(id) => {
-              const entry = getDepartmentCacheEntry(id);
-              if (entry)
-                return entry.abbreviation || entry.name || `Dept #${id}`;
-              // Fallback until cache filled
-              return `Dept #${id}`;
-            }}
-          />
-          <div className="border-t border-gray-300 my-4" />
           <div className="flex flex-col gap-2 mb-2">
             <IMTableHeader
               activeIMType={activeIMType}
@@ -139,7 +162,7 @@ export default function UtldoEvaluationDirectory() {
               ) : activeIMType === "service" ? (
                 renderTable(serviceRows as any)
               ) : (
-                renderTable(allRows as any)
+                renderTable(filteredAll as any)
               )}
             </div>
           </div>

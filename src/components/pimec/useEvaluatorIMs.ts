@@ -7,7 +7,7 @@ import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 
 export default function useEvaluatorIMs(
-  selectedCollege: any,
+  selectedCollege: any, // Single selected college object
   reloadTick: number,
   departmentId?: number | null,
   needsOnly?: boolean
@@ -50,6 +50,7 @@ export default function useEvaluatorIMs(
       setBaseServiceIMs([]);
       return;
     }
+
     Promise.all([
       getUniversityIMsByCollege(selectedCollege.id, authToken),
       getServiceIMsByCollege(selectedCollege.id, authToken),
@@ -108,6 +109,7 @@ export default function useEvaluatorIMs(
       setDepartmentIds([]);
       return;
     }
+
     getDepartmentsByCollegeId(selectedCollege.id, authToken)
       .then((deps) => {
         const ids = Array.isArray(deps) ? deps.map((d: any) => d.id) : [];

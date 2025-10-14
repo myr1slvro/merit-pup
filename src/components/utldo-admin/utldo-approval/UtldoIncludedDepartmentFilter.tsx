@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../auth/AuthProvider";
+import { useAuth } from "../../auth/AuthProvider";
 import {
   getDepartmentsByIdsCached,
   getDepartmentCacheEntry,
   getDepartmentsByCollegeId,
-} from "../../api/department";
+} from "../../../api/department";
 
 interface DeptAssoc {
   department_id: number;
@@ -14,6 +14,7 @@ interface DeptAssoc {
 interface DepartmentCountMap {
   [deptId: number]: number;
 }
+
 interface Props {
   selectedDepartmentId: number | null;
   onSelect: (deptId: number | null, collegeId?: number) => void;
@@ -23,7 +24,7 @@ interface Props {
   onDepartmentsLoaded?: (assocs: DeptAssoc[], deptIds: number[]) => void;
 }
 
-export default function PimecIncludedDepartmentFilter({
+export default function UtldoIncludedDepartmentFilter({
   selectedDepartmentId,
   onSelect,
   className = "",
@@ -37,7 +38,7 @@ export default function PimecIncludedDepartmentFilter({
   const [error, setError] = useState<string | null>(null);
 
   // Fetch departments for selected college
-  // PIMEC needs to see all departments in the selected college to evaluate IMs
+  // UTLDO needs to see all departments in the selected college to approve IMs
   useEffect(() => {
     if (!authToken || !filterCollegeId) {
       setDepartmentIds([]);
@@ -106,7 +107,7 @@ export default function PimecIncludedDepartmentFilter({
   if (!departmentIds.length) {
     return (
       <div className={className + " text-sm text-gray-500"}>
-        No departments found for this college.
+        No departments found for your colleges.
       </div>
     );
   }

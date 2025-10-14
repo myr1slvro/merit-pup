@@ -1,82 +1,100 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  uploadIMPdf,
-  updateInstructionalMaterial,
   downloadInstructionalMaterial,
-  checkMissingSections,
   deleteInstructionalMaterial,
 } from "../../api/instructionalmaterial";
 import { getAllUsersForIM } from "../../api/author";
-// Removed broad getAllUsers usage in favor of department-based filtering
 import EditAuthorsModal from "./EditAuthorsModal";
 import DeleteIMModal from "./DeleteIMModal";
 import UploadIMModal from "./UploadIMModal";
 import { useAuth } from "../auth/AuthProvider";
 
 interface Props {
-  row: any; // unified row shape
+  row: any;
   onChanged: () => void;
   role?: string;
   disabled?: boolean;
-  evaluateLabel?: string; // override label (e.g., Approval)
+  evaluateLabel?: string;
+  showEvaluate?: boolean; // New prop to control evaluate button visibility
 }
 
 const STATUS_FOR_RESUBMISSION = "For Resubmission";
+const STATUS_FOR_PIMEC_EVALUATION = "For PIMEC Evaluation";
+const STATUS_ASSIGNED_TO_FACULTY = "Assigned to Faculty";
+const STATUS_PUBLISHED = "Published";
+
+// Statuses where evaluate button should be shown for PIMEC
+const EVALUABLE_STATUSES = [
+  STATUS_ASSIGNED_TO_FACULTY.toLowerCase(),
+  STATUS_FOR_RESUBMISSION.toLowerCase(),
+  STATUS_FOR_PIMEC_EVALUATION.toLowerCase(),
+  STATUS_PUBLISHED.toLowerCase(),
+];
 
 export default function IMRowActions({
   row,
   onChanged,
   role,
-  disabled,
+  disabled = false,
   evaluateLabel = "Evaluate",
+  showEvaluate = false, // Default to false - must be explicitly enabled
 }: Props) {
   const { authToken } = useAuth();
   const navigate = useNavigate();
+
+  // Modal States
   const [openUpload, setOpenUpload] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [analysisNotes, setAnalysisNotes] = useState<string>("");
-  const [analyzing, setAnalyzing] = useState(false);
   const [showAuthorsModal, setShowAuthorsModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Data States
   const [authorIds, setAuthorIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
 
   const roleNorm = (role || "").toLowerCase();
-
   const statusNorm = String(row.status || "").toLowerCase();
 
-  // Faculty can upload revision when status is "For Resubmission"
-  const canUploadRevision =
-    !disabled &&
-    statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
-    role === "Faculty";
+  // Permission checks
+  const permissions = {
+    canUploadRevision:
+      !disabled &&
+      statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
+      roleNorm === "faculty",
 
-  // Faculty can upload IM for the first time when s3_link is null (assigned but not yet uploaded)
-  const canInitialUpload = !disabled && !row.s3_link && roleNorm === "faculty";
+    canInitialUpload: !disabled && !row.s3_link && roleNorm === "faculty",
 
-  // PIMEC/Admin can upload if no s3_link exists (override upload)
-  const canAdminUpload =
-    !disabled &&
-    !row.s3_link &&
-    (roleNorm === "pimec" || roleNorm === "technical admin");
+    canAdminUpload:
+      !disabled &&
+      !row.s3_link &&
+      (roleNorm === "pimec" || roleNorm === "technical admin"),
 
-  const canDownload = !!row.s3_link || !!row.id;
-  const canEvaluate =
-    roleNorm === "pimec" &&
-    String(row.status).toLowerCase() === "for pimec evaluation";
-  const canEditAuthors =
-    roleNorm === "pimec" ||
-    roleNorm === "technical admin" ||
-    roleNorm === "utldo admin";
-  const canDelete = roleNorm === "technical admin"; // tighten if needed
+    canDownload: !!row.s3_link || !!row.id,
 
+    canEvaluate:
+      showEvaluate &&
+      (roleNorm === "pimec" || roleNorm === "technical admin") &&
+      EVALUABLE_STATUSES.includes(statusNorm),
+
+    canEditAuthors:
+      roleNorm === "pimec" ||
+      roleNorm === "technical admin" ||
+      roleNorm === "utldo admin",
+
+    canDelete: roleNorm === "technical admin",
+  };
+
+  const canShowUpload =
+    permissions.canUploadRevision ||
+    permissions.canInitialUpload ||
+    permissions.canAdminUpload;
+
+  // Fetch author IDs when modal opens
   useEffect(() => {
     if (!showAuthorsModal || !authToken) return;
+
     let cancelled = false;
+
     (async () => {
       try {
         const ids = await getAllUsersForIM(row.id, authToken);
@@ -85,15 +103,15 @@ export default function IMRowActions({
         if (!cancelled) setAuthorIds([]);
       }
     })();
+
     return () => {
       cancelled = true;
     };
   }, [showAuthorsModal, authToken, row.id]);
 
-  // Author save logic moved into EditAuthorsModal component
-
-  async function confirmDelete() {
+  async function handleDelete() {
     if (!authToken) return;
+
     setDeleting(true);
     try {
       const res = await deleteInstructionalMaterial(row.id, authToken);
@@ -109,6 +127,7 @@ export default function IMRowActions({
 
   async function handleDownload() {
     if (!authToken) return;
+
     try {
       // Prefer direct S3 link if bucket env provided
       if (row.s3_link) {
@@ -119,9 +138,9 @@ export default function IMRowActions({
           return;
         }
       }
+
       const res = await downloadInstructionalMaterial(row.id, authToken);
       if (res?.file_path) {
-        // Backend saved locally; just notify user.
         alert(`Downloaded on server: ${res.file_name || res.file_path}`);
       } else if (res?.error) {
         alert(res.error);
@@ -133,22 +152,31 @@ export default function IMRowActions({
     }
   }
 
+  function handleEvaluate() {
+    navigate(`/pimec/evaluate/${row.id}`, {
+      state: { s3_link: row.s3_link },
+    });
+  }
+
+  function getUploadButtonLabel() {
+    if (permissions.canInitialUpload) return "Upload IM";
+    if (permissions.canUploadRevision) return "Upload Revision";
+    return "Upload PDF";
+  }
+
   return (
     <div className="flex items-center gap-2">
-      {(canUploadRevision || canInitialUpload || canAdminUpload) && (
+      {canShowUpload && (
         <button
           type="button"
           onClick={() => setOpenUpload(true)}
           className="text-xs px-2 py-1 rounded bg-meritRed text-white hover:bg-meritDarkRed whitespace-nowrap"
         >
-          {canInitialUpload
-            ? "Upload IM"
-            : canUploadRevision
-            ? "Upload Revision"
-            : "Upload PDF"}
+          {getUploadButtonLabel()}
         </button>
       )}
-      {canDownload && (
+
+      {permissions.canDownload && (
         <button
           type="button"
           className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 whitespace-nowrap"
@@ -157,20 +185,18 @@ export default function IMRowActions({
           Download
         </button>
       )}
-      {canEvaluate && (
+
+      {permissions.canEvaluate && (
         <button
           type="button"
           className="text-xs px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 whitespace-nowrap"
-          onClick={() =>
-            navigate(`/pimec/evaluate/${row.id}`, {
-              state: { s3_link: row.s3_link },
-            })
-          }
+          onClick={handleEvaluate}
         >
           {evaluateLabel}
         </button>
       )}
-      {canEditAuthors && (
+
+      {permissions.canEditAuthors && (
         <button
           type="button"
           className="text-xs px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 whitespace-nowrap"
@@ -179,7 +205,8 @@ export default function IMRowActions({
           Edit Authors
         </button>
       )}
-      {canDelete && (
+
+      {permissions.canDelete && (
         <button
           type="button"
           className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 whitespace-nowrap"
@@ -189,27 +216,28 @@ export default function IMRowActions({
         </button>
       )}
 
+      {/* Modals */}
       <UploadIMModal
         isOpen={openUpload}
         onClose={() => setOpenUpload(false)}
-        onUploaded={() => onChanged()}
+        onUploaded={onChanged}
         imId={row.id}
-        canInitialUpload={canInitialUpload}
+        canInitialUpload={permissions.canInitialUpload}
       />
+
       <EditAuthorsModal
         imId={row.id}
         departmentId={row.department_id || row.department?.id}
         isOpen={showAuthorsModal}
         onClose={() => setShowAuthorsModal(false)}
-        onSaved={() => {
-          onChanged();
-        }}
+        onSaved={onChanged}
       />
+
       <DeleteIMModal
         isOpen={showDeleteConfirm}
         deleting={deleting}
         onCancel={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDelete}
+        onConfirm={handleDelete}
       />
     </div>
   );

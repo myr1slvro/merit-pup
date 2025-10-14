@@ -45,6 +45,7 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
       setBaseServiceIMs([]);
       return;
     }
+
     Promise.all([
       getUniversityIMsByCollege(selectedCollege.id, authToken),
       getServiceIMsByCollege(selectedCollege.id, authToken),
@@ -96,6 +97,7 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
       setDepartmentIds([]);
       return;
     }
+
     getDepartmentsByCollegeId(selectedCollege.id, authToken)
       .then((deps) => {
         const ids = Array.isArray(deps) ? deps.map((d: any) => d.id) : [];
@@ -156,6 +158,19 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
       };
     });
 
+  // Department counts from currently loaded rawIMs (university only with department_id after enrichment)
+  const deptCounts: Record<number, number> = {};
+  baseUniversityIMs.forEach((u: any) => {
+    const deptId = u.department_id;
+    if (!Number.isFinite(deptId)) return;
+    // count how many rawIMs reference this base university IM and have UTLDO evaluation status
+    const count = rawIMs.filter(
+      (im) =>
+        im.university_im_id === u.id && im.status === "For UTLDO Evaluation"
+    ).length;
+    if (count) deptCounts[deptId] = (deptCounts[deptId] || 0) + count;
+  });
+
   return {
     loading,
     error,
@@ -165,5 +180,6 @@ export default function useUecIMs(selectedCollege: any, reloadTick: number) {
     collegeFiltered: enrichRows(collegeFiltered),
     baseUniversityIMs,
     baseServiceIMs,
+    deptCounts,
   } as const;
 }

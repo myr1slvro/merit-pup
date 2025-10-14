@@ -18,6 +18,7 @@ interface BaseProps {
   actionsRole?: string;
   extraActions?: (row: any) => React.ReactNode | null;
   authToken?: string;
+  showEvaluate?: boolean;
 }
 
 interface UniversityProps extends BaseProps {
@@ -43,6 +44,7 @@ export default function IMTable(
     actionsRole,
     extraActions,
     authToken,
+    showEvaluate = false,
   } = props as any;
   const data = props.data as any[];
 
@@ -372,6 +374,7 @@ export default function IMTable(
                                 row={im}
                                 onChanged={() => onRefresh && onRefresh()}
                                 role={roleForRow}
+                                showEvaluate={showEvaluate}
                               />
                               {extraActions ? extraActions(im) : null}
                             </>
