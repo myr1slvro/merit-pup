@@ -1,5 +1,6 @@
 import React from "react";
 import { FaRegFileLines } from "react-icons/fa6";
+import IMTypeToggle from "./IMTypeToggle";
 
 interface IMTableHeaderProps {
   activeIMType: "university" | "service" | "all";
@@ -30,34 +31,12 @@ export default function IMTableHeader({
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaRegFileLines className="text-meritRed" />
         Instructional Materials
-        <span className="ml-4 inline-flex rounded-full bg-gray-100 text-gray-700 text-xs font-semibold overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setActiveIMType("all")}
-            className={buttonClasses(activeIMType === "all")}
-          >
-            All IMs
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveIMType("university")}
-            className={`border-l border-gray-300 ${buttonClasses(
-              activeIMType === "university"
-            )}`}
-          >
-            University IMs
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveIMType("service")}
-            className={`border-l border-gray-300 ${buttonClasses(
-              activeIMType === "service"
-            )}`}
-          >
-            Service IMs
-          </button>
-        </span>
+        <IMTypeToggle
+          activeIMType={activeIMType}
+          setActiveIMType={setActiveIMType}
+        />
       </h2>
+
       <div className="flex items-center gap-4 ml-auto">
         {!hideCreate && onCreate && (
           <button
