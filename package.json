@@ -17,6 +17,7 @@
     "react-phone-input-2": "^2.15.1",
     "react-router": "^7.7.1",
     "react-router-dom": "^7.7.1",
+    "recharts": "^3.5.0",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
