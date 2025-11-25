@@ -17,6 +17,7 @@ export default function PimecDirectory() {
     number | null
   >(null);
   const [activeIMType, setActiveIMType] = useState<IMType>("all");
+  const [activeStatus, setActiveStatus] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [needsOnly, setNeedsOnly] = useState(true); // Show only "For PIMEC Evaluation" IMs
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -38,6 +39,35 @@ export default function PimecDirectory() {
     needsOnly
   );
 
+  // Helper to apply subject name search (case-insensitive) to a list of IMs
+  const applySearch = useMemo(() => {
+    return (rows: any[]) => {
+      const q = (searchTerm || "").trim().toLowerCase();
+      if (!q) return rows;
+      return (rows || []).filter((im: any) => {
+        const subjectName = (
+          im.subject_name ||
+          (im.subject && im.subject.name) ||
+          ""
+        ).toString();
+        return subjectName.toLowerCase().includes(q);
+      });
+    };
+  }, [searchTerm]);
+
+  // Helper to apply status filtering (null or "all" means no filter)
+  const applyStatus = useMemo(() => {
+    return (rows: any[]) => {
+      if (!activeStatus) return rows;
+      const norm = activeStatus.trim().toLowerCase();
+      if (!norm || norm === "all") return rows;
+      return rows.filter((im: any) => {
+        const st = (im.status || "").toString().toLowerCase();
+        return st === norm;
+      });
+    };
+  }, [activeStatus]);
+
   // Filter by IM type
   const universityRows = useMemo(
     () =>
@@ -55,20 +85,6 @@ export default function PimecDirectory() {
     [collegeFiltered]
   );
 
-  // Helper to apply subject name search (case-insensitive) to a list of IMs
-  const applySearch = (rows: any[]) => {
-    const q = (searchTerm || "").trim().toLowerCase();
-    if (!q) return rows;
-    return (rows || []).filter((im: any) => {
-      const subjectName = (
-        im.subject_name ||
-        (im.subject && im.subject.name) ||
-        ""
-      ).toString();
-      return subjectName.toLowerCase().includes(q);
-    });
-  };
-
   // Apply department filter to university IMs
   const filteredUniversity = useMemo(() => {
     let rows = universityRows;
@@ -77,8 +93,8 @@ export default function PimecDirectory() {
         (im: any) => im.department_id === selectedDepartmentId
       );
     }
-    return applySearch(rows);
-  }, [universityRows, selectedDepartmentId]);
+    return applySearch(applyStatus(rows));
+  }, [universityRows, selectedDepartmentId, applySearch, applyStatus]);
 
   // Apply department filter to all IMs (exclude service IMs when department selected)
   const filteredAll = useMemo(() => {
@@ -93,13 +109,13 @@ export default function PimecDirectory() {
       return im.department_id === selectedDepartmentId;
     });
 
-    return applySearch(base);
-  }, [collegeFiltered, selectedDepartmentId, searchTerm]);
+    return applySearch(applyStatus(base));
+  }, [collegeFiltered, selectedDepartmentId, applySearch, applyStatus]);
 
   // Apply search to service rows when viewing service IMs
   const displayedServiceRows = useMemo(
-    () => applySearch(serviceRows),
-    [serviceRows, searchTerm]
+    () => applySearch(applyStatus(serviceRows)),
+    [serviceRows, applySearch, applyStatus]
   );
 
   function handleCollegeSelect(c: any) {
@@ -158,6 +174,16 @@ export default function PimecDirectory() {
             onRefresh={() => setReloadTick((n) => n + 1)}
             onSearch={setSearchTerm}
             searchTerm={searchTerm}
+            activeStatus={activeStatus}
+            setActiveStatus={setActiveStatus}
+            statusList={[
+              "All",
+              "Assigned to Faculty",
+              "For PIMEC Evaluation",
+              "For UTLDO Evaluation",
+              "For Certification",
+              "Certified",
+            ]}
           />
 
           <div>

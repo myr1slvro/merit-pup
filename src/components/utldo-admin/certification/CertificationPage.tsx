@@ -230,6 +230,7 @@ export default function CertificationPage() {
         notes: notesLines.join("\n"),
         email: user?.email,
         updated_by: user?.email || user?.id || "utldo-admin",
+        user_id: user?.id, // For activity log tracking
       };
       const res = await updateInstructionalMaterial(
         selected.id,

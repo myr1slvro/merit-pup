@@ -56,6 +56,7 @@ export default function CreateIMForm({
   const [yearLevel, setYearLevel] = useState<number | "">("");
   // Validity is now implicit; removed from the form but still sent with a sensible default
   const defaultValidity = useMemo(() => String(new Date().getFullYear()), []);
+  const [dueDate, setDueDate] = useState<string>("");
 
   const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([]);
   useEffect(() => {
@@ -188,6 +189,8 @@ export default function CreateIMForm({
         s3_link: null, // No file uploaded yet
         notes: "IM assigned to authors. Awaiting initial upload.",
         author_ids: selectedAuthorIds, // Send author IDs for email notifications
+        user_id: user?.id, // For activity log tracking
+        due_date: dueDate || null, // Optional due date for deadline notifications
       };
       if (imType === IMType.university) {
         payload.university_im_id = subtypeId;
@@ -274,6 +277,26 @@ export default function CreateIMForm({
               disabled={false}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Due Date (optional) */}
+      <div className="grid grid-cols-1 gap-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Due Date <span className="text-xs text-gray-500">(optional)</span>
+          </label>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            min={new Date().toISOString().split("T")[0]}
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Authors will receive email reminders everyday for 7 days before
+            the due date.
+          </p>
         </div>
       </div>
 

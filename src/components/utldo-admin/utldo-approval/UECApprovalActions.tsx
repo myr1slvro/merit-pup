@@ -78,6 +78,7 @@ export default function UECApprovalActions({
         notes: buildNotes(header, explicitNotes),
         email: userEmail,
         updated_by: userEmail || userId || "utldo-admin",
+        user_id: userId, // For activity log tracking
       };
       const res = await updateInstructionalMaterial(imId, payload, authToken);
       if ((res as any)?.error) throw new Error((res as any).error);

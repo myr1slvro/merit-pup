@@ -34,6 +34,7 @@ export default function FacultyDirectory() {
     number | null
   >(null);
   const [activeIMType, setActiveIMType] = useState<IMType>("all");
+  const [activeStatus, setActiveStatus] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
 
   // Data State
@@ -147,6 +148,19 @@ export default function FacultyDirectory() {
       .finally(() => setAllIMsLoading(false));
   }, [authToken, reloadTick]);
 
+  // Helper to apply status filtering (null or "all" means no filter)
+  const applyStatus = useMemo(() => {
+    return (rows: any[]) => {
+      if (!activeStatus) return rows;
+      const norm = activeStatus.trim().toLowerCase();
+      if (!norm || norm === "all") return rows;
+      return rows.filter((im: any) => {
+        const st = (im.status || "").toString().toLowerCase();
+        return st === norm;
+      });
+    };
+  }, [activeStatus]);
+
   // Build latest metadata maps
   const latestUniversityIMMeta = useMemo(
     () => buildLatestMetaMap(allIMs, "university", "university_im_id"),
@@ -161,28 +175,32 @@ export default function FacultyDirectory() {
   // Build enriched table rows filtered by Faculty-visible statuses
   const universityRows = useMemo(
     () =>
-      filterByFacultyStatuses(
-        enrichBaseIMs(
-          universityIMs,
-          latestUniversityIMMeta,
-          "University",
-          selectedCollege?.id
+      applyStatus(
+        filterByFacultyStatuses(
+          enrichBaseIMs(
+            universityIMs,
+            latestUniversityIMMeta,
+            "University",
+            selectedCollege?.id
+          )
         )
       ),
-    [universityIMs, latestUniversityIMMeta, selectedCollege?.id]
+    [universityIMs, latestUniversityIMMeta, selectedCollege?.id, applyStatus]
   );
 
   const serviceRows = useMemo(
     () =>
-      filterByFacultyStatuses(
-        enrichBaseIMs(
-          serviceIMs,
-          latestServiceIMMeta,
-          "Service",
-          selectedCollege?.id
+      applyStatus(
+        filterByFacultyStatuses(
+          enrichBaseIMs(
+            serviceIMs,
+            latestServiceIMMeta,
+            "Service",
+            selectedCollege?.id
+          )
         )
       ),
-    [serviceIMs, latestServiceIMMeta, selectedCollege?.id]
+    [serviceIMs, latestServiceIMMeta, selectedCollege?.id, applyStatus]
   );
 
   const allRows = useMemo(() => {
@@ -194,9 +212,11 @@ export default function FacultyDirectory() {
       )
       .map((im) => buildAllRow(im, universityIMs, serviceIMs));
 
-    return applyDepartmentFilter(
-      deduplicateById(filterByFacultyStatuses(rows)),
-      selectedDepartmentId
+    return applyStatus(
+      applyDepartmentFilter(
+        deduplicateById(filterByFacultyStatuses(rows)),
+        selectedDepartmentId
+      )
     );
   }, [
     allIMs,
@@ -204,6 +224,7 @@ export default function FacultyDirectory() {
     universityIMs,
     serviceIMs,
     selectedDepartmentId,
+    applyStatus,
   ]);
 
   const getDepartmentLabel = (deptId: number) => {
@@ -246,6 +267,16 @@ export default function FacultyDirectory() {
               setActiveIMType={setActiveIMType}
               onRefresh={() => setReloadTick((n) => n + 1)}
               hideCreate
+              activeStatus={activeStatus}
+              setActiveStatus={setActiveStatus}
+              statusList={[
+                "All",
+                "Assigned to Faculty",
+                "For Resubmission",
+                "For Certification",
+                "Certified",
+                "Published",
+              ]}
             />
 
             <div>
@@ -406,7 +437,13 @@ function applyDepartmentFilter(
 }
 
 function filterByFacultyStatuses(rows: any[]): any[] {
-  const ALLOWED_FACULTY_STATUSES = ["assigned to faculty", "for resubmission", "for certification", "certified", "published"];
+  const ALLOWED_FACULTY_STATUSES = [
+    "assigned to faculty",
+    "for resubmission",
+    "for certification",
+    "certified",
+    "published",
+  ];
 
   return rows.filter((row) => {
     const statusNorm = String(row.status || "").toLowerCase();

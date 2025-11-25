@@ -1,5 +1,7 @@
 import React from "react";
 import { FaRegFileLines } from "react-icons/fa6";
+import IMTypeToggle from "./IMTypeToggle";
+import IMStatusDropdown from "./IMStatusDropdown";
 
 interface IMTableHeaderProps {
   activeIMType: "university" | "service" | "all";
@@ -9,6 +11,9 @@ interface IMTableHeaderProps {
   onSearch?: (q: string) => void;
   searchTerm?: string;
   hideCreate?: boolean;
+  activeStatus?: string | null;
+  setActiveStatus?: (s: string | null) => void;
+  statusList?: string[];
 }
 
 export default function IMTableHeader({
@@ -19,45 +24,28 @@ export default function IMTableHeader({
   onSearch,
   searchTerm,
   hideCreate,
+  activeStatus,
+  setActiveStatus,
+  statusList,
 }: IMTableHeaderProps) {
-  const buttonClasses = (isActive: boolean) =>
-    `px-3 py-1 transition-colors ${
-      isActive ? "bg-meritRed text-white" : "hover:bg-gray-200"
-    }`;
-
   return (
     <div className="flex items-center justify-between flex-wrap gap-4 my-2">
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaRegFileLines className="text-meritRed" />
         Instructional Materials
-        <span className="ml-4 inline-flex rounded-full bg-gray-100 text-gray-700 text-xs font-semibold overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setActiveIMType("all")}
-            className={buttonClasses(activeIMType === "all")}
-          >
-            All IMs
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveIMType("university")}
-            className={`border-l border-gray-300 ${buttonClasses(
-              activeIMType === "university"
-            )}`}
-          >
-            University IMs
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveIMType("service")}
-            className={`border-l border-gray-300 ${buttonClasses(
-              activeIMType === "service"
-            )}`}
-          >
-            Service IMs
-          </button>
-        </span>
+        <div className="flex items-center gap-2">
+          <IMTypeToggle
+            activeIMType={activeIMType}
+            setActiveIMType={setActiveIMType}
+          />
+          <IMStatusDropdown
+            activeStatus={activeStatus}
+            setActiveStatus={setActiveStatus}
+            statuses={statusList}
+          />
+        </div>
       </h2>
+
       <div className="flex items-center gap-4 ml-auto">
         {!hideCreate && onCreate && (
           <button

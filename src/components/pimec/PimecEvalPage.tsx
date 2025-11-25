@@ -22,7 +22,7 @@ export default function PimecEvalPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { authToken, user } = useAuth();
-  const [assumedIsModule, setAssumedIsModule] = useState(true); // toggle for hiding module-only fields
+  const [assumedIsModule, setAssumedIsModule] = useState(true); 
   const [scores, setScores] = useState<Record<string, number>>({});
   const [sectionComments, setSectionComments] = useState<
     Record<string, string>
@@ -198,6 +198,7 @@ export default function PimecEvalPage() {
         notes,
         email: user?.email,
         updated_by: user?.email || user?.id || "pimec",
+        user_id: user?.id,
       };
 
       // If IMERPIMEC was created, link it to the IM

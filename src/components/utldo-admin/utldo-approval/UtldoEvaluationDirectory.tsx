@@ -24,6 +24,7 @@ export default function UtldoEvaluationDirectory() {
   const [activeIMType, setActiveIMType] = useState<
     "university" | "service" | "all"
   >("university");
+  const [activeStatus, setActiveStatus] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
@@ -41,6 +42,19 @@ export default function UtldoEvaluationDirectory() {
     setSelectedDepartmentId(null);
   }, [selectedCollege?.id]);
 
+  // Helper to apply status filtering (null or "all" means no filter)
+  const applyStatus = useMemo(() => {
+    return (rows: any[]) => {
+      if (!activeStatus) return rows;
+      const norm = activeStatus.trim().toLowerCase();
+      if (!norm || norm === "all") return rows;
+      return rows.filter((im: any) => {
+        const st = (im.status || "").toString().toLowerCase();
+        return st === norm;
+      });
+    };
+  }, [activeStatus]);
+
   const universityRows = useMemo(
     () => collegeFiltered.filter((im: any) => im.im_type === "university"),
     [collegeFiltered]
@@ -49,24 +63,35 @@ export default function UtldoEvaluationDirectory() {
     () => collegeFiltered.filter((im: any) => im.im_type === "service"),
     [collegeFiltered]
   );
+
+  const displayedServiceRows = useMemo(
+    () => applyStatus(serviceRows),
+    [serviceRows, applyStatus]
+  );
   const allRows = collegeFiltered;
 
   const filteredUniversity = useMemo(() => {
-    if (selectedDepartmentId == null) return universityRows;
-    return universityRows.filter(
-      (im: any) => im.department_id === selectedDepartmentId
-    );
-  }, [universityRows, selectedDepartmentId]);
+    let rows = universityRows;
+    if (selectedDepartmentId !== null) {
+      rows = rows.filter(
+        (im: any) => im.department_id === selectedDepartmentId
+      );
+    }
+    return applyStatus(rows);
+  }, [universityRows, selectedDepartmentId, applyStatus]);
 
   // Apply department filter to all IMs (exclude service IMs when department selected)
   const filteredAll = useMemo(() => {
-    if (selectedDepartmentId === null) return allRows;
-    return allRows.filter((im: any) => {
-      const isService = (im.im_type || "").toLowerCase() === "service";
-      if (isService) return false;
-      return im.department_id === selectedDepartmentId;
-    });
-  }, [allRows, selectedDepartmentId]);
+    const base =
+      selectedDepartmentId === null
+        ? allRows
+        : allRows.filter((im: any) => {
+            const isService = (im.im_type || "").toLowerCase() === "service";
+            if (isService) return false;
+            return im.department_id === selectedDepartmentId;
+          });
+    return applyStatus(base);
+  }, [allRows, selectedDepartmentId, applyStatus]);
 
   function handleCollegeSelect(c: any) {
     setSelectedCollege(c);
@@ -151,6 +176,16 @@ export default function UtldoEvaluationDirectory() {
               setActiveIMType={setActiveIMType}
               onRefresh={() => setReloadTick((n) => n + 1)}
               hideCreate
+              activeStatus={activeStatus}
+              setActiveStatus={setActiveStatus}
+              statusList={[
+                "All",
+                "Assigned to Faculty",
+                "For PIMEC Evaluation",
+                "For UTLDO Evaluation",
+                "For Certification",
+                "Certified",
+              ]}
             />
             <div>
               {loading ? (
@@ -160,7 +195,7 @@ export default function UtldoEvaluationDirectory() {
               ) : activeIMType === "university" ? (
                 renderTable(filteredUniversity as any)
               ) : activeIMType === "service" ? (
-                renderTable(serviceRows as any)
+                renderTable(displayedServiceRows as any)
               ) : (
                 renderTable(filteredAll as any)
               )}
