@@ -284,7 +284,7 @@ export default function CreateIMForm({
       <div className="grid grid-cols-1 gap-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Due Date <span className="text-xs text-gray-500">(optional)</span>
+            Due Date 
           </label>
           <input
             type="date"
@@ -292,6 +292,7 @@ export default function CreateIMForm({
             onChange={(e) => setDueDate(e.target.value)}
             min={new Date().toISOString().split("T")[0]}
             className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+            required
           />
           <p className="mt-1 text-xs text-gray-500">
             Authors will receive email reminders everyday for 7 days before
