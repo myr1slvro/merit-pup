@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
-import { getAllColleges } from "../../../api/college";
 import { getDepartmentsByCollegeId } from "../../../api/department";
+import { getCollegesForUserDetailed } from "../../../api/collegeincluded";
 import type { College } from "../../../types/college";
 import type { Department } from "../../../types/department";
 import type { AnalyticsFilters as FiltersType } from "../../../api/analytics";
 
 interface AnalyticsFiltersProps {
   authToken: string;
+  userId: number;
   filters: FiltersType;
   onFiltersChange: (filters: FiltersType) => void;
 }
 
 export default function AnalyticsFilters({
   authToken,
+  userId,
   filters,
   onFiltersChange,
 }: AnalyticsFiltersProps) {
@@ -21,21 +23,27 @@ export default function AnalyticsFilters({
   const [loadingColleges, setLoadingColleges] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
 
-  // Load colleges on mount
+  // Load user's included colleges on mount
   useEffect(() => {
     async function loadColleges() {
       try {
-        const response = await getAllColleges(authToken);
-        // API returns { colleges: [...] }
-        setColleges(response.colleges || []);
+        // Use getCollegesForUserDetailed to get only user's included colleges
+        const userColleges = await getCollegesForUserDetailed(
+          userId,
+          authToken
+        );
+        setColleges(userColleges || []);
       } catch (e) {
         console.error("Failed to load colleges:", e);
+        setColleges([]);
       } finally {
         setLoadingColleges(false);
       }
     }
-    loadColleges();
-  }, [authToken]);
+    if (userId && authToken) {
+      loadColleges();
+    }
+  }, [authToken, userId]);
 
   // Load departments when college changes
   useEffect(() => {

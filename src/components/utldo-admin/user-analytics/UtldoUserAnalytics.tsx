@@ -6,14 +6,31 @@ import {
   getDepartmentAnalytics,
   getUserContributions,
   getActivityTimeline,
+  getDeadlineAnalytics,
+  getWorkflowAnalytics,
+  getSubmissionsByUser,
+  getSubmissionsTimeline,
   type AnalyticsOverview,
   type CollegeAnalytics,
   type DepartmentAnalytics,
   type UserContributions,
   type ActivityTimeline,
+  type DeadlineAnalytics,
+  type WorkflowAnalytics,
+  type UserSubmissions,
+  type SubmissionsTimeline,
   type AnalyticsFilters as FiltersType,
 } from "../../../api/analytics";
-import { FaSpinner, FaChartBar, FaUsers, FaBuilding } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaChartBar,
+  FaUsers,
+  FaBuilding,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaTasks,
+  FaFileAlt,
+} from "react-icons/fa";
 
 // Modular components
 import StatCard from "./StatCard";
@@ -25,9 +42,13 @@ import TopContributorsList from "./TopContributorsList";
 import ActivityTimelineChart from "./ActivityTimelineChart";
 import StatusDistributionChart from "./StatusDistributionChart";
 import MonthlyTrendsChart from "./MonthlyTrendsChart";
+import DeadlineOverview from "./DeadlineOverview";
+import WorkflowChart from "./WorkflowChart";
+import SubmissionsTimelineChart from "./SubmissionsTimelineChart";
+import UserSubmissionsList from "./UserSubmissionsList";
 
 export default function UtldoUserAnalytics() {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +61,16 @@ export default function UtldoUserAnalytics() {
     null
   );
   const [timeline, setTimeline] = useState<ActivityTimeline | null>(null);
+  const [deadlineData, setDeadlineData] = useState<DeadlineAnalytics | null>(
+    null
+  );
+  const [workflowData, setWorkflowData] = useState<WorkflowAnalytics | null>(
+    null
+  );
+  const [userSubmissions, setUserSubmissions] =
+    useState<UserSubmissions | null>(null);
+  const [submissionsTimeline, setSubmissionsTimeline] =
+    useState<SubmissionsTimeline | null>(null);
 
   // Global filter state
   const [filters, setFilters] = useState<FiltersType>({});
@@ -49,6 +80,7 @@ export default function UtldoUserAnalytics() {
     null
   );
   const [timelineDays, setTimelineDays] = useState<number>(30);
+  const [submissionDays, setSubmissionDays] = useState<number>(30);
 
   const loadAllAnalytics = useCallback(async () => {
     if (!authToken) return;
@@ -56,20 +88,38 @@ export default function UtldoUserAnalytics() {
     setLoading(true);
     setError(null);
     try {
-      const [overviewRes, collegeRes, deptRes, contribRes, timelineRes] =
-        await Promise.all([
-          getAnalyticsOverview(authToken, filters),
-          getCollegeAnalytics(authToken, filters),
-          getDepartmentAnalytics(authToken, filters.college_id),
-          getUserContributions(authToken, 10, filters),
-          getActivityTimeline(authToken, timelineDays, filters),
-        ]);
+      // Use Promise.allSettled so individual failures don't break everything
+      const results = await Promise.allSettled([
+        getAnalyticsOverview(authToken, filters),
+        getCollegeAnalytics(authToken, filters),
+        getDepartmentAnalytics(authToken, filters.college_id),
+        getUserContributions(authToken, 10, filters),
+        getActivityTimeline(authToken, timelineDays, filters),
+        getDeadlineAnalytics(authToken, filters),
+        getWorkflowAnalytics(authToken, filters),
+        getSubmissionsByUser(authToken, 10, filters),
+        getSubmissionsTimeline(authToken, submissionDays, filters),
+      ]);
 
-      setOverview(overviewRes);
-      setCollegeData(collegeRes);
-      setDepartmentData(deptRes);
-      setContributors(contribRes);
-      setTimeline(timelineRes);
+      // Extract values from settled promises, null for failures
+      const getValue = <T,>(result: PromiseSettledResult<T>): T | null =>
+        result.status === "fulfilled" ? result.value : null;
+
+      setOverview(getValue(results[0]));
+      setCollegeData(getValue(results[1]));
+      setDepartmentData(getValue(results[2]));
+      setContributors(getValue(results[3]));
+      setTimeline(getValue(results[4]));
+      setDeadlineData(getValue(results[5]));
+      setWorkflowData(getValue(results[6]));
+      setUserSubmissions(getValue(results[7]));
+      setSubmissionsTimeline(getValue(results[8]));
+
+      // Log any failures for debugging but don't block the UI
+      const failures = results.filter((r) => r.status === "rejected");
+      if (failures.length > 0) {
+        console.warn("Some analytics endpoints failed:", failures);
+      }
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Failed to load analytics";
@@ -77,7 +127,7 @@ export default function UtldoUserAnalytics() {
     } finally {
       setLoading(false);
     }
-  }, [authToken, filters, timelineDays]);
+  }, [authToken, filters, timelineDays, submissionDays]);
 
   const loadDepartmentData = useCallback(async () => {
     if (!authToken) return;
@@ -108,6 +158,21 @@ export default function UtldoUserAnalytics() {
     }
   }, [authToken, timelineDays, filters]);
 
+  const loadSubmissionsTimeline = useCallback(async () => {
+    if (!authToken) return;
+
+    try {
+      const subTimelineRes = await getSubmissionsTimeline(
+        authToken,
+        submissionDays,
+        filters
+      );
+      setSubmissionsTimeline(subTimelineRes);
+    } catch (e: unknown) {
+      console.error("Failed to load submissions timeline:", e);
+    }
+  }, [authToken, submissionDays, filters]);
+
   // Initial load
   useEffect(() => {
     loadAllAnalytics();
@@ -128,6 +193,14 @@ export default function UtldoUserAnalytics() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timelineDays]);
+
+  // Reload submissions timeline when days change
+  useEffect(() => {
+    if (!loading) {
+      loadSubmissionsTimeline();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionDays]);
 
   // Handle global filter change
   const handleFiltersChange = (newFilters: FiltersType) => {
@@ -164,6 +237,7 @@ export default function UtldoUserAnalytics() {
           <div className="px-8 pb-4">
             <AnalyticsFilters
               authToken={authToken!}
+              userId={user?.id || 0}
               filters={filters}
               onFiltersChange={handleFiltersChange}
             />
@@ -171,36 +245,81 @@ export default function UtldoUserAnalytics() {
         </div>
 
         <div className="p-8 space-y-8">
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Overview Stats - Row 1: Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard
-              title="Recent Activities"
-              value={overview?.recent_activity_count || 0}
-              subtitle="Last 30 days"
-              icon={<FaChartBar />}
+              title="Active IMs"
+              value={workflowData?.total_active || 0}
+              subtitle="In progress"
+              icon={<FaTasks />}
+              gradient="yellow"
+            />
+            <StatCard
+              title="Completed"
+              value={workflowData?.total_completed || 0}
+              subtitle="Certified + Published"
+              icon={<FaCheckCircle />}
+              gradient="green"
+            />
+            <StatCard
+              title="Overdue"
+              value={deadlineData?.summary?.overdue || 0}
+              subtitle="Past deadline"
+              icon={<FaExclamationTriangle />}
               gradient="red"
             />
             <StatCard
-              title="Total Colleges"
-              value={collegeData?.colleges?.length || 0}
-              subtitle="Active colleges"
-              icon={<FaBuilding />}
+              title="Due Soon"
+              value={deadlineData?.summary?.due_soon || 0}
+              subtitle="Within 7 days"
+              icon={<FaFileAlt />}
               gradient="blue"
-            />
-            <StatCard
-              title="Active Contributors"
-              value={contributors?.top_contributors?.length || 0}
-              subtitle="Top performers"
-              icon={<FaUsers />}
-              gradient="green"
             />
           </div>
 
-          {/* College Performance Chart */}
-          <CollegePerformanceChart data={collegeData} />
+          {/* Deadline Overview - Critical for monitoring */}
+          <DeadlineOverview data={deadlineData} />
 
-          {/* College Completion Rates Table */}
-          <CollegeCompletionTable data={collegeData} />
+          {/* Workflow Pipeline - Shows where IMs are stuck */}
+          <WorkflowChart data={workflowData} />
+
+          {/* Two-column layout for submissions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Submissions Timeline */}
+            <SubmissionsTimelineChart
+              data={submissionsTimeline}
+              days={submissionDays}
+              onDaysChange={setSubmissionDays}
+            />
+
+            {/* Top Submitters */}
+            <UserSubmissionsList data={userSubmissions} />
+          </div>
+
+          {/* Activity Timeline Chart */}
+          <ActivityTimelineChart
+            data={timeline}
+            days={timelineDays}
+            onDaysChange={setTimelineDays}
+          />
+
+          {/* Two-column layout for status and trends */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* IM Status Distribution Chart */}
+            <StatusDistributionChart data={overview} />
+
+            {/* Monthly Trends Chart */}
+            <MonthlyTrendsChart data={overview} />
+          </div>
+
+          {/* College Performance Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* College Performance Chart */}
+            <CollegePerformanceChart data={collegeData} />
+
+            {/* College Completion Rates Table */}
+            <CollegeCompletionTable data={collegeData} />
+          </div>
 
           {/* Department Performance Chart */}
           <DepartmentPerformanceChart
@@ -212,19 +331,6 @@ export default function UtldoUserAnalytics() {
 
           {/* Top Contributors List */}
           <TopContributorsList data={contributors} />
-
-          {/* Activity Timeline Chart */}
-          <ActivityTimelineChart
-            data={timeline}
-            days={timelineDays}
-            onDaysChange={setTimelineDays}
-          />
-
-          {/* IM Status Distribution Chart */}
-          <StatusDistributionChart data={overview} />
-
-          {/* Monthly Trends Chart */}
-          <MonthlyTrendsChart data={overview} />
         </div>
       </div>
     </div>
