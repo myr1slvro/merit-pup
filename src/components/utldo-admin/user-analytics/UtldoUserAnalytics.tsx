@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "../../auth/AuthProvider";
 import {
   getAnalyticsOverview,
@@ -10,6 +10,7 @@ import {
   getWorkflowAnalytics,
   getSubmissionsByUser,
   getSubmissionsTimeline,
+  exportAnalyticsCSV,
   type AnalyticsOverview,
   type CollegeAnalytics,
   type DepartmentAnalytics,
@@ -46,11 +47,15 @@ import DeadlineOverview from "./DeadlineOverview";
 import WorkflowChart from "./WorkflowChart";
 import SubmissionsTimelineChart from "./SubmissionsTimelineChart";
 import UserSubmissionsList from "./UserSubmissionsList";
+import ExportButton from "../../shared/ExportButton";
 
 export default function UtldoUserAnalytics() {
   const { authToken, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Ref for PDF export
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Data states with proper types
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
@@ -209,6 +214,12 @@ export default function UtldoUserAnalytics() {
     setDeptChartCollegeId(null);
   };
 
+  // Handle CSV export
+  const handleExportCSV = useCallback(async () => {
+    if (!authToken) return;
+    await exportAnalyticsCSV(authToken, filters);
+  }, [authToken, filters]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center w-full h-full">
@@ -231,9 +242,16 @@ export default function UtldoUserAnalytics() {
     <div className="flex-1 flex w-full">
       <div className="flex flex-col w-full bg-white m-8 rounded-lg shadow-lg overflow-y-auto">
         <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-          <h1 className="text-3xl font-bold p-8 pb-4 text-meritRed">
-            User Analytics Dashboard
-          </h1>
+          <div className="flex items-center justify-between p-8 pb-4">
+            <h1 className="text-3xl font-bold text-meritRed">
+              User Analytics Dashboard
+            </h1>
+            <ExportButton
+              targetRef={dashboardRef}
+              onExportCSV={handleExportCSV}
+              pdfFilename="analytics_dashboard"
+            />
+          </div>
           <div className="px-8 pb-4">
             <AnalyticsFilters
               authToken={authToken!}
@@ -244,7 +262,7 @@ export default function UtldoUserAnalytics() {
           </div>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div ref={dashboardRef} className="p-8 space-y-8">
           {/* Overview Stats - Row 1: Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard

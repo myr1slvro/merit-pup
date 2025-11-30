@@ -270,3 +270,34 @@ export const getWorkflowAnalytics = async (
   });
   return handleResponse<WorkflowAnalytics>(res);
 };
+
+// Export analytics as CSV - triggers file download
+export const exportAnalyticsCSV = async (
+  token: string,
+  filters?: AnalyticsFilters
+): Promise<void> => {
+  const query = buildQueryString({
+    college_id: filters?.college_id,
+    department_id: filters?.department_id,
+  });
+  const res = await fetch(`${API_URL}/export${query}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error ${res.status}`);
+  }
+
+  // Get the CSV data and trigger download
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics_report_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+};
