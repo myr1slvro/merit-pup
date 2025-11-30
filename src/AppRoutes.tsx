@@ -9,7 +9,7 @@ import PimecRoleContent from "./components/pimec/PimecRoleContent";
 import PimecEvalPage from "./components/pimec/PimecEvalPage";
 import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-approval/UtldoEvaluationDirectory";
 import UECApprovalPage from "./components/utldo-admin/utldo-approval/UECApprovalPage";
-import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
+import UtldoUserAnalytics from "./components/shared/user-analytics/UserAnalytics";
 import CertificationPage from "./components/utldo-admin/certification/CertificationPage";
 import SettingsPage from "./components/navigation/settings/SettingsPage";
 
@@ -152,7 +152,14 @@ export default function AppRoutes() {
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin", "PIMEC", "Faculty"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "UTLDO Admin",
+              "Technical Admin",
+              "PIMEC",
+              "Faculty",
+            ]}
+          >
             <SettingsPage />
           </ProtectedRoute>
         }

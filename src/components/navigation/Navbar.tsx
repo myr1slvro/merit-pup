@@ -14,7 +14,13 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
   Faculty: [{ label: "Faculty", to: "/faculty" }],
   PIMEC: [
     { label: "Faculty", to: "/faculty" },
-    { label: "PIMEC", to: "/pimec" },
+    {
+      label: "PIMEC",
+      children: [
+        { label: "PIMEC Dashboard", to: "/pimec" },
+        { label: "User Analytics", to: "/utldo-admin" },
+      ],
+    },
   ],
   "UTLDO Admin": [
     { label: "Faculty", to: "/faculty" },

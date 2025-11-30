@@ -47,7 +47,7 @@ import DeadlineOverview from "./DeadlineOverview";
 import WorkflowChart from "./WorkflowChart";
 import SubmissionsTimelineChart from "./SubmissionsTimelineChart";
 import UserSubmissionsList from "./UserSubmissionsList";
-import ExportButton from "../../shared/ExportButton";
+import ExportButton from "../ExportButton";
 
 export default function UtldoUserAnalytics() {
   const { authToken, user } = useAuth();
