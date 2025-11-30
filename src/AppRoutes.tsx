@@ -1,40 +1,35 @@
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./components/auth/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import FacultyRoleContent from "./components/faculty/facultyRoleContent";
-import UserManagement from "./components/technical-admin/user-management/UserManagement";
-import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
-import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
-import PimecRoleContent from "./components/pimec/PimecRoleContent";
+
+// Pages
+import { FacultyPage, PimecPage, UserAnalyticsPage } from "./pages";
+
+// Feature components (these could also be moved to pages if needed)
 import PimecEvalPage from "./components/pimec/PimecEvalPage";
 import UtldoEvaluationDirectory from "./components/utldo-admin/utldo-approval/UtldoEvaluationDirectory";
 import UECApprovalPage from "./components/utldo-admin/utldo-approval/UECApprovalPage";
-import UtldoUserAnalytics from "./components/utldo-admin/user-analytics/utldoUserAnalytics";
 import CertificationPage from "./components/utldo-admin/certification/CertificationPage";
+import UserManagement from "./components/technical-admin/user-management/UserManagement";
+import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
+import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
 import SettingsPage from "./components/navigation/settings/SettingsPage";
 
 import { UserRole } from "./types/user";
 
-// Placeholder for UTLDO Admin role content
-function UtldoAdminRoleContent() {
-  return (
-    <div className="flex-1 flex w-full px-8 py-16">
-      <UtldoUserAnalytics />
-    </div>
-  );
-}
-
 export default function AppRoutes() {
   const { user } = useAuth();
+
   const roleToRoute: Record<UserRole, string> = {
     "Technical Admin": "/technical-admin",
-    "UTLDO Admin": "/utldo-admin",
+    "UTLDO Admin": "/user-analytics",
     PIMEC: "/pimec",
     Faculty: "/faculty",
   };
+
   return (
     <Routes>
-      {/* Redirect / to highest authority role route */}
+      {/* Redirect / to role-based default route */}
       <Route
         path="/"
         element={
@@ -50,6 +45,8 @@ export default function AppRoutes() {
           )
         }
       />
+
+      {/* Faculty */}
       <Route
         path="/faculty"
         element={
@@ -61,17 +58,19 @@ export default function AppRoutes() {
               "Technical Admin",
             ]}
           >
-            <FacultyRoleContent />
+            <FacultyPage />
           </ProtectedRoute>
         }
       />
+
+      {/* PIMEC */}
       <Route
         path="/pimec"
         element={
           <ProtectedRoute
             allowedRoles={["PIMEC", "UTLDO Admin", "Technical Admin"]}
           >
-            <PimecRoleContent />
+            <PimecPage />
           </ProtectedRoute>
         }
       />
@@ -85,14 +84,46 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* User Analytics - accessible by PIMEC, UTLDO Admin, Technical Admin */}
       <Route
-        path="/utldo-admin"
+        path="/user-analytics"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <UtldoAdminRoleContent />
+          <ProtectedRoute
+            allowedRoles={["PIMEC", "UTLDO Admin", "Technical Admin"]}
+          >
+            <UserAnalyticsPage />
           </ProtectedRoute>
         }
       />
+
+      {/* UTLDO Office */}
+      <Route
+        path="/utldo/approval"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <UtldoEvaluationDirectory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/approval/:id"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <UECApprovalPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/utldo/certification"
+        element={
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+            <CertificationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Technical Admin */}
       <Route
         path="/technical-admin"
         element={
@@ -125,39 +156,25 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/utldo/approval"
-        element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <UtldoEvaluationDirectory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/utldo/approval/:id"
-        element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <UECApprovalPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/utldo/certification"
-        element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
-            <CertificationPage />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Settings - all roles */}
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin", "PIMEC", "Faculty"]}>
+          <ProtectedRoute
+            allowedRoles={[
+              "Faculty",
+              "PIMEC",
+              "UTLDO Admin",
+              "Technical Admin",
+            ]}
+          >
             <SettingsPage />
           </ProtectedRoute>
         }
       />
-      {/* Add more routes as needed */}
+
+      {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

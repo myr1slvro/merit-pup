@@ -14,7 +14,13 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
   Faculty: [{ label: "Faculty", to: "/faculty" }],
   PIMEC: [
     { label: "Faculty", to: "/faculty" },
-    { label: "PIMEC", to: "/pimec" },
+    {
+      label: "PIMEC",
+      children: [
+        { label: "PIMEC Dashboard", to: "/pimec" },
+        { label: "User Analytics", to: "/user-analytics" },
+      ],
+    },
   ],
   "UTLDO Admin": [
     { label: "Faculty", to: "/faculty" },
@@ -23,7 +29,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
       label: "UTLDO Office",
       children: [
         { label: "UTLDO Approval", to: "/utldo/approval" },
-        { label: "User Analytics", to: "/utldo-admin" },
+        { label: "User Analytics", to: "/user-analytics" },
         { label: "Certification", to: "/utldo/certification" },
       ],
     },
@@ -35,7 +41,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
       label: "UTLDO Office",
       children: [
         { label: "UTLDO Approval", to: "/utldo/approval" },
-        { label: "User Analytics", to: "/utldo-admin" },
+        { label: "User Analytics", to: "/user-analytics" },
         { label: "Certification", to: "/utldo/certification" },
       ],
     },
