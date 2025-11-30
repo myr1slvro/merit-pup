@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { FaDownload, FaFilePdf, FaFileCsv, FaSpinner } from "react-icons/fa";
 
 interface ExportButtonProps {
@@ -14,7 +14,7 @@ interface ExportButtonProps {
 
 /**
  * ExportButton component for exporting analytics dashboard
- * - PDF: Captures the target element as a PDF using html2canvas + jsPDF
+ * - PDF: Uses browser print dialog for accurate rendering
  * - CSV: Calls the backend export endpoint
  */
 export default function ExportButton({
@@ -37,51 +37,93 @@ export default function ExportButton({
     setShowDropdown(false);
 
     try {
-      // Dynamically import to avoid SSR issues and keep bundle size smaller
-      const html2canvasModule = await import("html2canvas");
-      const html2canvas = html2canvasModule.default;
-      const jspdfModule = await import("jspdf");
-      const jsPDF = jspdfModule.jsPDF;
+      // Create a new window for printing
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("Please allow pop-ups to export PDF");
+        return;
+      }
 
       const element = targetRef.current;
 
-      // Capture the element as a canvas
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-      });
+      // Get all stylesheets
+      const stylesheets = Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join("\n");
+          } catch {
+            // External stylesheets may throw CORS error
+            if (sheet.href) {
+              return `@import url("${sheet.href}");`;
+            }
+            return "";
+          }
+        })
+        .join("\n");
 
-      const imgData = canvas.toDataURL("image/png");
+      // Clone the content
+      const content = element.cloneNode(true) as HTMLElement;
 
-      // Calculate dimensions for PDF (A4 width)
-      const pdfWidth = 210; // A4 width in mm
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Remove the export button from the clone
+      const exportBtns = content.querySelectorAll('[class*="export"]');
+      exportBtns.forEach((btn) => btn.remove());
 
-      // Create PDF with appropriate size
-      const pdf = new jsPDF({
-        orientation: pdfHeight > pdfWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: [pdfWidth, Math.max(pdfHeight, 297)], // At least A4 height
-      });
+      // Build the print document
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${pdfFilename}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+              ${stylesheets}
+              
+              @media print {
+                body {
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                  color-adjust: exact !important;
+                }
+                
+                * {
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                }
+              }
+              
+              body {
+                font-family: 'Poppins', sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: white;
+              }
+              
+              @page {
+                size: A4 portrait;
+                margin: 10mm;
+              }
+            </style>
+          </head>
+          <body>
+            ${content.outerHTML}
+          </body>
+        </html>
+      `);
 
-      // Add the image to PDF
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      printWindow.document.close();
 
-      // Add metadata
-      pdf.setProperties({
-        title: pdfFilename,
-        subject: "Analytics Dashboard Report",
-        creator: "MERIT Analytics",
-      });
+      // Wait for content and fonts to load
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Save the PDF
-      pdf.save(`${pdfFilename}.pdf`);
+      // Trigger print dialog
+      printWindow.print();
+
+      // Close the window after a delay (user may cancel)
+      setTimeout(() => {
+        printWindow.close();
+      }, 1000);
     } catch (error) {
       console.error("Failed to export PDF:", error);
       alert(
