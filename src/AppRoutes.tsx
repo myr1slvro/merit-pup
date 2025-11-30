@@ -88,7 +88,7 @@ export default function AppRoutes() {
       <Route
         path="/utldo-admin"
         element={
-          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin"]}>
+          <ProtectedRoute allowedRoles={["UTLDO Admin", "Technical Admin", "PIMEC"]}>
             <UtldoAdminRoleContent />
           </ProtectedRoute>
         }
