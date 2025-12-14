@@ -208,15 +208,50 @@ export default function FacultyDirectory() {
   const allRows = useMemo(() => {
     if (!selectedCollege?.id) return [];
 
-    const rows = allIMs
+    // Get IMs with full metadata
+    const metadataRows = allIMs
       .filter((im) =>
         belongsToCollege(im, universityIMs, serviceIMs, selectedCollege.id)
       )
       .map((im) => buildAllRow(im, universityIMs, serviceIMs));
 
+    // Get base university IMs without metadata
+    const baseUniversityRows = universityIMs.map((base) => ({
+      id: base.id,
+      im_type: "University",
+      department_id: base.department_id,
+      year_level: base.year_level,
+      subject_id: base.subject_id,
+      subject_name: base.subject?.name,
+      status: "-",
+      validity: "-",
+      version: "-",
+      updated_by: "-",
+      updated_at: null,
+    }));
+
+    // Get base service IMs without metadata
+    const baseServiceRows = serviceIMs.map((base) => ({
+      id: base.id,
+      im_type: "Service",
+      department_id: null,
+      year_level: null,
+      subject_id: base.subject_id,
+      subject_name: base.subject?.name,
+      status: "-",
+      validity: "-",
+      version: "-",
+      updated_by: "-",
+      updated_at: null,
+    }));
+    console.log('Base service rows:', baseServiceRows);
+
+    // Combine all rows
+    const allCombined = [...metadataRows, ...baseUniversityRows, ...baseServiceRows];
+
     return applyStatus(
       applyDepartmentFilter(
-        deduplicateById(filterByFacultyStatuses(rows)),
+        deduplicateById(filterByFacultyStatuses(allCombined)),
         selectedDepartmentId
       )
     );
@@ -459,10 +494,11 @@ function filterByFacultyStatuses(rows: any[]): any[] {
 }
 
 function deduplicateById(rows: any[]): any[] {
-  const seen = new Set<number>();
+  const seen = new Set<string>();
   return rows.filter((row) => {
-    if (seen.has(row.id)) return false;
-    seen.add(row.id);
+    const key = `${row.id}-${row.im_type}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }
