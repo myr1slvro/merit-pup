@@ -235,7 +235,7 @@ export const ImerRubricForm: React.FC<ImerRubricFormProps> = ({
           {passed ? (
             <span className="text-green-700 font-semibold">Pass</span>
           ) : (
-            <span className="text-red-700 font-semibold">Below Threshold</span>
+            <span className="text-red-700 font-semibold">Failed</span>
           )}
         </div>
         <button

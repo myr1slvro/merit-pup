@@ -266,11 +266,6 @@ export default function CertificationPage() {
 
   return (
     <div className="flex flex-col w-full h-full p-4 gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-meritRed">
-          Certification Phase
-        </h1>
-      </div>
       <div className="flex gap-4 flex-1 min-h-[70vh]">
         <CertificationsSidebar
           ims={ims}

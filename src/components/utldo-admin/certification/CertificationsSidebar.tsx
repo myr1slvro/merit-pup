@@ -32,6 +32,11 @@ export default function CertificationsSidebar({
   return (
     <div className="w-1/3 rounded-lg shadow-lg p-6 flex flex-col overflow-hidden bg-white">
       <div className="font-semibold mb-2 text-sm flex items-center justify-between">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-meritRed">
+            Certification Phase
+          </h1>
+        </div>
         <span>Awaiting Certification ({ims.length})</span>
         {loading && <span className="text-xs text-gray-500">Loading...</span>}
       </div>
