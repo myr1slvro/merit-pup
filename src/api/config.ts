@@ -1,5 +1,5 @@
 // Centralized API base URL.
-export const API_BASE_URL = "http://127.0.0.1:5000";
+export const API_BASE_URL = "http://127.0.0.1:8080";
 
 if (!API_BASE_URL) {
   // Warn but don't throw here — some dev setups may provide env later.

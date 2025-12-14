@@ -101,6 +101,8 @@ export default function FacultyDirectory() {
           : servResponse?.serviceims || [];
 
         // Display IMs immediately
+        console.log('University IMs received:', uims);
+        console.log('Service IMs received:', sims);
         setUniversityIMs(uims);
         setServiceIMs(sims);
         setIMsLoading(false);
@@ -438,6 +440,8 @@ function applyDepartmentFilter(
 
 function filterByFacultyStatuses(rows: any[]): any[] {
   const ALLOWED_FACULTY_STATUSES = [
+    "-",
+    "for utldo evaluation",
     "assigned to faculty",
     "for resubmission",
     "for certification",
@@ -445,10 +449,13 @@ function filterByFacultyStatuses(rows: any[]): any[] {
     "published",
   ];
 
-  return rows.filter((row) => {
+  console.log('Before faculty filter:', rows);
+  const filtered = rows.filter((row) => {
     const statusNorm = String(row.status || "").toLowerCase();
     return ALLOWED_FACULTY_STATUSES.includes(statusNorm);
   });
+  console.log('After faculty filter:', filtered);
+  return filtered;
 }
 
 function deduplicateById(rows: any[]): any[] {
