@@ -276,7 +276,7 @@ export default function CertificationPage() {
           totalPages={totalPages}
           loading={loading}
         />
-        <div className="flex-1">
+        <div className="flex-1 bg-white">
           {!selected && (
             <div className="flex items-center justify-center h-full text-sm text-gray-500 border rounded p-4">
               Select an IM to review and certify.
