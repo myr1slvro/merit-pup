@@ -330,7 +330,7 @@ export default function SubjectDepartmentsModal({
                 ))}
               </select>
               <button
-                className="px-3 py-1 text-sm bg-meritRed text-white rounded disabled:opacity-60"
+                className="px-3 py-1 text-sm bg-immsRed text-white rounded disabled:opacity-60"
                 onClick={handleAdd}
                 disabled={saving || !pick || candidatesLoading}
               >

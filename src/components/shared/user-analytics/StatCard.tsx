@@ -9,10 +9,10 @@ interface StatCardProps {
 }
 
 const gradientClasses = {
-  red: "bg-gradient-to-br from-meritRed to-meritDarkRed",
+  red: "bg-gradient-to-br from-immsRed to-immsDarkRed",
   blue: "bg-gradient-to-br from-blue-500 to-blue-700",
   green: "bg-gradient-to-br from-green-500 to-green-700",
-  yellow: "bg-gradient-to-br from-meritYellow to-yellow-600",
+  yellow: "bg-gradient-to-br from-immsYellow to-yellow-600",
 };
 
 export default function StatCard({

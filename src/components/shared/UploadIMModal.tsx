@@ -155,7 +155,7 @@ export default function UploadIMModal({
         <div
           className={`border-2 rounded-lg p-6 text-center transition-colors ${
             dragOver
-              ? "border-meritRed bg-meritRed/5"
+              ? "border-immsRed bg-immsRed/5"
               : "border-dashed border-gray-300 bg-gray-50"
           }`}
           onDragOver={(e) => {
@@ -174,7 +174,7 @@ export default function UploadIMModal({
             <div className="text-3xl">📄</div>
             <div className="text-sm text-gray-700">
               Drag & drop a PDF here, or
-              <label className="ml-2 inline-flex items-center px-3 py-1 bg-white border rounded cursor-pointer text-sm text-meritRed hover:bg-meritRed/5">
+              <label className="ml-2 inline-flex items-center px-3 py-1 bg-white border rounded cursor-pointer text-sm text-immsRed hover:bg-immsRed/5">
                 <span className="sr-only">Select file</span>
                 Browse
                 <input
@@ -215,14 +215,14 @@ export default function UploadIMModal({
               type="button"
               onClick={handleAnalyze}
               disabled={analyzing || uploading || !file}
-              className="px-4 py-1 text-sm bg-meritRed text-white rounded hover:bg-meritDarkRed disabled:opacity-50"
+              className="px-4 py-1 text-sm bg-immsRed text-white rounded hover:bg-immsDarkRed disabled:opacity-50"
             >
               {analyzing ? "Analyzing..." : "Analyze PDF"}
             </button>
             <button
               type="submit"
               disabled={uploading || analyzing || !analysisNotes || !file}
-              className="px-4 py-1 text-sm bg-meritDarkRed text-white rounded hover:opacity-90 disabled:opacity-50"
+              className="px-4 py-1 text-sm bg-immsDarkRed text-white rounded hover:opacity-90 disabled:opacity-50"
             >
               {uploading ? "Uploading..." : "Upload"}
             </button>
@@ -257,7 +257,7 @@ export default function UploadIMModal({
           </div>
         )}
 
-        {error && <div className="text-meritRed text-sm">{error}</div>}
+        {error && <div className="text-immsRed text-sm">{error}</div>}
       </form>
     </div>
   );

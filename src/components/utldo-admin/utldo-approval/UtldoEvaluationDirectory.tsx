@@ -130,7 +130,7 @@ export default function UtldoEvaluationDirectory() {
                   state: { s3_link: row.s3_link },
                 })
               }
-              className="px-2 py-1 rounded text-xs bg-meritRed text-white hover:bg-meritDarkRed"
+              className="px-2 py-1 rounded text-xs bg-immsRed text-white hover:bg-immsDarkRed"
             >
               Approval
             </button>
@@ -143,7 +143,7 @@ export default function UtldoEvaluationDirectory() {
   return (
     <div className="p-8 m-16 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaUniversity className="text-meritRed" /> UTLDO Evaluation
+        <FaUniversity className="text-immsRed" /> UTLDO Evaluation
       </h2>
 
       <div className="flex flex-col gap-3 mb-4">
@@ -167,7 +167,7 @@ export default function UtldoEvaluationDirectory() {
 
       {selectedCollege && (
         <div className="flex flex-col">
-          <h3 className="text-xl font-semibold mb-2 text-meritRed">
+          <h3 className="text-xl font-semibold mb-2 text-immsRed">
             {selectedCollege.name}
           </h3>
           <div className="flex flex-col gap-2 mb-2">
@@ -191,7 +191,7 @@ export default function UtldoEvaluationDirectory() {
               {loading ? (
                 <div className="text-gray-500">Loading UEC IMs...</div>
               ) : error ? (
-                <div className="text-meritRed">{error}</div>
+                <div className="text-immsRed">{error}</div>
               ) : activeIMType === "university" ? (
                 renderTable(filteredUniversity as any)
               ) : activeIMType === "service" ? (

@@ -94,7 +94,7 @@ export default function IMStatusDropdown({
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
                     isActive
-                      ? "bg-meritRed/90 text-white hover:bg-meritRed"
+                      ? "bg-immsRed/90 text-white hover:bg-immsRed"
                       : "text-gray-700"
                   }`}
                 >

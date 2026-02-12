@@ -311,7 +311,7 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
             type="button"
             disabled={saving || !hasChanged()}
             onClick={handleSave}
-            className="px-4 py-1 text-sm bg-gradient-to-r from-meritRed to-meritDarkRed text-white rounded disabled:opacity-50 disabled:bg-meritRed"
+            className="px-4 py-1 text-sm bg-gradient-to-r from-immsRed to-immsDarkRed text-white rounded disabled:opacity-50 disabled:bg-immsRed"
           >
             {saving ? "Saving..." : "Save"}
           </button>

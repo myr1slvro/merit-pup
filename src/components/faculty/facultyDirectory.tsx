@@ -101,8 +101,8 @@ export default function FacultyDirectory() {
           : servResponse?.serviceims || [];
 
         // Display IMs immediately
-        console.log('University IMs received:', uims);
-        console.log('Service IMs received:', sims);
+        console.log("University IMs received:", uims);
+        console.log("Service IMs received:", sims);
         setUniversityIMs(uims);
         setServiceIMs(sims);
         setIMsLoading(false);
@@ -113,12 +113,12 @@ export default function FacultyDirectory() {
           authToken,
           (enriched) => {
             setUniversityIMs(
-              enriched.filter((im) => uims.find((u) => u.id === im.id))
+              enriched.filter((im) => uims.find((u) => u.id === im.id)),
             );
             setServiceIMs(
-              enriched.filter((im) => sims.find((s) => s.id === im.id))
+              enriched.filter((im) => sims.find((s) => s.id === im.id)),
             );
-          }
+          },
         );
       })
       .catch(() => {
@@ -166,12 +166,12 @@ export default function FacultyDirectory() {
   // Build latest metadata maps
   const latestUniversityIMMeta = useMemo(
     () => buildLatestMetaMap(allIMs, "university", "university_im_id"),
-    [allIMs]
+    [allIMs],
   );
 
   const latestServiceIMMeta = useMemo(
     () => buildLatestMetaMap(allIMs, "service", "service_im_id"),
-    [allIMs]
+    [allIMs],
   );
 
   // Build enriched table rows filtered by Faculty-visible statuses
@@ -183,11 +183,11 @@ export default function FacultyDirectory() {
             universityIMs,
             latestUniversityIMMeta,
             "University",
-            selectedCollege?.id
-          )
-        )
+            selectedCollege?.id,
+          ),
+        ),
       ),
-    [universityIMs, latestUniversityIMMeta, selectedCollege?.id, applyStatus]
+    [universityIMs, latestUniversityIMMeta, selectedCollege?.id, applyStatus],
   );
 
   const serviceRows = useMemo(
@@ -198,11 +198,11 @@ export default function FacultyDirectory() {
             serviceIMs,
             latestServiceIMMeta,
             "Service",
-            selectedCollege?.id
-          )
-        )
+            selectedCollege?.id,
+          ),
+        ),
       ),
-    [serviceIMs, latestServiceIMMeta, selectedCollege?.id, applyStatus]
+    [serviceIMs, latestServiceIMMeta, selectedCollege?.id, applyStatus],
   );
 
   const allRows = useMemo(() => {
@@ -211,7 +211,7 @@ export default function FacultyDirectory() {
     // Get IMs with full metadata
     const metadataRows = allIMs
       .filter((im) =>
-        belongsToCollege(im, universityIMs, serviceIMs, selectedCollege.id)
+        belongsToCollege(im, universityIMs, serviceIMs, selectedCollege.id),
       )
       .map((im) => buildAllRow(im, universityIMs, serviceIMs));
 
@@ -244,16 +244,20 @@ export default function FacultyDirectory() {
       updated_by: "-",
       updated_at: null,
     }));
-    console.log('Base service rows:', baseServiceRows);
+    console.log("Base service rows:", baseServiceRows);
 
     // Combine all rows
-    const allCombined = [...metadataRows, ...baseUniversityRows, ...baseServiceRows];
+    const allCombined = [
+      ...metadataRows,
+      ...baseUniversityRows,
+      ...baseServiceRows,
+    ];
 
     return applyStatus(
       applyDepartmentFilter(
         deduplicateById(filterByFacultyStatuses(allCombined)),
-        selectedDepartmentId
-      )
+        selectedDepartmentId,
+      ),
     );
   }, [
     allIMs,
@@ -272,7 +276,7 @@ export default function FacultyDirectory() {
   return (
     <div className="mx-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaUniversity className="text-meritRed" /> My Colleges
+        <FaUniversity className="text-immsRed" /> My Colleges
       </h2>
 
       <CollegeButtonsRow
@@ -285,7 +289,7 @@ export default function FacultyDirectory() {
 
       {selectedCollege && (
         <div className="flex flex-col">
-          <h3 className="text-xl font-semibold mb-2 text-meritRed">
+          <h3 className="text-xl font-semibold mb-2 text-immsRed">
             {selectedCollege.name}
           </h3>
 
@@ -328,7 +332,7 @@ export default function FacultyDirectory() {
                   loading: imsLoading || allIMsLoading,
                   error: imsError || allIMsError,
                   onRefresh: () => setReloadTick((n) => n + 1),
-                }
+                },
               )}
             </div>
           </div>
@@ -343,10 +347,10 @@ export default function FacultyDirectory() {
 async function enrichIMsWithSubjects(
   ims: any[],
   authToken: string,
-  onComplete: (enriched: any[]) => void
+  onComplete: (enriched: any[]) => void,
 ) {
   const subjectIds = Array.from(
-    new Set(ims.map((im) => im.subject_id).filter(Boolean))
+    new Set(ims.map((im) => im.subject_id).filter(Boolean)),
   );
   const subjectMap: Record<number, string> = {};
 
@@ -356,7 +360,7 @@ async function enrichIMsWithSubjects(
         const subj = await getSubjectById(id, authToken);
         if (subj?.name) subjectMap[id] = subj.name;
       } catch {}
-    })
+    }),
   );
 
   const enriched = ims.map((im) =>
@@ -365,7 +369,7 @@ async function enrichIMsWithSubjects(
           ...im,
           subject: { ...(im.subject || {}), name: subjectMap[im.subject_id] },
         }
-      : im
+      : im,
   );
 
   onComplete(enriched);
@@ -374,7 +378,7 @@ async function enrichIMsWithSubjects(
 function buildLatestMetaMap(
   allIMs: any[],
   type: string,
-  idKey: string
+  idKey: string,
 ): Map<number, any> {
   const map = new Map<number, any>();
 
@@ -396,7 +400,7 @@ function enrichBaseIMs(
   baseIMs: any[],
   metaMap: Map<number, any>,
   defaultType: string,
-  collegeId?: number
+  collegeId?: number,
 ): any[] {
   if (!collegeId) return [];
 
@@ -424,7 +428,7 @@ function belongsToCollege(
   im: any,
   universityIMs: any[],
   serviceIMs: any[],
-  collegeId: number
+  collegeId: number,
 ): boolean {
   if (im.university_im_id) {
     const base = universityIMs.find((x) => x.id === im.university_im_id);
@@ -462,14 +466,14 @@ function buildAllRow(im: any, universityIMs: any[], serviceIMs: any[]): any {
 
 function applyDepartmentFilter(
   rows: any[],
-  departmentId: number | null
+  departmentId: number | null,
 ): any[] {
   if (departmentId === null) return rows;
 
   return rows.filter(
     (row) =>
       (row.im_type || "").toLowerCase() !== "service" &&
-      row.department_id === departmentId
+      row.department_id === departmentId,
   );
 }
 
@@ -484,12 +488,12 @@ function filterByFacultyStatuses(rows: any[]): any[] {
     "published",
   ];
 
-  console.log('Before faculty filter:', rows);
+  console.log("Before faculty filter:", rows);
   const filtered = rows.filter((row) => {
     const statusNorm = String(row.status || "").toLowerCase();
     return ALLOWED_FACULTY_STATUSES.includes(statusNorm);
   });
-  console.log('After faculty filter:', filtered);
+  console.log("After faculty filter:", filtered);
   return filtered;
 }
 
@@ -510,12 +514,12 @@ function getTimestamp(im: any): number {
 function renderTable(
   type: IMType,
   data: Record<IMType, any[]>,
-  options: { loading: boolean; error: string | null; onRefresh: () => void }
+  options: { loading: boolean; error: string | null; onRefresh: () => void },
 ) {
   const { loading, error, onRefresh } = options;
 
   if (loading) return <div className="text-gray-500">Loading IMs...</div>;
-  if (error) return <div className="text-meritRed">{error}</div>;
+  if (error) return <div className="text-immsRed">{error}</div>;
 
   return (
     <IMTable

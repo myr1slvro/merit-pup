@@ -36,7 +36,7 @@ export default function ActivityTimelineChart({
         <select
           value={days}
           onChange={(e) => onDaysChange(Number(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-meritRed focus:border-meritRed"
+          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-immsRed focus:border-immsRed"
         >
           <option value={7}>Last 7 days</option>
           <option value={14}>Last 14 days</option>

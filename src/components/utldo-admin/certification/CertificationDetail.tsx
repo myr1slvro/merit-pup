@@ -78,7 +78,7 @@ export default function CertificationDetail({
     <div className="flex-1 flex flex-col rounded-lg shadow-lg gap-3 p-4 bg-white">
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-meritRed">
+          <h2 className="text-lg font-semibold text-immsRed">
             {subjectLoading && !subjectName
               ? "Loading subject..."
               : subjectName || "Subject"}
@@ -97,7 +97,7 @@ export default function CertificationDetail({
           <button
             onClick={() => onAct("For Resubmission")}
             disabled={actionLoading}
-            className="px-3 py-1 text-sm rounded bg-meritRed text-white hover:bg-red-700 disabled:opacity-50"
+            className="px-3 py-1 text-sm rounded bg-immsRed text-white hover:bg-red-700 disabled:opacity-50"
           >
             Request Resubmission
           </button>

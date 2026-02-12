@@ -82,7 +82,7 @@ export default function EditModal({
                       type="checkbox"
                       checked={!!(editForm.colleges || []).includes(college.id)}
                       onChange={() => handleCollegeCheck(college.id)}
-                      className="accent-meritRed"
+                      className="accent-immsRed"
                     />
                     <span className="text-sm">
                       {college.name}{" "}
@@ -262,7 +262,7 @@ export default function EditModal({
           <div className="flex gap-2 mt-4">
             <button
               type="submit"
-              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold"
+              className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold"
               disabled={saving}
             >
               {saving ? "Saving..." : "Save"}
@@ -277,7 +277,7 @@ export default function EditModal({
             </button>
             <button
               type="button"
-              className="px-4 py-2 bg-meritYellow text-black rounded hover:bg-yellow-400 font-semibold"
+              className="px-4 py-2 bg-immsYellow text-black rounded hover:bg-yellow-400 font-semibold"
               onClick={handleDeleteUser}
               disabled={saving}
             >

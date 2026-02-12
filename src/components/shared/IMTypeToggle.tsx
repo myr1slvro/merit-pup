@@ -11,7 +11,7 @@ export default function IMTypeToggle({
 }: IMTypeToggleProps) {
   const buttonClasses = (isActive: boolean) =>
     `px-3 py-1 transition-colors ${
-      isActive ? "bg-meritRed text-white" : "hover:bg-gray-200"
+      isActive ? "bg-immsRed text-white" : "hover:bg-gray-200"
     }`;
 
   return (

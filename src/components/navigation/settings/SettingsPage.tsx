@@ -109,7 +109,7 @@ export default function SettingsPage() {
                 </label>
                 <input
                   aria-label="First name"
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
@@ -120,7 +120,7 @@ export default function SettingsPage() {
                 </label>
                 <input
                   aria-label="Last name"
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
@@ -134,7 +134,7 @@ export default function SettingsPage() {
               <input
                 type="email"
                 aria-label="Email"
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -147,7 +147,7 @@ export default function SettingsPage() {
               {profileMessage && (
                 <div
                   className={`text-sm ${
-                    profileSuccess ? "text-green-600" : "text-meritRed"
+                    profileSuccess ? "text-green-600" : "text-immsRed"
                   }`}
                 >
                   {profileMessage}
@@ -156,7 +156,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed disabled:opacity-60"
+                className="px-4 py-2 bg-immsRed text-white rounded-md hover:bg-immsDarkRed disabled:opacity-60"
               >
                 {savingProfile ? "Saving..." : "Save Profile"}
               </button>
@@ -174,7 +174,7 @@ export default function SettingsPage() {
               <input
                 type="password"
                 aria-label="Current password"
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
               />
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   aria-label="New password"
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   aria-label="Confirm new password"
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-meritRed"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-immsRed"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -213,7 +213,7 @@ export default function SettingsPage() {
               {passwordMessage && (
                 <div
                   className={`text-sm ${
-                    passwordSuccess ? "text-green-600" : "text-meritRed"
+                    passwordSuccess ? "text-green-600" : "text-immsRed"
                   }`}
                 >
                   {passwordMessage}
@@ -222,7 +222,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={changingPassword}
-                className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed disabled:opacity-60"
+                className="px-4 py-2 bg-immsRed text-white rounded-md hover:bg-immsDarkRed disabled:opacity-60"
               >
                 {changingPassword ? "Changing..." : "Change Password"}
               </button>

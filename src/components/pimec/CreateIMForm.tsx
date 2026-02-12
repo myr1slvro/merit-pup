@@ -255,7 +255,7 @@ export default function CreateIMForm({
           <select
             value={imType}
             onChange={(e) => setImType(e.target.value as IMType)}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
           >
             <option value={IMType.university}>University IM</option>
             <option value={IMType.service}>Service IM</option>
@@ -267,7 +267,7 @@ export default function CreateIMForm({
       <div className="grid grid-cols-1 gap-2">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700">
-            Authors <span className="text-meritRed">*</span>
+            Authors <span className="text-immsRed">*</span>
           </label>
           <div className="mt-2">
             <AuthorsSelector
@@ -284,19 +284,19 @@ export default function CreateIMForm({
       <div className="grid grid-cols-1 gap-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Due Date 
+            Due Date
           </label>
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             min={new Date().toISOString().split("T")[0]}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
             required
           />
           <p className="mt-1 text-xs text-gray-500">
-            Authors will receive email reminders everyday for 7 days before
-            the due date.
+            Authors will receive email reminders everyday for 7 days before the
+            due date.
           </p>
         </div>
       </div>
@@ -315,7 +315,7 @@ export default function CreateIMForm({
         </div>
       </div>
 
-      {error && <div className="text-meritRed text-sm">{error}</div>}
+      {error && <div className="text-immsRed text-sm">{error}</div>}
 
       <div className="flex flex-row-reverse gap-2 mt-4 items-center">
         <div className="flex-1 text-sm text-gray-600">
@@ -326,14 +326,14 @@ export default function CreateIMForm({
         </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-meritRed text-white rounded-md hover:bg-meritDarkRed font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-immsRed text-white rounded-md hover:bg-immsDarkRed font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={creating || selectedAuthorIds.length === 0}
         >
           {creating ? "Assigning..." : "Assign IM"}
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-meritGray font-semibold shadow-sm"
+          className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-immsGray font-semibold shadow-sm"
           onClick={onCancel}
           disabled={creating}
         >

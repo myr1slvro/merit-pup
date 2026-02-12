@@ -157,7 +157,7 @@ export default function ExportButton({
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         disabled={isExporting}
-        className={`flex items-center gap-2 px-4 py-2 bg-meritRed text-white rounded-lg 
+        className={`flex items-center gap-2 px-4 py-2 bg-immsRed text-white rounded-lg 
           hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
           ${className}`}
       >

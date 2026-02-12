@@ -28,7 +28,7 @@ export default function PriorPhaseSummary({ imerpimec }: Props) {
 
   return (
     <div className="border rounded-lg shadow-lg overflow-hidden text-lg">
-      <span className="w-full flex items-center justify-between px-3 py-2 bg-linear-to-r from-meritRed to-meritDarkRed  transition-colors text-white font-semibold">
+      <span className="w-full flex items-center justify-between px-3 py-2 bg-linear-to-r from-immsRed to-immsDarkRed  transition-colors text-white font-semibold">
         Prior Phase Summary
       </span>
       {open && (
@@ -39,7 +39,7 @@ export default function PriorPhaseSummary({ imerpimec }: Props) {
                 key={section}
                 className="border rounded w-full flex flex-col bg-white"
               >
-                <div className="px-2 py-1 bg-linear-to-r from-meritRed to-meritDarkRed text-white text-xs font-semibold flex justify-between">
+                <div className="px-2 py-1 bg-linear-to-r from-immsRed to-immsDarkRed text-white text-xs font-semibold flex justify-between">
                   <span>{SECTION_TITLES[section]}</span>
                 </div>
                 <div className="divide-y">

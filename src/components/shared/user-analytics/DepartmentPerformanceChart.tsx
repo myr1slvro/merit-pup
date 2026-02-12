@@ -47,7 +47,7 @@ export default function DepartmentPerformanceChart({
           onChange={(e) =>
             onCollegeChange(e.target.value ? Number(e.target.value) : null)
           }
-          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-meritRed focus:border-meritRed"
+          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-immsRed focus:border-immsRed"
         >
           <option value="">All Colleges</option>
           {collegeData?.colleges?.map((college) => (

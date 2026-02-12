@@ -143,7 +143,7 @@ export default function PimecDirectory() {
   return (
     <div className="mx-8 p-8 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold flex items-center gap-2 mb-4">
-        <FaUniversity className="text-meritRed" /> PIMEC Evaluation
+        <FaUniversity className="text-immsRed" /> PIMEC Evaluation
       </h2>
 
       <div className="flex flex-col">
@@ -190,7 +190,7 @@ export default function PimecDirectory() {
             {loading ? (
               <div className="text-gray-500">Loading evaluator IMs...</div>
             ) : error ? (
-              <div className="text-meritRed">{error}</div>
+              <div className="text-immsRed">{error}</div>
             ) : activeIMType === "university" ? (
               <>
                 <IMTable

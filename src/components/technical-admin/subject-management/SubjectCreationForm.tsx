@@ -176,9 +176,7 @@ export default function SubjectCreationForm({ onCreated, onCancel, initialColleg
           </button>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-gray-600">
-            College filter
-          </label>
+          <label className="text-xs text-gray-600">College filter</label>
           <select
             className="border rounded px-2 py-1 text-sm"
             value={deptCollegeFilter as any}
@@ -203,7 +201,8 @@ export default function SubjectCreationForm({ onCreated, onCancel, initialColleg
         </div>
         <div>
           <p className="text-xs text-gray-500 mb-2">
-            Select one or more departments to immediately associate with the new subject.
+            Select one or more departments to immediately associate with the new
+            subject.
           </p>
           {departmentsLoading ? (
             <div className="text-xs text-gray-500">Loading departments...</div>
@@ -247,24 +246,22 @@ export default function SubjectCreationForm({ onCreated, onCancel, initialColleg
         </div>
       </div>
 
-      {error && <div className="text-meritRed text-sm">{error}</div>}
+      {error && <div className="text-immsRed text-sm">{error}</div>}
       <div className="flex gap-2 justify-end items-center">
         {linking && (
-          <span className="text-xs text-gray-500">
-            Linking departments...
-          </span>
+          <span className="text-xs text-gray-500">Linking departments...</span>
         )}
         <button
           type="button"
-            className="px-3 py-1 bg-gray-200 rounded"
-            onClick={onCancel}
-            disabled={saving}
+          className="px-3 py-1 bg-gray-200 rounded"
+          onClick={onCancel}
+          disabled={saving}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-3 py-1 bg-meritRed text-white rounded disabled:opacity-60"
+          className="px-3 py-1 bg-immsRed text-white rounded disabled:opacity-60"
           disabled={saving}
         >
           {saving ? "Creating..." : "Create Subject"}

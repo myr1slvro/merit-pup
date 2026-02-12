@@ -40,7 +40,7 @@ export default function DepartmentRow({
                 collegeId,
                 department.id,
                 "abbreviation",
-                e.target.value
+                e.target.value,
               )
             }
             className="w-full text-xs px-2 py-1 border border-gray-300 rounded bg-white"
@@ -59,7 +59,7 @@ export default function DepartmentRow({
                 collegeId,
                 department.id,
                 "name",
-                e.target.value
+                e.target.value,
               )
             }
             className="w-full text-xs px-2 py-1 border border-gray-300 rounded bg-white"
@@ -74,7 +74,7 @@ export default function DepartmentRow({
           <>
             <button
               onClick={() => onSaveNewDepartment(collegeId, department)}
-              className="text-[10px] px-2 py-0.5 bg-meritRed text-white rounded"
+              className="text-[10px] px-2 py-0.5 bg-immsRed text-white rounded"
             >
               Save
             </button>
@@ -89,7 +89,7 @@ export default function DepartmentRow({
           <>
             <button
               onClick={() => onSaveDepartment(collegeId, department)}
-              className="text-[10px] px-2 py-0.5 bg-meritRed text-white rounded"
+              className="text-[10px] px-2 py-0.5 bg-immsRed text-white rounded"
             >
               Save
             </button>
@@ -110,7 +110,7 @@ export default function DepartmentRow({
             </button>
             <button
               onClick={() => onDeleteDepartment(collegeId, department.id)}
-              className="text-[10px] px-2 py-0.5 bg-meritYellow rounded"
+              className="text-[10px] px-2 py-0.5 bg-immsYellow rounded"
             >
               Delete
             </button>

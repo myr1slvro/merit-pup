@@ -62,8 +62,8 @@ export default function CollegeCompletionTable({
                           college.completion_rate >= 75
                             ? "#10B981"
                             : college.completion_rate >= 50
-                            ? THEME_COLORS.meritYellow
-                            : THEME_COLORS.meritRed,
+                              ? THEME_COLORS.immsYellow
+                              : THEME_COLORS.immsRed,
                       }}
                     >
                       {college.completion_rate}%
@@ -77,8 +77,8 @@ export default function CollegeCompletionTable({
                             college.completion_rate >= 75
                               ? "#10B981"
                               : college.completion_rate >= 50
-                              ? THEME_COLORS.meritYellow
-                              : THEME_COLORS.meritRed,
+                                ? THEME_COLORS.immsYellow
+                                : THEME_COLORS.immsRed,
                         }}
                       ></div>
                     </div>

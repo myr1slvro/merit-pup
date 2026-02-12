@@ -142,13 +142,13 @@ export default function UserManagement({
                 )}
           </div>
           <button
-            className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+            className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold shadow"
             onClick={handleCreateUser}
           >
             + Create User
           </button>
         </div>
-        <hr className="h-1 rounded-full border-meritGray/50" />
+        <hr className="h-1 rounded-full border-immsGray/50" />
         <div className="flex-grow">
           <UserManagementTable
             key={refreshKey}

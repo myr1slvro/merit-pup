@@ -45,9 +45,7 @@ export default function PdfUploadSection({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-black">
-        PDF File
-      </label>
+      <label className="block text-sm font-medium text-black">PDF File</label>
       <div className="mt-1 flex items-center gap-2">
         <label className="inline-flex items-center px-3 py-2 bg-gray-100 text-black rounded-md border border-gray-300 cursor-pointer hover:bg-gray-200 text-sm shadow-sm">
           Browse...
@@ -104,7 +102,7 @@ export default function PdfUploadSection({
           )}
         </div>
       )}
-      {error && <div className="text-meritRed text-xs mt-1">{error}</div>}
+      {error && <div className="text-immsRed text-xs mt-1">{error}</div>}
     </div>
   );
 }

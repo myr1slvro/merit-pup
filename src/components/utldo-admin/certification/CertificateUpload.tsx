@@ -22,7 +22,7 @@ export default function CertificateUpload({
         <div>
           <div className="text-sm font-semibold text-gray-700">
             Upload Certificate of Appreciation{" "}
-            <span className="text-meritRed">*</span>
+            <span className="text-immsRed">*</span>
           </div>
           <div className="text-xs text-gray-500">
             Accepted: .docx, .doc, .pdf
@@ -48,7 +48,7 @@ export default function CertificateUpload({
               const file = e.target.files?.[0];
               if (file) setCertFile(file);
             }}
-            className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-meritRed file:text-white cursor-pointer"
+            className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-immsRed file:text-white cursor-pointer"
           />
           {certFile ? (
             <div className="text-xs text-green-700 flex items-center gap-2">

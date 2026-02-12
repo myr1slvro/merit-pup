@@ -225,7 +225,7 @@ export default function PimecEvalPage() {
   return (
     <div className="flex flex-col w-full h-full p-4 gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-meritRed leading-tight flex flex-col gap-0">
+        <h1 className="text-2xl font-bold text-immsRed leading-tight flex flex-col gap-0">
           {subjectLoading ? (
             <span className="">Loading subject...</span>
           ) : (
@@ -240,14 +240,14 @@ export default function PimecEvalPage() {
         <div className="flex gap-2 *:px-3 *:py-1 *:text-md text-white *:rounded-md *:border-2 *:border-black">
           <button
             onClick={handleDownloadOriginal}
-            className="bg-meritRed  hover:bg-meritDarkRed items-center flex"
+            className="bg-immsRed  hover:bg-immsDarkRed items-center flex"
           >
             <FaDownload className="inline mr-2" />
             Download PDF
           </button>
           <button
             onClick={() => navigate(-1)}
-            className="bg-meritDarkRed hover:bg-meritRed"
+            className="bg-immsDarkRed hover:bg-immsRed"
           >
             Back
           </button>
@@ -273,9 +273,7 @@ export default function PimecEvalPage() {
           disabled={submitting}
         />
       </div>
-      {submitError && (
-        <div className="text-xs text-meritRed">{submitError}</div>
-      )}
+      {submitError && <div className="text-xs text-immsRed">{submitError}</div>}
       <ToastContainer messages={toasts} remove={removeToast} />
     </div>
   );

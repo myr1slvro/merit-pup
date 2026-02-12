@@ -170,7 +170,7 @@ export default function IMRowActions({
         <button
           type="button"
           onClick={() => setOpenUpload(true)}
-          className="text-xs px-2 py-1 rounded bg-meritRed text-white hover:bg-meritDarkRed whitespace-nowrap"
+          className="text-xs px-2 py-1 rounded bg-immsRed text-white hover:bg-immsDarkRed whitespace-nowrap"
         >
           {getUploadButtonLabel()}
         </button>

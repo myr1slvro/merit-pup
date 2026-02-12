@@ -17,7 +17,7 @@ export default function CollegeButtonsRow({
   onSelect,
 }: Props) {
   if (loading) return <div className="text-gray-500">Loading colleges...</div>;
-  if (error) return <div className="text-meritRed">{error}</div>;
+  if (error) return <div className="text-immsRed">{error}</div>;
   if (!colleges?.length)
     return (
       <div className="text-gray-400 flex items-center gap-2">
@@ -32,8 +32,8 @@ export default function CollegeButtonsRow({
           key={c.id}
           className={`px-4 py-2 rounded-full border font-semibold transition-colors cursor-pointer ${
             selectedCollege?.id === c.id
-              ? "bg-meritRed text-white border-meritRed"
-              : "bg-white text-meritRed border-meritRed/40 hover:bg-meritRed/10"
+              ? "bg-immsRed text-white border-immsRed"
+              : "bg-white text-immsRed border-immsRed/40 hover:bg-immsRed/10"
           }`}
           title={c.name}
           onClick={() => onSelect(c)}

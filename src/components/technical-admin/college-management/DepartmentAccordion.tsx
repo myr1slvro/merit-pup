@@ -45,7 +45,7 @@ export default function DepartmentAccordion({
             </a>
             <button
               onClick={() => onAddDepartment(collegeId)}
-              className="text-xs px-2 py-1 bg-meritRed text-white rounded hover:bg-meritDarkRed"
+              className="text-xs px-2 py-1 bg-immsRed text-white rounded hover:bg-immsDarkRed"
             >
               + Add Department
             </button>

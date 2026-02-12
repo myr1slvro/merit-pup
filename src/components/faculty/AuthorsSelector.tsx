@@ -215,7 +215,7 @@ export default function AuthorsSelector({
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as any)}
-          className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+          className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
           disabled={disabled}
         >
           <option value="All">All Roles</option>
@@ -230,7 +230,7 @@ export default function AuthorsSelector({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search authors by name, staff id, email..."
-        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
         disabled={disabled}
       />
       {/* Selected chips */}

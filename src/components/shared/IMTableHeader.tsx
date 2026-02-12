@@ -31,7 +31,7 @@ export default function IMTableHeader({
   return (
     <div className="flex items-center justify-between flex-wrap gap-4 my-2">
       <h2 className="text-2xl font-bold flex items-center gap-2">
-        <FaRegFileLines className="text-meritRed" />
+        <FaRegFileLines className="text-immsRed" />
         Instructional Materials
         <div className="flex items-center gap-2">
           <IMTypeToggle
@@ -49,7 +49,7 @@ export default function IMTableHeader({
       <div className="flex items-center gap-4 ml-auto">
         {!hideCreate && onCreate && (
           <button
-            className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+            className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold shadow"
             onClick={onCreate}
             type="button"
           >
@@ -63,7 +63,7 @@ export default function IMTableHeader({
             placeholder="Search by subject..."
             value={searchTerm || ""}
             onChange={(e) => onSearch && onSearch(e.target.value)}
-            className="px-6 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-meritRed"
+            className="px-6 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-immsRed"
           />
         </div>
         <button

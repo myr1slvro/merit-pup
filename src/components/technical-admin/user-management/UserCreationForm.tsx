@@ -189,7 +189,7 @@ export default function UserCreationForm({
           Colleges
           {((form.role || "").toLowerCase() === "technical admin" ||
             (form.role || "").toLowerCase() === "utldo admin") && (
-            <span className="ml-2 text-xs text-meritRed font-semibold">
+            <span className="ml-2 text-xs text-immsRed font-semibold">
               (All colleges auto-selected for this role)
             </span>
           )}
@@ -209,7 +209,7 @@ export default function UserCreationForm({
                   className={`flex items-center gap-1 border rounded px-2 py-1 ${
                     isLocked
                       ? "bg-gray-100 cursor-not-allowed opacity-75"
-                      : "cursor-pointer hover:border-meritRed"
+                      : "cursor-pointer hover:border-immsRed"
                   }`}
                 >
                   <input
@@ -217,7 +217,7 @@ export default function UserCreationForm({
                     checked={!!(form.colleges || []).includes(college.id)}
                     onChange={() => handleCollegeCheck(college.id)}
                     disabled={isLocked}
-                    className="accent-meritRed"
+                    className="accent-immsRed"
                   />
                   <span className="text-sm">
                     {college.name}{" "}
@@ -362,14 +362,14 @@ export default function UserCreationForm({
       <div className="flex flex-row-reverse gap-2 mt-4">
         <button
           type="submit"
-          className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold"
+          className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold"
           disabled={saving}
         >
           {saving ? "Creating..." : "Create"}
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-meritGray font-semibold"
+          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-immsGray font-semibold"
           onClick={onCancel}
           disabled={saving}
         >

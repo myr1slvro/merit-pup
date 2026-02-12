@@ -116,7 +116,7 @@ export default function CollegeCreationForm({
           <button
             type="button"
             onClick={addDepartmentRow}
-            className="text-xs px-2 py-1 bg-meritRed text-white rounded hover:bg-meritDarkRed"
+            className="text-xs px-2 py-1 bg-immsRed text-white rounded hover:bg-immsDarkRed"
           >
             + Add Department
           </button>
@@ -166,7 +166,7 @@ export default function CollegeCreationForm({
         <button
           type="submit"
           disabled={saving}
-          className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold"
+          className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold"
         >
           {saving ? "Creating..." : "Create College"}
         </button>

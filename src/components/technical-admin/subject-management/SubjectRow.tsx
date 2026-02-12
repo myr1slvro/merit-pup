@@ -90,7 +90,7 @@ export default function SubjectRow({
               Cancel
             </button>
             <button
-              className="px-2 py-1 text-xs bg-meritRed text-white rounded"
+              className="px-2 py-1 text-xs bg-immsRed text-white rounded"
               onClick={save}
               disabled={saving}
             >

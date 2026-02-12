@@ -44,7 +44,7 @@ export default function SearchInput({
         type="text"
         name={name}
         aria-label={ariaLabel || placeholder}
-        className="pl-7 pr-2 py-1 border rounded w-full text-sm focus:outline-none focus:ring focus:ring-meritRed/30"
+        className="pl-7 pr-2 py-1 border rounded w-full text-sm focus:outline-none focus:ring focus:ring-immsRed/30"
         placeholder={placeholder}
         value={inner}
         autoFocus={autoFocus}

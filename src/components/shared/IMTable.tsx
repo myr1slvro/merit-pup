@@ -241,7 +241,7 @@ export default function IMTable(
         IMs...
       </div>
     );
-  if (error) return <div className="text-meritRed p-2">{error}</div>;
+  if (error) return <div className="text-immsRed p-2">{error}</div>;
   if (!data.length)
     return (
       <div className="text-gray-400 p-2">

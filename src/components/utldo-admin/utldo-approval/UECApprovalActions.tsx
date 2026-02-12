@@ -117,7 +117,7 @@ export default function UECApprovalActions({
           Approve
         </button>
       </div>
-      {error && <div className="text-xs text-meritRed">{error}</div>}
+      {error && <div className="text-xs text-immsRed">{error}</div>}
       <UECApprovalModal
         open={showApproveModal}
         loading={actionLoading === "approve"}
@@ -128,7 +128,7 @@ export default function UECApprovalActions({
           performStatusChange(
             "For Certification",
             "Approved by UTLDO for Certification",
-            "approve"
+            "approve",
           )
         }
       />
@@ -142,7 +142,7 @@ export default function UECApprovalActions({
             "For Resubmission",
             "Returned by UTLDO for revision",
             "reject",
-            fullNotes
+            fullNotes,
           )
         }
       />

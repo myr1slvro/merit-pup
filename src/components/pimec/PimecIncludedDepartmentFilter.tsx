@@ -101,7 +101,7 @@ export default function PimecIncludedDepartmentFilter({
     );
   }
   if (error) {
-    return <div className={className + " text-sm text-meritRed"}>{error}</div>;
+    return <div className={className + " text-sm text-immsRed"}>{error}</div>;
   }
   if (!departmentIds.length) {
     return (
@@ -118,8 +118,8 @@ export default function PimecIncludedDepartmentFilter({
         onClick={() => onSelect(null)}
         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
           selectedDepartmentId == null
-            ? "bg-meritRed text-white border-meritRed"
-            : "bg-white text-gray-700 border-gray-300 hover:border-meritRed"
+            ? "bg-immsRed text-white border-immsRed"
+            : "bg-white text-gray-700 border-gray-300 hover:border-immsRed"
         }`}
       >
         All Departments
@@ -131,8 +131,8 @@ export default function PimecIncludedDepartmentFilter({
           onClick={() => onSelect(deptId, collegeIdFor(deptId))}
           className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
             selectedDepartmentId === deptId
-              ? "bg-meritRed text-white border-meritRed"
-              : "bg-white text-gray-700 border-gray-300 hover:border-meritRed"
+              ? "bg-immsRed text-white border-immsRed"
+              : "bg-white text-gray-700 border-gray-300 hover:border-immsRed"
           }`}
         >
           {labelFor(deptId)}

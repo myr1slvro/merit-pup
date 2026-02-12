@@ -19,8 +19,8 @@ export default function DepartmentFilter({
         type="button"
         className={`px-3 py-1 rounded-full border text-sm ${
           selectedDepartmentId == null
-            ? "bg-meritRed text-white border-meritRed"
-            : "bg-white text-meritRed border-meritRed/40 hover:bg-meritRed/10"
+            ? "bg-immsRed text-white border-immsRed"
+            : "bg-white text-immsRed border-immsRed/40 hover:bg-immsRed/10"
         }`}
         onClick={() => onSelect(null)}
       >
@@ -35,8 +35,8 @@ export default function DepartmentFilter({
             type="button"
             className={`px-3 py-1 rounded-full border text-sm ${
               active
-                ? "bg-meritRed text-white border-meritRed"
-                : "bg-white text-meritRed border-meritRed/40 hover:bg-meritRed/10"
+                ? "bg-immsRed text-white border-immsRed"
+                : "bg-white text-immsRed border-immsRed/40 hover:bg-immsRed/10"
             }`}
             onClick={() => onSelect(deptId)}
             title={label}

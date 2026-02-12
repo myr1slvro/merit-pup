@@ -223,7 +223,7 @@ export default function UtldoUserAnalytics() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center w-full h-full">
-        <FaSpinner className="animate-spin text-4xl text-meritRed" />
+        <FaSpinner className="animate-spin text-4xl text-immsRed" />
       </div>
     );
   }
@@ -243,7 +243,7 @@ export default function UtldoUserAnalytics() {
       <div className="flex flex-col w-full bg-white m-8 rounded-lg shadow-lg overflow-y-auto">
         <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
           <div className="flex items-center justify-between p-8 pb-4">
-            <h1 className="text-3xl font-bold text-meritRed">
+            <h1 className="text-3xl font-bold text-immsRed">
               User Analytics Dashboard
             </h1>
             <ExportButton

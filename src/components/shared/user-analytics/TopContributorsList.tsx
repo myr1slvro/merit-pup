@@ -43,7 +43,7 @@ export default function TopContributorsList({
             <div className="text-right">
               <p
                 className="text-2xl font-bold"
-                style={{ color: THEME_COLORS.meritRed }}
+                style={{ color: THEME_COLORS.immsRed }}
               >
                 {contributor.contributions}
               </p>

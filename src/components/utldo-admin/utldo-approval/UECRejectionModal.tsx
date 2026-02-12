@@ -52,7 +52,7 @@ export default function UECRejectionModal({
           <span className="font-semibold">For Resubmission</span>.
         </p>
         <textarea
-          className="w-full border rounded p-2 text-sm h-32 resize-y focus:outline-none focus:ring focus:ring-meritRed/30"
+          className="w-full border rounded p-2 text-sm h-32 resize-y focus:outline-none focus:ring focus:ring-immsRed/30"
           placeholder="Detail the issues and required revisions..."
           value={value}
           onChange={(e) => setValue(e.target.value)}

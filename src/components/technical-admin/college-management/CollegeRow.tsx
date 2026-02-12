@@ -89,7 +89,7 @@ export default function CollegeRow({
             <>
               <button
                 onClick={() => onSave(college.id)}
-                className="text-xs px-2 py-1 bg-meritRed text-white rounded"
+                className="text-xs px-2 py-1 bg-immsRed text-white rounded"
               >
                 Save
               </button>
@@ -110,7 +110,7 @@ export default function CollegeRow({
               </button>
               <button
                 onClick={() => onDelete(college.id)}
-                className="text-xs px-2 py-1 bg-meritYellow rounded hover:bg-yellow-400"
+                className="text-xs px-2 py-1 bg-immsYellow rounded hover:bg-yellow-400"
               >
                 Delete
               </button>

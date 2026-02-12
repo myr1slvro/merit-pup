@@ -116,11 +116,11 @@ export default function AnalyticsFilters({
             value={filters.college_id || ""}
             onChange={(e) =>
               handleCollegeChange(
-                e.target.value ? Number(e.target.value) : undefined
+                e.target.value ? Number(e.target.value) : undefined,
               )
             }
             disabled={loadingColleges}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-meritRed focus:border-meritRed min-w-[200px]"
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-immsRed focus:border-immsRed min-w-[200px]"
           >
             <option value="">All Colleges</option>
             {colleges.map((college) => (
@@ -144,11 +144,11 @@ export default function AnalyticsFilters({
             value={filters.department_id || ""}
             onChange={(e) =>
               handleDepartmentChange(
-                e.target.value ? Number(e.target.value) : undefined
+                e.target.value ? Number(e.target.value) : undefined,
               )
             }
             disabled={!filters.college_id || loadingDepartments}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-meritRed focus:border-meritRed min-w-[200px] disabled:bg-gray-100 disabled:text-gray-400"
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-immsRed focus:border-immsRed min-w-[200px] disabled:bg-gray-100 disabled:text-gray-400"
           >
             <option value="">
               {!filters.college_id
@@ -167,7 +167,7 @@ export default function AnalyticsFilters({
         {hasFilters && (
           <button
             onClick={handleClearFilters}
-            className="px-3 py-2 text-sm text-meritRed hover:text-meritDarkRed hover:bg-red-50 rounded-md transition-colors"
+            className="px-3 py-2 text-sm text-immsRed hover:text-immsDarkRed hover:bg-red-50 rounded-md transition-colors"
           >
             Clear Filters
           </button>
@@ -179,7 +179,7 @@ export default function AnalyticsFilters({
         <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
           <span>Active filters:</span>
           {filters.college_id && (
-            <span className="px-2 py-1 bg-meritRed/10 text-meritRed rounded-full text-xs font-medium">
+            <span className="px-2 py-1 bg-immsRed/10 text-immsRed rounded-full text-xs font-medium">
               {colleges.find((c) => c.id === filters.college_id)?.name ||
                 "College"}
             </span>

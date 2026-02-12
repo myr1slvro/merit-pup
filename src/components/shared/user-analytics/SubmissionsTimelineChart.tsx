@@ -62,7 +62,7 @@ export default function SubmissionsTimelineChart({
         <select
           value={days}
           onChange={(e) => onDaysChange(Number(e.target.value))}
-          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-meritRed focus:border-meritRed"
+          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-immsRed focus:border-immsRed"
         >
           <option value={7}>Last 7 days</option>
           <option value={14}>Last 14 days</option>
@@ -88,12 +88,12 @@ export default function SubmissionsTimelineChart({
               >
                 <stop
                   offset="5%"
-                  stopColor={THEME_COLORS.meritRed}
+                  stopColor={THEME_COLORS.immsRed}
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="95%"
-                  stopColor={THEME_COLORS.meritRed}
+                  stopColor={THEME_COLORS.immsRed}
                   stopOpacity={0}
                 />
               </linearGradient>
@@ -117,7 +117,7 @@ export default function SubmissionsTimelineChart({
             <Area
               type="monotone"
               dataKey="submissions"
-              stroke={THEME_COLORS.meritRed}
+              stroke={THEME_COLORS.immsRed}
               strokeWidth={2}
               fill="url(#submissionGradient)"
             />

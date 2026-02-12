@@ -354,14 +354,14 @@ export default function CollegeManagement({
           <div className="flex items-center gap-3">
             <SearchBar value={search} onChange={setSearch} />
             <button
-              className="px-4 py-2 bg-meritRed text-white rounded hover:bg-meritDarkRed font-semibold shadow"
+              className="px-4 py-2 bg-immsRed text-white rounded hover:bg-immsDarkRed font-semibold shadow"
               onClick={() => setShowCreate(true)}
             >
               + Create College
             </button>
           </div>
         </div>
-        <hr className="h-1 rounded-full border-meritGray/50" />
+        <hr className="h-1 rounded-full border-immsGray/50" />
         <div className="p-4 overflow-y-auto">
           {loadingColleges ? (
             <div>Loading colleges...</div>
@@ -444,7 +444,7 @@ export default function CollegeManagement({
           else
             await performDeleteDepartment(
               confirmState.collegeId,
-              confirmState.depId
+              confirmState.depId,
             );
           setConfirmState(null);
         }}

@@ -94,13 +94,13 @@ export default function SubjectSelector({
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
         placeholder="Search subjects..."
       />
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value ? Number(e.target.value) : "")}
-        className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-meritRed focus:ring-1 focus:ring-meritRed/30"
+        className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
         disabled={loading}
       >
         {loading ? (

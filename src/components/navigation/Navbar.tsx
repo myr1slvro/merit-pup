@@ -98,14 +98,14 @@ export default function Navbar() {
     <nav
       className={`shadow px-8 py-4 flex items-center justify-between ${
         authToken
-          ? "bg-gradient-to-r from-meritRed to-meritDarkRed"
-          : "bg-gradient-to-r from-meritRed to-meritDarkRed"
+          ? "bg-gradient-to-r from-immsRed to-immsDarkRed"
+          : "bg-gradient-to-r from-immsRed to-immsDarkRed"
       }`}
     >
       <div className="flex items-center gap-3 font-[TimesNewRoman]">
         <span className="h-15 w-15 inline-block bg-center bg-contain bg-no-repeat bg-[url(/pup-logo.svg)]"></span>
         <div className="flex flex-col">
-          <span className="text-lg font-semibold text-meritYellow leading-none">
+          <span className="text-lg font-semibold text-immsYellow leading-none">
             Polytechnic University of the Philippines
           </span>
           <span className="text-lg font-semibold text-white leading-none">
@@ -131,10 +131,10 @@ export default function Navbar() {
                     className={`text-lg font-medium px-2 flex items-center gap-1 transition ${
                       isOpen ||
                       location.pathname.startsWith(
-                        "/" + (tab.label.toLowerCase().split(" ")[0] || "")
+                        "/" + (tab.label.toLowerCase().split(" ")[0] || ""),
                       )
-                        ? "text-meritYellow"
-                        : "text-white hover:text-meritGray"
+                        ? "text-immsYellow"
+                        : "text-white hover:text-immsGray"
                     }`}
                   >
                     {tab.label}
@@ -149,7 +149,7 @@ export default function Navbar() {
                             to={child.to}
                             className={`block px-4 py-2 rounded-none whitespace-nowrap transition ${
                               location.pathname === child.to
-                                ? "bg-meritRed/10 text-meritRed font-semibold"
+                                ? "bg-immsRed/10 text-immsRed font-semibold"
                                 : "text-gray-700 hover:bg-gray-100"
                             }`}
                           >
@@ -168,8 +168,8 @@ export default function Navbar() {
                 to={tab.to || "#"}
                 className={`text-lg font-medium transition px-2 ${
                   location.pathname === tab.to
-                    ? "text-meritYellow"
-                    : "text-white hover:text-meritGray"
+                    ? "text-immsYellow"
+                    : "text-white hover:text-immsGray"
                 }`}
               >
                 {tab.label}
@@ -186,7 +186,7 @@ export default function Navbar() {
                 setOpenMenu(null);
                 setShowProfileDropdown(!showProfileDropdown);
               }}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white hover:bg-meritYellow transition text-meritRed"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white hover:bg-immsYellow transition text-immsRed"
               title="User Profile"
             >
               <FaUser className="text-lg" />
@@ -229,7 +229,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6 space-x-2">
           <button
             onClick={handleLogout}
-            className="ml-2 px-4 py-2 rounded bg-meritRed text-white hover:bg-meritDarkRed transition text-sm font-semibold"
+            className="ml-2 px-4 py-2 rounded bg-immsRed text-white hover:bg-immsDarkRed transition text-sm font-semibold"
           >
             Logout
           </button>

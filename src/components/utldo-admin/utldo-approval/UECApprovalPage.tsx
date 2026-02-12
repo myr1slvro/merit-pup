@@ -95,7 +95,7 @@ export default function UECApprovalPage() {
   return (
     <div className="flex flex-col w-full h-full p-4 gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-meritRed leading-tight flex flex-col gap-0">
+        <h1 className="text-2xl font-bold text-immsRed leading-tight flex flex-col gap-0">
           {subjectLoading ? (
             <span className="">Loading subject...</span>
           ) : (

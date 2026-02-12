@@ -35,10 +35,10 @@ export default function LoginForm() {
         <div className="flex flex-col w-1/2 justify-center">
           <div className="flex flex-col gap-2">
             <h2 className="text-3xl font-bold">Welcome Back</h2>
-            <p className="text-meritGray">
+            <p className="text-immsGray">
               Enter your credentials to access your account
             </p>
-            <hr className="border-t border-meritGray opacity-50" />
+            <hr className="border-t border-immsGray opacity-50" />
           </div>
           <form onSubmit={handleFormLogin} className="flex flex-col gap-2 py-4">
             <label className="text-sm font-medium">Email</label>
@@ -47,7 +47,7 @@ export default function LoginForm() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="border border-meritGray rounded-lg px-4 py-2 placeholder:text-sm"
+              className="border border-immsGray rounded-lg px-4 py-2 placeholder:text-sm"
               required
             />
             <label className="text-sm font-medium">Password</label>
@@ -57,12 +57,12 @@ export default function LoginForm() {
                 placeholder="Enter your Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="border border-meritGray rounded-lg px-4 py-2 w-full placeholder:text-sm"
+                className="border border-immsGray rounded-lg px-4 py-2 w-full placeholder:text-sm"
                 required
               />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-meritGray"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-immsGray"
                 tabIndex={-1}
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
@@ -76,17 +76,16 @@ export default function LoginForm() {
             </div>
             <div className="flex items-center justify-between text-xs mt-1 mb-2">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="accent-meritRed" />
+                <input type="checkbox" className="accent-immsRed" />
                 Remember Me
               </label>
-             
             </div>
             {error && (
-              <div className="text-meritRed text-sm text-center">{error}</div>
+              <div className="text-immsRed text-sm text-center">{error}</div>
             )}
             <button
               type="submit"
-              className="bg-linear-to-r from-meritRed to-meritDarkRed rounded-md p-2 text-white mt-2 text-lg font-semibold"
+              className="bg-linear-to-r from-immsRed to-immsDarkRed rounded-md p-2 text-white mt-2 text-lg font-semibold"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Log In"}
