@@ -3,13 +3,11 @@ import { FaUniversity } from "react-icons/fa";
 import { useAuth } from "../auth/AuthProvider";
 import CollegeButtonsRow from "../shared/CollegeButtonsRow";
 import DepartmentFilter from "../shared/DepartmentFilter";
-import IMTable from "../shared/IMTable";
 import IMTableHeader from "../shared/IMTableHeader";
 import useUserColleges from "./useUserColleges";
 import { getUniversityIMsByCollege } from "../../api/universityim";
 import { getServiceIMsByCollege } from "../../api/serviceim";
 import { getAllInstructionalMaterials } from "../../api/instructionalmaterial";
-import { getSubjectById } from "../../api/subject";
 import {
   getDepartmentsByCollegeId,
   getDepartmentsByIdsCached,
@@ -17,8 +15,19 @@ import {
 } from "../../api/department";
 import type { UniversityIM } from "../../types/universityim";
 import type { ServiceIM } from "../../types/serviceim";
-
-type IMType = "university" | "service" | "all";
+import {
+  type IMType,
+  enrichIMsWithSubjects,
+  buildLatestMetaMap,
+  enrichBaseIMs,
+  belongsToCollege,
+  buildAllRow,
+  applyDepartmentFilter,
+  filterByFacultyStatuses,
+  deduplicateById,
+  renderTable,
+} from "../../utils/imDirectoryUtils";
+import { useIMFilters } from "../../hooks/useIMFilters";
 
 export default function FacultyDirectory() {
   const { authToken } = useAuth();
@@ -150,18 +159,7 @@ export default function FacultyDirectory() {
       .finally(() => setAllIMsLoading(false));
   }, [authToken, reloadTick]);
 
-  // Helper to apply status filtering (null or "all" means no filter)
-  const applyStatus = useMemo(() => {
-    return (rows: any[]) => {
-      if (!activeStatus) return rows;
-      const norm = activeStatus.trim().toLowerCase();
-      if (!norm || norm === "all") return rows;
-      return rows.filter((im: any) => {
-        const st = (im.status || "").toString().toLowerCase();
-        return st === norm;
-      });
-    };
-  }, [activeStatus]);
+  const { applyStatus } = useIMFilters(activeStatus);
 
   // Build latest metadata maps
   const latestUniversityIMMeta = useMemo(
@@ -339,197 +337,5 @@ export default function FacultyDirectory() {
         </div>
       )}
     </div>
-  );
-}
-
-// Helper Functions
-
-async function enrichIMsWithSubjects(
-  ims: any[],
-  authToken: string,
-  onComplete: (enriched: any[]) => void,
-) {
-  const subjectIds = Array.from(
-    new Set(ims.map((im) => im.subject_id).filter(Boolean)),
-  );
-  const subjectMap: Record<number, string> = {};
-
-  await Promise.all(
-    subjectIds.map(async (id) => {
-      try {
-        const subj = await getSubjectById(id, authToken);
-        if (subj?.name) subjectMap[id] = subj.name;
-      } catch {}
-    }),
-  );
-
-  const enriched = ims.map((im) =>
-    im.subject_id && subjectMap[im.subject_id]
-      ? {
-          ...im,
-          subject: { ...(im.subject || {}), name: subjectMap[im.subject_id] },
-        }
-      : im,
-  );
-
-  onComplete(enriched);
-}
-
-function buildLatestMetaMap(
-  allIMs: any[],
-  type: string,
-  idKey: string,
-): Map<number, any> {
-  const map = new Map<number, any>();
-
-  allIMs
-    .filter((im) => im[idKey] && (im.im_type || "").toLowerCase() === type)
-    .forEach((im) => {
-      const key = im[idKey];
-      const existing = map.get(key);
-
-      if (!existing || getTimestamp(im) > getTimestamp(existing)) {
-        map.set(key, im);
-      }
-    });
-
-  return map;
-}
-
-function enrichBaseIMs(
-  baseIMs: any[],
-  metaMap: Map<number, any>,
-  defaultType: string,
-  collegeId?: number,
-): any[] {
-  if (!collegeId) return [];
-
-  const rows = baseIMs.map((base) => {
-    const meta = metaMap.get(base.id);
-    return {
-      id: base.id,
-      im_id: meta?.id ?? null, // InstructionalMaterial PK — use for upload
-      s3_link: meta?.s3_link ?? null, // needed for canInitialUpload check
-      im_type: meta?.im_type || defaultType,
-      department_id: base.department_id || null,
-      year_level: base.year_level || null,
-      subject_id: base.subject_id,
-      subject_name: base.subject?.name,
-      status: meta?.status || "-",
-      validity: meta?.validity || "-",
-      version: meta?.version || "-",
-      updated_by: meta?.updated_by || "-",
-      updated_at: meta?.updated_at || null,
-    };
-  });
-
-  return deduplicateById(rows);
-}
-
-function belongsToCollege(
-  im: any,
-  universityIMs: any[],
-  serviceIMs: any[],
-  collegeId: number,
-): boolean {
-  if (im.university_im_id) {
-    const base = universityIMs.find((x) => x.id === im.university_im_id);
-    return base?.college_id === collegeId;
-  }
-  if (im.service_im_id) {
-    const base = serviceIMs.find((x) => x.id === im.service_im_id);
-    return base?.college_id === collegeId;
-  }
-  return false;
-}
-
-function buildAllRow(im: any, universityIMs: any[], serviceIMs: any[]): any {
-  const baseU = im.university_im_id
-    ? universityIMs.find((x) => x.id === im.university_im_id)
-    : undefined;
-  const baseS = im.service_im_id
-    ? serviceIMs.find((x) => x.id === im.service_im_id)
-    : undefined;
-
-  return {
-    id: im.id,
-    im_type: im.im_type,
-    department_id: baseU?.department_id || null,
-    year_level: baseU?.year_level || null,
-    subject_id: baseU?.subject_id || baseS?.subject_id,
-    subject_name: baseU?.subject?.name || baseS?.subject?.name,
-    status: im.status,
-    validity: im.validity,
-    version: im.version,
-    updated_by: im.updated_by,
-    updated_at: im.updated_at,
-  };
-}
-
-function applyDepartmentFilter(
-  rows: any[],
-  departmentId: number | null,
-): any[] {
-  if (departmentId === null) return rows;
-
-  return rows.filter(
-    (row) =>
-      (row.im_type || "").toLowerCase() !== "service" &&
-      row.department_id === departmentId,
-  );
-}
-
-function filterByFacultyStatuses(rows: any[]): any[] {
-  const ALLOWED_FACULTY_STATUSES = [
-    "-",
-    "for utldo evaluation",
-    "assigned to faculty",
-    "for resubmission",
-    "for certification",
-    "certified",
-    "published",
-  ];
-
-  console.log("Before faculty filter:", rows);
-  const filtered = rows.filter((row) => {
-    const statusNorm = String(row.status || "").toLowerCase();
-    return ALLOWED_FACULTY_STATUSES.includes(statusNorm);
-  });
-  console.log("After faculty filter:", filtered);
-  return filtered;
-}
-
-function deduplicateById(rows: any[]): any[] {
-  const seen = new Set<string>();
-  return rows.filter((row) => {
-    const key = `${row.id}-${row.im_type}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function getTimestamp(im: any): number {
-  return im.updated_at ? new Date(im.updated_at).getTime() : 0;
-}
-
-function renderTable(
-  type: IMType,
-  data: Record<IMType, any[]>,
-  options: { loading: boolean; error: string | null; onRefresh: () => void },
-) {
-  const { loading, error, onRefresh } = options;
-
-  if (loading) return <div className="text-gray-500">Loading IMs...</div>;
-  if (error) return <div className="text-immsRed">{error}</div>;
-
-  return (
-    <IMTable
-      type={type}
-      data={data[type]}
-      loading={loading}
-      error={error}
-      onRefresh={onRefresh}
-    />
   );
 }

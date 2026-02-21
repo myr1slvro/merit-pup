@@ -7,6 +7,7 @@ import IMTable from "../shared/IMTable";
 import useEvaluatorIMs from "./useEvaluatorIMs";
 import PimecIncludedDepartmentFilter from "./PimecIncludedDepartmentFilter";
 import CreateIMForm from "./CreateIMForm";
+import { useIMFilters } from "../../hooks/useIMFilters";
 
 type IMType = "university" | "service" | "all";
 
@@ -39,34 +40,7 @@ export default function PimecDirectory() {
     needsOnly
   );
 
-  // Helper to apply subject name search (case-insensitive) to a list of IMs
-  const applySearch = useMemo(() => {
-    return (rows: any[]) => {
-      const q = (searchTerm || "").trim().toLowerCase();
-      if (!q) return rows;
-      return (rows || []).filter((im: any) => {
-        const subjectName = (
-          im.subject_name ||
-          (im.subject && im.subject.name) ||
-          ""
-        ).toString();
-        return subjectName.toLowerCase().includes(q);
-      });
-    };
-  }, [searchTerm]);
-
-  // Helper to apply status filtering (null or "all" means no filter)
-  const applyStatus = useMemo(() => {
-    return (rows: any[]) => {
-      if (!activeStatus) return rows;
-      const norm = activeStatus.trim().toLowerCase();
-      if (!norm || norm === "all") return rows;
-      return rows.filter((im: any) => {
-        const st = (im.status || "").toString().toLowerCase();
-        return st === norm;
-      });
-    };
-  }, [activeStatus]);
+  const { applyStatus, applySearch } = useIMFilters(activeStatus, searchTerm);
 
   // Filter by IM type
   const universityRows = useMemo(
