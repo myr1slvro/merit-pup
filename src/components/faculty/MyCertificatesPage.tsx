@@ -1,130 +1,84 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { getCertificatesByUser } from "../../api/instructionalmaterial";
-import { IMCertificate } from "../../types/certificate";
-import CertDownloadButton from "../utldo-admin/certification/CertDownloadButton";
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—";
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+import { MdWorkspacePremium } from "react-icons/md";
+import { useCertificates } from "../../hooks/useCertificates";
+import CertCard from "../utldo-admin/certification/CertCard";
 
 export default function MyCertificatesPage() {
   const { user, authToken } = useAuth();
-  const [certs, setCerts] = useState<IMCertificate[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    if (!user?.id || !authToken) return;
-    setLoading(true);
-    setError(null);
-    getCertificatesByUser(user.id, authToken)
-      .then((data) => {
-        const list = Array.isArray(data)
-          ? data
-          : data?.certificates || data?.data || [];
-        setCerts(list as IMCertificate[]);
-      })
-      .catch((e: any) => setError(e.message || "Failed to load certificates"))
-      .finally(() => setLoading(false));
-  }, [user?.id, authToken]);
+  const { certs, loading, error } = useCertificates(
+    user?.id,
+    authToken ?? undefined,
+  );
 
   return (
-    <div className="flex flex-col gap-4 p-6 max-w-5xl mx-auto">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-immsRed">My Certificates</h1>
-        <p className="text-sm text-gray-500">
-          Certificates of recognition issued for your instructional materials.
-        </p>
+    <div className="flex flex-col gap-4 p-8 max-w-screen-2xl mx-auto bg-white mt-8 rounded-2xl">
+      {/* Page header — white card to lift above background image */}
+      <div className=" backdrop-blur-sm rounded-xl px-5 flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-xl font-bold text-immsRed leading-tight">
+            My Certificates
+          </h1>
+          <p className="text-xs text-gray mt-0.5">
+            Certificates of appreciation issued for your instructional
+            materials.
+          </p>
+        </div>
+        {certs.length > 0 && (
+          <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-immsRed/10 text-immsRed text-xs font-semibold">
+            <MdWorkspacePremium />
+            {certs.length} {certs.length === 1 ? "certificate" : "certificates"}
+          </span>
+        )}
       </div>
 
+      {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-12 text-gray-500">
-          Loading certificates…
+        <div className="flex items-center justify-center py-16 text-gray-400 gap-2 text-sm">
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"
+            />
+          </svg>
+          Loading your certificates…
         </div>
       )}
 
+      {/* Error */}
       {error && !loading && (
-        <div className="bg-red-50 border border-red-200 text-red-600 rounded p-3 text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
           {error}
         </div>
       )}
 
+      {/* Empty state */}
       {!loading && !error && certs.length === 0 && (
-        <div className="flex items-center justify-center py-12 text-gray-400 border rounded-lg bg-gray-50">
-          No certificates issued yet.
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+          <MdWorkspacePremium className="text-5xl text-gray-300" />
+          <p className="text-sm font-medium">No certificates issued yet.</p>
+          <p className="text-xs">
+            Certificates will appear here once your instructional materials are
+            certified.
+          </p>
         </div>
       )}
 
+      {/* Certificate card grid */}
       {!loading && certs.length > 0 && (
-        <div className="overflow-auto rounded-lg border shadow-sm">
-          <table className="min-w-full text-sm">
-            <thead className="bg-immsRed text-white">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">QR ID</th>
-                <th className="px-4 py-2 text-left font-medium">
-                  Subject Code
-                </th>
-                <th className="px-4 py-2 text-left font-medium">
-                  Subject Title
-                </th>
-                <th className="px-4 py-2 text-left font-medium">IM Version</th>
-                <th className="px-4 py-2 text-left font-medium">Date Issued</th>
-                <th className="px-4 py-2 text-center font-medium">Download</th>
-              </tr>
-            </thead>
-            <tbody>
-              {certs.map((cert, idx) => (
-                <tr
-                  key={cert.id}
-                  className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="px-4 py-2 font-mono text-xs text-gray-600">
-                    {cert.qr_id || "—"}
-                  </td>
-                  <td className="px-4 py-2">{cert.subject_code || "—"}</td>
-                  <td className="px-4 py-2">{cert.subject_title || "—"}</td>
-                  <td className="px-4 py-2">
-                    {cert.im_version != null ? `v${cert.im_version}` : "—"}
-                  </td>
-                  <td className="px-4 py-2">{formatDate(cert.date_issued)}</td>
-                  <td className="px-4 py-2 text-center">
-                    {cert.s3_link || cert.s3_link_docx ? (
-                      <div className="flex items-center justify-center gap-2">
-                        {cert.s3_link && (
-                          <a
-                            href={cert.s3_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-immsRed text-white rounded hover:bg-red-700 transition-colors"
-                          >
-                            View PDF
-                          </a>
-                        )}
-                        <CertDownloadButton
-                          pdfUrl={cert.s3_link}
-                          docxUrl={cert.s3_link_docx}
-                          label={cert.qr_id}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-xs">
-                        Not available
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {certs.map((cert) => (
+            <CertCard key={cert.id ?? cert.qr_id} cert={cert} />
+          ))}
         </div>
       )}
     </div>
