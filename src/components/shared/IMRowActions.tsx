@@ -65,10 +65,7 @@ export default function IMRowActions({
     // row.im_id is null when enrichBaseIMs found no InstructionalMaterial record yet —
     // in that case the PIMEC hasn't assigned the IM so the upload button must be hidden.
     canInitialUpload:
-      !disabled &&
-      !row.s3_link &&
-      roleNorm === "faculty" &&
-      row.im_id !== null,
+      !disabled && !row.s3_link && roleNorm === "faculty" && row.im_id !== null,
 
     canAdminUpload:
       !disabled &&
@@ -103,7 +100,7 @@ export default function IMRowActions({
 
     (async () => {
       try {
-        const ids = await getAllUsersForIM((row.im_id ?? row.id), authToken);
+        const ids = await getAllUsersForIM(row.im_id ?? row.id, authToken);
         if (!cancelled) setAuthorIds(ids);
       } catch {
         if (!cancelled) setAuthorIds([]);
@@ -120,7 +117,10 @@ export default function IMRowActions({
 
     setDeleting(true);
     try {
-      const res = await deleteInstructionalMaterial((row.im_id ?? row.id), authToken);
+      const res = await deleteInstructionalMaterial(
+        row.im_id ?? row.id,
+        authToken,
+      );
       if (res?.error) throw new Error(res.error);
       setShowDeleteConfirm(false);
       onChanged();
@@ -145,7 +145,10 @@ export default function IMRowActions({
         }
       }
 
-      const res = await downloadInstructionalMaterial((row.im_id ?? row.id), authToken);
+      const res = await downloadInstructionalMaterial(
+        row.im_id ?? row.id,
+        authToken,
+      );
       if (res?.file_path) {
         alert(`Downloaded on server: ${res.file_name || res.file_path}`);
       } else if (res?.error) {

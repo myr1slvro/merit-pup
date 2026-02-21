@@ -408,8 +408,8 @@ function enrichBaseIMs(
     const meta = metaMap.get(base.id);
     return {
       id: base.id,
-      im_id: meta?.id ?? null,          // InstructionalMaterial PK — use for upload
-      s3_link: meta?.s3_link ?? null,   // needed for canInitialUpload check
+      im_id: meta?.id ?? null, // InstructionalMaterial PK — use for upload
+      s3_link: meta?.s3_link ?? null, // needed for canInitialUpload check
       im_type: meta?.im_type || defaultType,
       department_id: base.department_id || null,
       year_level: base.year_level || null,
