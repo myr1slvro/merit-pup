@@ -62,7 +62,13 @@ export default function IMRowActions({
       statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
       roleNorm === "faculty",
 
-    canInitialUpload: !disabled && !row.s3_link && roleNorm === "faculty",
+    // row.im_id is null when enrichBaseIMs found no InstructionalMaterial record yet —
+    // in that case the PIMEC hasn't assigned the IM so the upload button must be hidden.
+    canInitialUpload:
+      !disabled &&
+      !row.s3_link &&
+      roleNorm === "faculty" &&
+      row.im_id !== null,
 
     canAdminUpload:
       !disabled &&
@@ -97,7 +103,7 @@ export default function IMRowActions({
 
     (async () => {
       try {
-        const ids = await getAllUsersForIM(row.id, authToken);
+        const ids = await getAllUsersForIM((row.im_id ?? row.id), authToken);
         if (!cancelled) setAuthorIds(ids);
       } catch {
         if (!cancelled) setAuthorIds([]);
@@ -107,14 +113,14 @@ export default function IMRowActions({
     return () => {
       cancelled = true;
     };
-  }, [showAuthorsModal, authToken, row.id]);
+  }, [showAuthorsModal, authToken, row.im_id, row.id]);
 
   async function handleDelete() {
     if (!authToken) return;
 
     setDeleting(true);
     try {
-      const res = await deleteInstructionalMaterial(row.id, authToken);
+      const res = await deleteInstructionalMaterial((row.im_id ?? row.id), authToken);
       if (res?.error) throw new Error(res.error);
       setShowDeleteConfirm(false);
       onChanged();
@@ -139,7 +145,7 @@ export default function IMRowActions({
         }
       }
 
-      const res = await downloadInstructionalMaterial(row.id, authToken);
+      const res = await downloadInstructionalMaterial((row.im_id ?? row.id), authToken);
       if (res?.file_path) {
         alert(`Downloaded on server: ${res.file_name || res.file_path}`);
       } else if (res?.error) {
@@ -153,7 +159,7 @@ export default function IMRowActions({
   }
 
   function handleEvaluate() {
-    navigate(`/pimec/evaluate/${row.id}`, {
+    navigate(`/pimec/evaluate/${row.im_id ?? row.id}`, {
       state: { s3_link: row.s3_link },
     });
   }
@@ -221,12 +227,12 @@ export default function IMRowActions({
         isOpen={openUpload}
         onClose={() => setOpenUpload(false)}
         onUploaded={onChanged}
-        imId={row.id}
+        imId={row.im_id ?? row.id}
         canInitialUpload={permissions.canInitialUpload}
       />
 
       <EditAuthorsModal
-        imId={row.id}
+        imId={row.im_id ?? row.id}
         departmentId={row.department_id || row.department?.id}
         isOpen={showAuthorsModal}
         onClose={() => setShowAuthorsModal(false)}
