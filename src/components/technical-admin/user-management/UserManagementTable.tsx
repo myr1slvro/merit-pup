@@ -37,6 +37,7 @@ const columnOrder: string[] = [
   "first_name",
   "middle_name",
   "role",
+  "rank",
   "staff_id",
   "email",
   "phone_number",
@@ -57,6 +58,7 @@ const columnLabels: Record<string, string> = {
   password: "Password",
   colleges: "Colleges",
   role: "Role",
+  rank: "Rank",
   birth_date: "Birthdate",
   updated_by: "Updated By",
   updated_at: "Updated At",
@@ -89,7 +91,9 @@ export default function UserManagementTable({
 
   const [users, setUsers] = useState<User[]>([]);
   const [collegeMap, setCollegeMap] = useState<CollegeMap>({});
-  const [collegeLoading, setCollegeLoading] = useState<Record<number, boolean>>({});
+  const [collegeLoading, setCollegeLoading] = useState<Record<number, boolean>>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -111,7 +115,7 @@ export default function UserManagementTable({
       }
       return "";
     },
-    [collegeMap, collegeLoading]
+    [collegeMap, collegeLoading],
   );
 
   // Server-side sorted list already comes sorted; just pass through
@@ -135,7 +139,7 @@ export default function UserManagementTable({
     async (
       currentPage = page,
       sortKey?: string,
-      sortDir: "asc" | "desc" = "asc"
+      sortDir: "asc" | "desc" = "asc",
     ) => {
       setLoading(true);
       if (!authToken) {
@@ -151,14 +155,14 @@ export default function UserManagementTable({
           authToken,
           currentPage,
           sortKey || sortConfig?.key,
-          sortKey ? sortDir : sortConfig?.direction || "asc"
+          sortKey ? sortDir : sortConfig?.direction || "asc",
         );
         const userList: User[] = res?.users ?? [];
         setUsers(userList);
         setHasNext(
           !!res?.has_next ||
             ((res?.users?.length ?? 0) > 0 &&
-              res?.users?.length === (res?.per_page ?? 10))
+              res?.users?.length === (res?.per_page ?? 10)),
         );
         setHasPrev(currentPage > 1);
         setLoading(false);
@@ -166,11 +170,11 @@ export default function UserManagementTable({
         // Load colleges in background
         const map: CollegeMap = {};
         const loadingMap: Record<number, boolean> = {};
-        userList.forEach(u => {
+        userList.forEach((u) => {
           if (u.id != null) loadingMap[u.id] = true;
         });
         setCollegeLoading(loadingMap);
-        
+
         Promise.all(
           userList.map(async (u) => {
             if (u.id == null) return;
@@ -179,11 +183,11 @@ export default function UserManagementTable({
               let ids: number[] = [];
               if (Array.isArray(colleges)) {
                 ids = colleges.map((c: any) =>
-                  typeof c === "object" && c.college_id ? c.college_id : c
+                  typeof c === "object" && c.college_id ? c.college_id : c,
                 );
               } else if ((colleges as any)?.data) {
                 ids = (colleges as any).data.map((c: any) =>
-                  typeof c === "object" && c.college_id ? c.college_id : c
+                  typeof c === "object" && c.college_id ? c.college_id : c,
                 );
               }
               const abbrs = await Promise.all(
@@ -200,13 +204,13 @@ export default function UserManagementTable({
                     } catch {
                       return String(id);
                     }
-                  })
+                  }),
               );
               map[u.id] = abbrs;
             } catch {
               map[u.id] = [];
             }
-          })
+          }),
         ).then(() => {
           setCollegeMap(map);
           setCollegeLoading({});
@@ -226,7 +230,7 @@ export default function UserManagementTable({
       sortConfig?.direction,
       setHasNext,
       setHasPrev,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -244,11 +248,11 @@ export default function UserManagementTable({
       const colleges = await getCollegesForUser(user.id, authToken);
       if (Array.isArray(colleges)) {
         userColleges = colleges.map((c: any) =>
-          typeof c === "object" && c.college_id ? c.college_id : c
+          typeof c === "object" && c.college_id ? c.college_id : c,
         );
       } else if ((colleges as any)?.data) {
         userColleges = (colleges as any).data.map((c: any) =>
-          typeof c === "object" && c.college_id ? c.college_id : c
+          typeof c === "object" && c.college_id ? c.college_id : c,
         );
       }
     } catch {
@@ -258,7 +262,7 @@ export default function UserManagementTable({
   }
 
   function handleEditChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
@@ -286,11 +290,11 @@ export default function UserManagementTable({
           const colleges = await getCollegesForUser(editingUser.id, authToken);
           if (Array.isArray(colleges)) {
             currentColleges = colleges.map((c: any) =>
-              typeof c === "object" && c.college_id ? c.college_id : c
+              typeof c === "object" && c.college_id ? c.college_id : c,
             );
           } else if ((colleges as any)?.data) {
             currentColleges = (colleges as any).data.map((c: any) =>
-              typeof c === "object" && c.college_id ? c.college_id : c
+              typeof c === "object" && c.college_id ? c.college_id : c,
             );
           }
         } catch {
@@ -300,16 +304,16 @@ export default function UserManagementTable({
           ? editForm.colleges
           : [];
         const toAdd = selectedColleges.filter(
-          (id) => !currentColleges.includes(id)
+          (id) => !currentColleges.includes(id),
         );
         const toRemove = currentColleges.filter(
-          (id) => !selectedColleges.includes(id)
+          (id) => !selectedColleges.includes(id),
         );
         for (const collegeId of toAdd) {
           try {
             await createAssociation(
               { college_id: collegeId, user_id: editingUser.id },
-              authToken
+              authToken,
             );
           } catch {
             /* ignore */

@@ -14,6 +14,7 @@ import UserManagement from "./components/technical-admin/user-management/UserMan
 import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
 import SettingsPage from "./components/navigation/settings/SettingsPage";
+import MyCertificatesPage from "./components/faculty/MyCertificatesPage";
 
 import { UserRole } from "./types/user";
 
@@ -59,6 +60,23 @@ export default function AppRoutes() {
             ]}
           >
             <FacultyPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Faculty Certificates */}
+      <Route
+        path="/faculty/certificates"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              "Faculty",
+              "PIMEC",
+              "UTLDO Admin",
+              "Technical Admin",
+            ]}
+          >
+            <MyCertificatesPage />
           </ProtectedRoute>
         }
       />

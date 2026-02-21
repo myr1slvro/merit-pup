@@ -51,7 +51,7 @@ export default function CreateIMForm({
   // Conditional fields
   const [departments, setDepartments] = useState<any[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | "">(
-    ""
+    "",
   );
   const [yearLevel, setYearLevel] = useState<number | "">("");
   // Validity is now implicit; removed from the form but still sent with a sensible default
@@ -59,6 +59,7 @@ export default function CreateIMForm({
   const [dueDate, setDueDate] = useState<string>("");
 
   const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([]);
+  const [semester, setSemester] = useState<string>("");
   useEffect(() => {
     if (!authToken) return;
     let cancelled = false;
@@ -89,14 +90,14 @@ export default function CreateIMForm({
         if (effectiveCollegeId) {
           const res = await getDepartmentsByCollegeId(
             effectiveCollegeId as number,
-            authToken
+            authToken,
           );
           if (!cancelled) setDepartments(normalizeList(res));
         } else if (user?.id) {
           // Aggregate departments from all colleges the user belongs to
           const ciRes: any = await getCollegesForUser(
             user.id as number,
-            authToken
+            authToken,
           );
           const assocList: any[] = Array.isArray(ciRes)
             ? ciRes
@@ -105,7 +106,7 @@ export default function CreateIMForm({
             .map((a: any) =>
               typeof a?.college_id === "string"
                 ? parseInt(a.college_id, 10)
-                : a?.college_id
+                : a?.college_id,
             )
             .filter((id: any) => Number.isFinite(id));
           const seen = new Set<number>();
@@ -184,6 +185,7 @@ export default function CreateIMForm({
         im_type: imType,
         status: "Assigned to Faculty", // Will be set automatically in backend
         validity: defaultValidity,
+        semester: semester || null,
         created_by: user?.staff_id || "",
         updated_by: user?.staff_id || "",
         s3_link: null, // No file uploaded yet
@@ -298,6 +300,25 @@ export default function CreateIMForm({
             Authors will receive email reminders everyday for 7 days before the
             due date.
           </p>
+        </div>
+      </div>
+
+      {/* Semester (optional) */}
+      <div className="grid grid-cols-1 gap-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Semester
+          </label>
+          <select
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-immsRed focus:ring-1 focus:ring-immsRed/30"
+          >
+            <option value="">-- Select semester --</option>
+            <option value="1st Semester">1st Semester</option>
+            <option value="2nd Semester">2nd Semester</option>
+            <option value="Summer">Summer</option>
+          </select>
         </div>
       </div>
 

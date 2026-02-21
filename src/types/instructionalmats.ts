@@ -17,6 +17,7 @@ export interface InstructionalMaterial {
   s3_link: string;
   notes?: string | null;
   due_date: string | null;
+  semester?: string | null;
   created_by: string;
   created_at: string;
   updated_by: string;

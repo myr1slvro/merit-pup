@@ -16,7 +16,7 @@ export default function EditModal({
   editingUser: User | null;
   editForm: EditFormType;
   handleEditChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => void;
   handleEditSave: () => void;
   handleEditCancel: () => void;
@@ -121,6 +121,22 @@ export default function EditModal({
                 <option value="PIMEC">PIMEC</option>
                 <option value="UTLDO Admin">UTLDO Admin</option>
                 <option value="Technical Admin">Technical Admin</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-gray-500">Academic Rank</span>
+              <select
+                name="rank"
+                value={(editForm as any).rank ?? ""}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border rounded px-2 py-1"
+              >
+                <option value="">Select Rank (optional)</option>
+                <option value="Professor">Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Instructor">Instructor</option>
+                <option value="Lecturer">Lecturer</option>
               </select>
             </div>
           </div>

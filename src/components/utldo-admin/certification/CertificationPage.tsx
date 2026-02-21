@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { IoIosWarning } from "react-icons/io";
-import { MdDownload } from "react-icons/md";
 import { useAuth } from "../../auth/AuthProvider";
 import {
   getInstructionalMaterialPresignedUrl,
   updateInstructionalMaterial,
   getForCertification,
-  sendCertsOfAppreciation,
-  getCertOfAppreciation,
 } from "../../../api/instructionalmaterial";
 import ToastContainer, { ToastMessage } from "../../shared/Toast";
 import PdfPreview from "../../shared/evaluation/PdfPreview";
@@ -25,11 +22,12 @@ interface CertificationIM {
   subject?: { id?: number; name?: string; title?: string };
   subject_name?: string;
   s3_link?: string;
-  // Possible type fields coming from backend
   im_type?: string;
   type?: string;
   category?: string;
   format?: string;
+  college_id?: number | null;
+  department_id?: number | null;
 }
 
 export default function CertificationPage() {
@@ -50,13 +48,10 @@ export default function CertificationPage() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [perPage, setPerPage] = useState<number>(0);
-  const [certFile, setCertFile] = useState<File | null>(null);
-  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
-
   function pushToast(
     type: ToastMessage["type"],
     text: string,
-    duration = 4000
+    duration = 4000,
   ) {
     setToasts((t) => [
       ...t,
@@ -77,8 +72,8 @@ export default function CertificationPage() {
         const list = Array.isArray(data?.instructional_materials)
           ? data.instructional_materials
           : Array.isArray(data)
-          ? data
-          : [];
+            ? data
+            : [];
         setIMs(list);
         // Pagination metadata (defensive parsing)
         const meta = data || {};
@@ -112,7 +107,7 @@ export default function CertificationPage() {
               } catch {
                 return [im.id, undefined] as const;
               }
-            })
+            }),
           );
           const map: Record<number, string> = {};
           for (const [id, name] of entries) {
@@ -137,7 +132,6 @@ export default function CertificationPage() {
     setPdfUrl(null);
     setPdfError(null);
     setSubjectName("");
-    setCertFile(null); // Reset certificate file when selecting new IM
     // Subject resolution
     const subjImmediate =
       (im.subject && (im.subject.name || im.subject.title)) || im.subject_name;
@@ -165,7 +159,7 @@ export default function CertificationPage() {
         setPdfLoading(true);
         const presigned = await getInstructionalMaterialPresignedUrl(
           im.id,
-          authToken
+          authToken,
         );
         if (presigned?.url) setPdfUrl(presigned.url);
         else setPdfError("No PDF URL");
@@ -180,45 +174,8 @@ export default function CertificationPage() {
   async function act(status: "Published" | "For Resubmission") {
     if (!selected || !authToken) return;
 
-    // If marking as Published, ensure certificate file is uploaded
-    if (status === "Published" && !certFile) {
-      pushToast(
-        "error",
-        "Please upload a certificate file before marking as certified"
-      );
-      return;
-    }
-
     setActionLoading(true);
     try {
-      // If marking as published, send certificate emails first
-      if (status === "Published" && certFile) {
-        try {
-          const certResult = await sendCertsOfAppreciation(
-            selected.id,
-            certFile,
-            authToken
-          );
-          if (certResult?.error) {
-            throw new Error(`Failed to send certificates: ${certResult.error}`);
-          }
-          pushToast(
-            "success",
-            `Certificates sent to ${
-              certResult.recipients?.length || 0
-            } author(s)`
-          );
-        } catch (certError: any) {
-          pushToast(
-            "error",
-            certError.message || "Failed to send certificates"
-          );
-          // Don't proceed with status update if certificate sending failed
-          setActionLoading(false);
-          return;
-        }
-      }
-
       const notesLines: string[] = [];
       notesLines.push(`Action: ${status}`);
       if (selected.notes) {
@@ -235,7 +192,7 @@ export default function CertificationPage() {
       const res = await updateInstructionalMaterial(
         selected.id,
         payload,
-        authToken
+        authToken,
       );
       if (res?.error) throw new Error(res.error);
       pushToast("success", `Updated IM ${selected.id} → ${status}`);
@@ -243,7 +200,6 @@ export default function CertificationPage() {
       setIMs((prev) => prev.filter((p) => p.id !== selected.id));
       setSelected(null);
       setPdfUrl(null);
-      setCertFile(null);
     } catch (e: any) {
       pushToast("error", e.message || "Update failed");
     } finally {
@@ -251,22 +207,9 @@ export default function CertificationPage() {
     }
   }
 
-  async function handleDownloadTemplate() {
-    if (!authToken) return;
-    setDownloadingTemplate(true);
-    try {
-      await getCertOfAppreciation(authToken);
-      pushToast("success", "Certificate template downloaded successfully");
-    } catch (e: any) {
-      pushToast("error", e.message || "Failed to download template");
-    } finally {
-      setDownloadingTemplate(false);
-    }
-  }
-
   return (
-    <div className="flex flex-col w-full h-full p-4 gap-4">
-      <div className="flex gap-4 flex-1 min-h-[70vh]">
+    <div className="flex flex-col w-full h-full p-4 gap-4 overflow-hidden">
+      <div className="flex gap-4 flex-1 overflow-hidden">
         <CertificationsSidebar
           ims={ims}
           selectedId={selected?.id}
@@ -275,6 +218,7 @@ export default function CertificationPage() {
           setPage={setPage}
           totalPages={totalPages}
           loading={loading}
+          subjectMap={subjectMap}
         />
         <div className="flex-1 bg-white">
           {!selected && (
@@ -290,12 +234,9 @@ export default function CertificationPage() {
               pdfUrl={pdfUrl}
               pdfLoading={pdfLoading}
               pdfError={pdfError}
-              certFile={certFile}
-              setCertFile={setCertFile}
-              downloadingTemplate={downloadingTemplate}
-              handleDownloadTemplate={handleDownloadTemplate}
               onAct={act}
               actionLoading={actionLoading}
+              onToast={pushToast}
             />
           )}
         </div>

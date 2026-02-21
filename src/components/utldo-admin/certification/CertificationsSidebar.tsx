@@ -18,6 +18,7 @@ interface Props {
   setPage: (p: number) => void;
   totalPages: number;
   loading: boolean;
+  subjectMap?: Record<number, string>;
 }
 
 export default function CertificationsSidebar({
@@ -28,9 +29,10 @@ export default function CertificationsSidebar({
   setPage,
   totalPages,
   loading,
+  subjectMap = {},
 }: Props) {
   return (
-    <div className="w-1/3 rounded-lg shadow-lg p-6 flex flex-col overflow-hidden bg-white">
+    <div className="w-1/3 min-w-[16rem] rounded-lg shadow-lg p-4 flex flex-col overflow-hidden bg-white">
       <div className="font-semibold mb-2 text-sm flex items-center justify-between">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-immsRed">
@@ -43,7 +45,12 @@ export default function CertificationsSidebar({
 
       <div className="flex-1 overflow-auto divide-y">
         {ims.map((im) => {
-          const subj = (im as any).subject_name || "Subject";
+          const subj =
+            subjectMap[im.id] ||
+            (im as any).subject_name ||
+            (im as any).subject?.name ||
+            (im as any).subject?.title ||
+            "Subject";
           const imType =
             im.im_type || im.material_type || im.category || im.format || "IM";
           return (

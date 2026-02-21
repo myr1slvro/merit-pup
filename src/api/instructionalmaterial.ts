@@ -43,7 +43,7 @@ export async function createInstructionalMaterial(data: any, token: string) {
 export async function updateInstructionalMaterial(
   imId: number,
   data: any,
-  token: string
+  token: string,
 ) {
   // If data contains a pdf_file, send as multipart/form-data
   if (data.pdf_file) {
@@ -88,7 +88,7 @@ export async function getInstructionalMaterial(imId: number, token: string) {
 
 export async function getAllInstructionalMaterials(
   token: string,
-  page: number = 1
+  page: number = 1,
 ) {
   const res = await fetch(`${API_URL}/?page=${page}`, {
     method: "GET",
@@ -123,7 +123,7 @@ export async function deleteInstructionalMaterial(imId: number, token: string) {
 
 export async function getDeletedInstructionalMaterials(
   token: string,
-  page: number = 1
+  page: number = 1,
 ) {
   const res = await fetch(`${API_URL}/deleted?page=${page}`, {
     method: "GET",
@@ -136,7 +136,7 @@ export async function getDeletedInstructionalMaterials(
 
 export async function restoreInstructionalMaterial(
   imId: number,
-  token: string
+  token: string,
 ) {
   const res = await fetch(`${API_URL}/${imId}/restore`, {
     method: "POST",
@@ -150,7 +150,7 @@ export async function restoreInstructionalMaterial(
 export async function downloadInstructionalMaterial(
   imId: number,
   token: string,
-  downloadDir?: string
+  downloadDir?: string,
 ) {
   let url = `${API_URL}/${imId}/download`;
   if (downloadDir) {
@@ -168,7 +168,7 @@ export async function downloadInstructionalMaterial(
 export async function getForPIMEC(
   token: string,
   page: number = 1,
-  departmentId?: number
+  departmentId?: number,
 ) {
   const params = new URLSearchParams({ page: String(page) });
   if (departmentId) params.append("department_id", String(departmentId));
@@ -183,7 +183,7 @@ export async function getForPIMEC(
 
 export async function getInstructionalMaterialPresignedUrl(
   imId: number,
-  token: string
+  token: string,
 ) {
   const res = await fetch(`${API_URL}/${imId}/presigned`, {
     method: "GET",
@@ -217,7 +217,7 @@ export async function sendCertsOfAppreciation(
   imId: number,
   file: File,
   token: string,
-  opts?: { subject?: string; text_body?: string; html_body?: string }
+  opts?: { subject?: string; text_body?: string; html_body?: string },
 ) {
   const form = new FormData();
   form.append("file", file);
@@ -230,6 +230,61 @@ export async function sendCertsOfAppreciation(
       Authorization: `Bearer ${token}`,
     },
     body: form,
+  });
+  return res.json();
+}
+
+// Auto-generate personalized certificates for all authors of an IM.
+// Optionally pass a custom DOCX template file to use instead of the S3 default.
+export async function generateCertificates(
+  imId: number,
+  token: string,
+  templateFile?: File,
+) {
+  if (templateFile) {
+    const form = new FormData();
+    form.append("template_file", templateFile);
+    const res = await fetch(`${API_URL}/${imId}/generate-certificates`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    return res.json();
+  }
+  const res = await fetch(`${API_URL}/${imId}/generate-certificates`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.json();
+}
+
+// Generate and send a certificate for a single author (post-publish catch-up).
+export async function generateCertificateForUser(
+  imId: number,
+  userId: number,
+  token: string,
+) {
+  const res = await fetch(
+    `${API_URL}/${imId}/generate-certificate-for-user/${userId}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  return res.json();
+}
+
+// Get all certificates issued to a specific user.
+export async function getCertificatesByUser(userId: number, token: string) {
+  const res = await fetch(`${API_URL}/certificates/user/${userId}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
 }

@@ -21,6 +21,7 @@ function getMinBirthdate() {
 type UserCreationFormProps = {
   form: {
     role?: string;
+    rank?: string;
     last_name?: string;
     first_name?: string;
     middle_name?: string;
@@ -32,7 +33,7 @@ type UserCreationFormProps = {
     colleges?: number[];
   };
   onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -142,7 +143,7 @@ export default function UserCreationForm({
   function handlePasswordBlur() {
     if (form.password && !passwordPattern.test(form.password)) {
       setPasswordError(
-        "Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character."
+        "Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character.",
       );
     } else {
       setPasswordError("");
@@ -162,7 +163,7 @@ export default function UserCreationForm({
 
     if (form.password && !passwordPattern.test(form.password)) {
       setPasswordError(
-        "Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character."
+        "Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character.",
       );
       valid = false;
     }
@@ -246,6 +247,22 @@ export default function UserCreationForm({
             <option value="PIMEC">PIMEC</option>
             <option value="UTLDO Admin">UTLDO Admin</option>
             <option value="Technical Admin">Technical Admin</option>
+          </select>
+        </div>
+        <div className="flex-1">
+          <span className="text-xs text-gray-500">Academic Rank</span>
+          <select
+            name="rank"
+            value={form.rank ?? ""}
+            onChange={onChange}
+            className="mt-1 block w-full border rounded px-2 py-1"
+          >
+            <option value="">Select Rank (optional)</option>
+            <option value="Professor">Professor</option>
+            <option value="Associate Professor">Associate Professor</option>
+            <option value="Assistant Professor">Assistant Professor</option>
+            <option value="Instructor">Instructor</option>
+            <option value="Lecturer">Lecturer</option>
           </select>
         </div>
       </div>

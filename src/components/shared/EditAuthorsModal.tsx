@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAllUsersForIM, createAuthor, deleteAuthor } from "../../api/author";
-import { getUsersForDepartment } from "../../api/departmentsincluded";
-import { getUserById } from "../../api/users";
+import { getUserById, getAllUsersNoPagination } from "../../api/users";
+import { getUsersForCollege } from "../../api/collegesincluded";
 import { useAuth } from "../auth/AuthProvider";
 
 interface UserLike {
@@ -11,11 +11,14 @@ interface UserLike {
   middle_name?: string;
   last_name?: string;
   email?: string;
+  role?: string;
+  rank?: string | null;
 }
 
 export interface EditAuthorsModalProps {
   imId: number;
   departmentId?: number | null;
+  collegeId?: number | null;
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
@@ -30,9 +33,16 @@ function formatUser(u: UserLike) {
   return `${staff} - ${last}, ${first}${midPart}`.trim();
 }
 
+const ROLE_COLORS: Record<string, string> = {
+  Faculty: "bg-blue-100 text-blue-700",
+  PIMEC: "bg-purple-100 text-purple-700",
+  "UTLDO Admin": "bg-green-100 text-green-700",
+  "Technical Admin": "bg-orange-100 text-orange-700",
+};
+
 const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
   imId,
-  departmentId,
+  collegeId,
   isOpen,
   onClose,
   onSaved,
@@ -42,110 +52,103 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [allUsers, setAllUsers] = useState<UserLike[]>([]);
   const [authorIds, setAuthorIds] = useState<number[]>([]);
+  const [initialAuthorIds, setInitialAuthorIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [initialAuthorIds, setInitialAuthorIds] = useState<number[]>([]);
+  const [roleFilter, setRoleFilter] = useState<string>("All");
+  const [isScopedToCollege, setIsScopedToCollege] = useState(false);
   const searchRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Load current authors + department users
   useEffect(() => {
     if (!isOpen || !authToken) return;
     let cancelled = false;
+    setQuery("");
+    setRoleFilter("All");
+
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const existingIds = await getAllUsersForIM(imId, authToken);
+        // 1. Get current authors
+        const existingIds: number[] = await getAllUsersForIM(imId, authToken);
         if (!cancelled) {
           setAuthorIds(existingIds);
           setInitialAuthorIds(existingIds);
         }
-        // Pull department users
-        if (departmentId) {
-          const resp: any = await getUsersForDepartment(
-            departmentId,
-            authToken
+
+        let rawUsers: UserLike[] = [];
+        let scoped = false;
+
+        if (collegeId) {
+          // 2a. Load college-scoped users
+          const collegeResp: any = await getUsersForCollege(
+            collegeId,
+            authToken,
           );
-          const list = Array.isArray(resp)
-            ? resp
-            : resp?.data || resp?.users || [];
-          // Each item may have user or user_id
-          const users: UserLike[] = [];
-          const toFetch: number[] = [];
-          for (const item of list) {
-            if (item?.user) {
-              const u = item.user;
-              const id = Number(u.id ?? u.user_id);
-              if (Number.isFinite(id)) users.push({ ...u, id });
-            } else if (item?.user_id != null) {
-              const id = Number(item.user_id);
-              if (Number.isFinite(id)) toFetch.push(id);
-            }
-          }
-          if (toFetch.length) {
-            const fetched = await Promise.all(
-              toFetch.map((id) =>
-                getUserById(id, authToken)
-                  .then((u) =>
-                    u?.user
-                      ? { ...u.user, id: Number(u.user.id) }
-                      : { ...u, id: Number(u.id) }
-                  )
-                  .catch(() => null)
-              )
-            );
-            for (const f of fetched) {
-              if (f && typeof f.id === "number") users.push(f as any);
-            }
-          }
-          // Ensure any currently linked authors (existingIds) are included
-          // in the list even if they are not present in the department users.
-          const missingExisting = (existingIds || []).filter(
-            (id: number) => !users.some((u) => u.id === id)
+          const associations: any[] = Array.isArray(collegeResp)
+            ? collegeResp
+            : collegeResp?.data || [];
+          const userIds: number[] = associations
+            .map((a: any) => Number(a.user_id))
+            .filter((id) => Number.isFinite(id));
+
+          const fetched = await Promise.all(
+            userIds.map((id) =>
+              getUserById(id, authToken)
+                .then((u) => {
+                  const raw = u?.user || u;
+                  return raw ? { ...raw, id: Number(raw.id) } : null;
+                })
+                .catch(() => null),
+            ),
           );
-          if (missingExisting.length) {
-            const fetchedExisting = await Promise.all(
-              missingExisting.map((id) =>
-                getUserById(id, authToken)
-                  .then((u) =>
-                    u?.user
-                      ? { ...u.user, id: Number(u.user.id) }
-                      : { ...u, id: Number(u.id) }
-                  )
-                  .catch(() => null)
-              )
-            );
-            for (const f of fetchedExisting) {
-              if (f && typeof f.id === "number") users.push(f as any);
-            }
-          }
-          // Deduplicate by id
-          const dedupMap = new Map<number, UserLike>();
-          for (const u of users) {
-            if (u.id != null && !dedupMap.has(u.id)) dedupMap.set(u.id, u);
-          }
-          if (!cancelled)
-            setAllUsers(
-              Array.from(dedupMap.values()).sort((a, b) =>
-                formatUser(a).localeCompare(formatUser(b))
-              )
-            );
+          rawUsers = fetched.filter(Boolean) as UserLike[];
+          scoped = true;
         } else {
-          // If departmentId missing, just show existing authors
-          const users: UserLike[] = [];
-          for (const id of existingIds) {
-            try {
-              const u = await getUserById(id, authToken);
-              const raw = u?.user || u;
-              if (raw) users.push({ ...raw, id: Number(raw.id) });
-            } catch {
-              /* ignore */
-            }
+          // 2b. Fallback: all users
+          const allResp: any = await getAllUsersNoPagination(authToken);
+          const list = Array.isArray(allResp)
+            ? allResp
+            : allResp?.users || allResp?.data || [];
+          rawUsers = list
+            .filter((u: any) => u && u.id != null)
+            .map((u: any) => ({ ...u, id: Number(u.id) }));
+        }
+
+        // 3. Make sure existing authors are always in the list
+        const presentIds = new Set(rawUsers.map((u) => u.id));
+        const missingIds = existingIds.filter((id) => !presentIds.has(id));
+        if (missingIds.length) {
+          const extra = await Promise.all(
+            missingIds.map((id) =>
+              getUserById(id, authToken)
+                .then((u) => {
+                  const raw = u?.user || u;
+                  return raw ? { ...raw, id: Number(raw.id) } : null;
+                })
+                .catch(() => null),
+            ),
+          );
+          for (const f of extra) {
+            if (f && typeof f.id === "number") rawUsers.push(f as UserLike);
           }
-          if (!cancelled) setAllUsers(users);
+        }
+
+        // 4. Deduplicate and sort
+        const dedupMap = new Map<number, UserLike>();
+        for (const u of rawUsers) {
+          if (u.id != null && !dedupMap.has(u.id)) dedupMap.set(u.id, u);
+        }
+        const sorted = Array.from(dedupMap.values()).sort((a, b) =>
+          formatUser(a).localeCompare(formatUser(b)),
+        );
+
+        if (!cancelled) {
+          setAllUsers(sorted);
+          setIsScopedToCollege(scoped);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e.message || "Failed loading authors");
+        if (!cancelled) setError(e.message || "Failed loading users");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -153,30 +156,23 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, authToken, imId, departmentId]);
+  }, [isOpen, authToken, imId, collegeId]);
 
   useEffect(() => {
-    if (isOpen) {
-      // focus search for quick filtering
-      setTimeout(() => searchRef.current?.focus(), 50);
-    }
+    if (isOpen) setTimeout(() => searchRef.current?.focus(), 50);
   }, [isOpen]);
 
   function toggleAuthor(id: number) {
     setAuthorIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
-  // Show linked authors at the top: preserve their current order from `authorIds`,
-  // then show remaining users sorted by display name. Apply filtering after ordering.
+  // Current authors first, then rest sorted
   const orderedUsers = React.useMemo(() => {
-    if (!allUsers || allUsers.length === 0) return [] as UserLike[];
     const byId = new Map<number, UserLike>();
     for (const u of allUsers) if (u.id != null) byId.set(u.id, u);
-
     const top: UserLike[] = [];
-    // Use authorIds (current selection) to place already-linked authors first.
     for (const id of authorIds) {
       const u = byId.get(id);
       if (u) {
@@ -184,38 +180,46 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
         byId.delete(id);
       }
     }
-
-    // Remaining users sorted by formatted name
     const rest = Array.from(byId.values()).sort((a, b) =>
-      formatUser(a).localeCompare(formatUser(b))
+      formatUser(a).localeCompare(formatUser(b)),
     );
-
     return [...top, ...rest];
   }, [allUsers, authorIds]);
 
-  const filtered = query.trim()
-    ? orderedUsers.filter((u) =>
-        formatUser(u).toLowerCase().includes(query.trim().toLowerCase())
-      )
-    : orderedUsers;
+  const availableRoles = React.useMemo(() => {
+    const roles = new Set(orderedUsers.map((u) => u.role).filter(Boolean));
+    return ["All", ...Array.from(roles).sort()];
+  }, [orderedUsers]);
+
+  const filtered = React.useMemo(() => {
+    return orderedUsers.filter((u) => {
+      const matchesRole = roleFilter === "All" || u.role === roleFilter;
+      const matchesQuery =
+        !query.trim() ||
+        formatUser(u).toLowerCase().includes(query.trim().toLowerCase()) ||
+        (u.email || "").toLowerCase().includes(query.trim().toLowerCase()) ||
+        (u.rank || "").toLowerCase().includes(query.trim().toLowerCase());
+      return matchesRole && matchesQuery;
+    });
+  }, [orderedUsers, query, roleFilter]);
 
   async function handleSave() {
     if (!authToken) return;
     setSaving(true);
     try {
-      const existing = await getAllUsersForIM(imId, authToken);
+      const existing: number[] = await getAllUsersForIM(imId, authToken);
       const toAdd = authorIds.filter((id) => !existing.includes(id));
-      const toRemove = existing.filter((id: number) => !authorIds.includes(id));
-      for (const add of toAdd) {
+      const toRemove = existing.filter((id) => !authorIds.includes(id));
+      for (const id of toAdd) {
         try {
-          await createAuthor(imId, add, authToken);
+          await createAuthor(imId, id, authToken);
         } catch {
-          /* ignore individual */
+          /* ignore */
         }
       }
-      for (const rem of toRemove) {
+      for (const id of toRemove) {
         try {
-          await deleteAuthor(imId, rem, authToken);
+          await deleteAuthor(imId, id, authToken);
         } catch {
           /* ignore */
         }
@@ -230,8 +234,7 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
   const hasChanged = () => {
     if (initialAuthorIds.length !== authorIds.length) return true;
     const setA = new Set(initialAuthorIds);
-    for (const id of authorIds) if (!setA.has(id)) return true;
-    return false;
+    return authorIds.some((id) => !setA.has(id));
   };
 
   if (!isOpen) return null;
@@ -242,54 +245,112 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
         className="absolute inset-0 bg-black/50"
         onClick={() => !saving && onClose()}
       />
-      <div className="relative bg-white rounded shadow-lg p-6 w-full max-w-xl z-10 flex flex-col gap-4">
-        <div className="flex items-start justify-between">
-          <h3 className="text-lg font-semibold">Edit Authors</h3>
+      <div className="relative bg-white rounded-lg shadow-xl p-5 w-full max-w-lg z-10 flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">Edit Authors</h3>
+            {isScopedToCollege ? (
+              <p className="text-xs text-gray-500">
+                Showing users within this college
+              </p>
+            ) : (
+              <p className="text-xs text-yellow-600">
+                ⚠ Showing all users (no college scope)
+              </p>
+            )}
+          </div>
           <div className="text-sm text-gray-600">
             Selected: <span className="font-medium">{authorIds.length}</span>
           </div>
         </div>
 
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && (
+          <div className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">
+            {error}
+          </div>
+        )}
 
-        <input
-          ref={searchRef}
-          type="text"
-          className="w-full rounded border px-3 py-2 text-sm"
-          placeholder="Search users..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          disabled={loading || saving}
-          aria-label="Search users"
-        />
+        {/* Filters */}
+        <div className="flex gap-2">
+          <input
+            ref={searchRef}
+            type="text"
+            className="flex-1 rounded border px-3 py-1.5 text-sm"
+            placeholder="Search by name, email, rank…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            disabled={loading || saving}
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            disabled={loading || saving}
+            className="rounded border px-2 py-1.5 text-sm bg-white"
+          >
+            {availableRoles.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <div className="max-h-64 overflow-auto border rounded p-2 divide-y text-sm">
+        {/* User list */}
+        <div className="max-h-72 overflow-auto border rounded divide-y text-sm">
           {loading ? (
-            <div className="p-2 text-gray-500">Loading users…</div>
+            <div className="p-3 text-gray-500 text-sm">Loading users…</div>
           ) : filtered.length === 0 ? (
-            <div className="p-2 text-gray-500">
-              No users found for department.
+            <div className="p-3 text-gray-500 text-sm italic">
+              No users found.
             </div>
           ) : (
             filtered.map((u) => {
               const checked = authorIds.includes(u.id);
+              const roleClass =
+                ROLE_COLORS[u.role || ""] || "bg-gray-100 text-gray-600";
               return (
                 <label
                   key={u.id}
-                  className="flex items-center gap-3 p-2 cursor-pointer hover:bg-gray-50"
+                  className={`flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+                    checked ? "bg-blue-50" : ""
+                  }`}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleAuthor(u.id)}
                     disabled={saving}
+                    className="mt-1 shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {formatUser(u)}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium text-sm">
+                        {formatUser(u)}
+                      </span>
+                      {u.role && (
+                        <span
+                          className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${roleClass}`}
+                        >
+                          {u.role}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {u.email || ""}
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {u.rank ? (
+                        <span className="text-xs text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                          {u.rank}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-yellow-600 italic">
+                          No rank
+                        </span>
+                      )}
+                      {u.email && (
+                        <span className="text-xs text-gray-500 truncate">
+                          {u.email}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </label>
@@ -298,23 +359,29 @@ const EditAuthorsModal: React.FC<EditAuthorsModalProps> = ({
           )}
         </div>
 
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            disabled={saving}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-100"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={saving || !hasChanged()}
-            onClick={handleSave}
-            className="px-4 py-1 text-sm bg-gradient-to-r from-immsRed to-immsDarkRed text-white rounded disabled:opacity-50 disabled:bg-immsRed"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
+        {/* Footer */}
+        <div className="flex justify-between items-center pt-1">
+          <span className="text-xs text-gray-400">
+            {filtered.length} of {allUsers.length} shown
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={saving}
+              className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={saving || !hasChanged()}
+              onClick={handleSave}
+              className="px-4 py-1.5 text-sm bg-gradient-to-r from-immsRed to-immsDarkRed text-white rounded disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

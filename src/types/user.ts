@@ -11,6 +11,7 @@ export type User = {
   phone_number: string;
   password?: string;
   role: UserRole;
+  rank?: string | null;
   created_by: string;
   created_at?: string;
   updated_by: string;
