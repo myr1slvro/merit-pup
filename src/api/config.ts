@@ -1,5 +1,5 @@
 // Centralized API base URL.
-export const API_BASE_URL = "http://127.0.0.1:5000";
+export const API_BASE_URL = "https://merit-flask-backend-13301803943.asia-southeast1.run.app";
 
 if (!API_BASE_URL) {
   // Warn but don't throw here — some dev setups may provide env later.
