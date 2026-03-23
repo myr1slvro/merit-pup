@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import { PiCertificateFill } from "react-icons/pi";
 import { FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 
 import { UserRole } from "../../types/user";
@@ -12,10 +13,7 @@ interface NavItem {
 
 const FACULTY_NAV: NavItem = {
   label: "Faculty",
-  children: [
-    { label: "Dashboard", to: "/faculty" },
-    { label: "My Certificates", to: "/faculty/certificates" },
-  ],
+  to: "/faculty",
 };
 
 const ROLE_TABS: Record<UserRole, NavItem[]> = {
@@ -208,6 +206,16 @@ export default function Navbar() {
                   <div className="text-xs text-gray-500 mt-1">{user?.role}</div>
                 </div>
                 <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowProfileDropdown(false);
+                      navigate("/faculty/certificates");
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition flex items-center gap-2"
+                  >
+                    <PiCertificateFill className="text-gray-600" />
+                    My Certificates
+                  </button>
                   <button
                     onClick={() => {
                       setShowProfileDropdown(false);
