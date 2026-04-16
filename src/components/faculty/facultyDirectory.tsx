@@ -20,8 +20,6 @@ import {
   enrichIMsWithSubjects,
   buildLatestMetaMap,
   enrichBaseIMs,
-  belongsToCollege,
-  buildAllRow,
   applyDepartmentFilter,
   filterByFacultyStatuses,
   deduplicateById,
@@ -116,19 +114,16 @@ export default function FacultyDirectory() {
         setServiceIMs(sims);
         setIMsLoading(false);
 
-        // Enrich with subject names in background
-        await enrichIMsWithSubjects(
-          [...uims, ...sims],
-          authToken,
-          (enriched) => {
-            setUniversityIMs(
-              enriched.filter((im) => uims.find((u) => u.id === im.id)),
-            );
-            setServiceIMs(
-              enriched.filter((im) => sims.find((s) => s.id === im.id)),
-            );
-          },
-        );
+        // Enrich each type independently to avoid ID collisions between
+        // university and service lists (both can share numeric IDs).
+        await Promise.all([
+          enrichIMsWithSubjects(uims, authToken, (enriched) => {
+            setUniversityIMs(enriched as UniversityIM[]);
+          }),
+          enrichIMsWithSubjects(sims, authToken, (enriched) => {
+            setServiceIMs(enriched as ServiceIM[]);
+          }),
+        ]);
       })
       .catch(() => {
         setIMsError("Failed to load IMs for this college.");
@@ -145,18 +140,46 @@ export default function FacultyDirectory() {
       return;
     }
 
+    let cancelled = false;
     setAllIMsLoading(true);
     setAllIMsError(null);
 
-    getAllInstructionalMaterials(authToken, 1)
-      .then((res) => {
+    (async () => {
+      const firstPage = await getAllInstructionalMaterials(authToken, 1);
+      const firstList = Array.isArray(firstPage)
+        ? firstPage
+        : firstPage?.instructional_materials || [];
+      const totalPages = Array.isArray(firstPage)
+        ? 1
+        : Number(firstPage?.pages || 1);
+
+      if (totalPages <= 1) {
+        if (!cancelled) setAllIMs(firstList);
+        return;
+      }
+
+      const pageRequests = [];
+      for (let page = 2; page <= totalPages; page += 1) {
+        pageRequests.push(getAllInstructionalMaterials(authToken, page));
+      }
+
+      const remaining = await Promise.all(pageRequests);
+      const merged = [...firstList];
+      remaining.forEach((res) => {
         const list = Array.isArray(res)
           ? res
           : res?.instructional_materials || [];
-        setAllIMs(list);
-      })
+        merged.push(...list);
+      });
+
+      if (!cancelled) setAllIMs(merged);
+    })()
       .catch(() => setAllIMsError("Failed to load instructional materials."))
       .finally(() => setAllIMsLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
   }, [authToken, reloadTick]);
 
   const { applyStatus } = useIMFilters(activeStatus);
@@ -206,65 +229,9 @@ export default function FacultyDirectory() {
   const allRows = useMemo(() => {
     if (!selectedCollege?.id) return [];
 
-    // Get IMs with full metadata
-    const metadataRows = allIMs
-      .filter((im) =>
-        belongsToCollege(im, universityIMs, serviceIMs, selectedCollege.id),
-      )
-      .map((im) => buildAllRow(im, universityIMs, serviceIMs));
-
-    // Get base university IMs without metadata
-    const baseUniversityRows = universityIMs.map((base) => ({
-      id: base.id,
-      im_type: "University",
-      department_id: base.department_id,
-      year_level: base.year_level,
-      subject_id: base.subject_id,
-      subject_name: base.subject?.name,
-      status: "-",
-      validity: "-",
-      version: "-",
-      updated_by: "-",
-      updated_at: null,
-    }));
-
-    // Get base service IMs without metadata
-    const baseServiceRows = serviceIMs.map((base) => ({
-      id: base.id,
-      im_type: "Service",
-      department_id: null,
-      year_level: null,
-      subject_id: base.subject_id,
-      subject_name: base.subject?.name,
-      status: "-",
-      validity: "-",
-      version: "-",
-      updated_by: "-",
-      updated_at: null,
-    }));
-    console.log("Base service rows:", baseServiceRows);
-
-    // Combine all rows
-    const allCombined = [
-      ...metadataRows,
-      ...baseUniversityRows,
-      ...baseServiceRows,
-    ];
-
-    return applyStatus(
-      applyDepartmentFilter(
-        deduplicateById(filterByFacultyStatuses(allCombined)),
-        selectedDepartmentId,
-      ),
-    );
-  }, [
-    allIMs,
-    selectedCollege?.id,
-    universityIMs,
-    serviceIMs,
-    selectedDepartmentId,
-    applyStatus,
-  ]);
+    const mergedRows = deduplicateById([...universityRows, ...serviceRows]);
+    return applyDepartmentFilter(mergedRows, selectedDepartmentId);
+  }, [selectedCollege?.id, universityRows, serviceRows, selectedDepartmentId]);
 
   const getDepartmentLabel = (deptId: number) => {
     const entry = getDepartmentCacheEntry(deptId);

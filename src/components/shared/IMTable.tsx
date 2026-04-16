@@ -33,7 +33,7 @@ interface AllProps extends BaseProps {
   data: any[];
 }
 export default function IMTable(
-  props: UniversityProps | ServiceProps | AllProps
+  props: UniversityProps | ServiceProps | AllProps,
 ) {
   const {
     type,
@@ -63,7 +63,7 @@ export default function IMTable(
   const { colleges: userColleges } = useUserColleges();
   const userCollegeIds = useMemo(
     () => (userColleges || []).map((c: any) => Number(c.id)).filter(Boolean),
-    [userColleges]
+    [userColleges],
   );
 
   const { authorsStaffIdsByIm, canActByIm } = useIMTableAuthors(
@@ -81,8 +81,8 @@ export default function IMTable(
         {type === "university"
           ? "University"
           : type === "service"
-          ? "Service"
-          : "All"}{" "}
+            ? "Service"
+            : "All"}{" "}
         IMs...
       </div>
     );
@@ -94,8 +94,8 @@ export default function IMTable(
         {type === "university"
           ? "University"
           : type === "service"
-          ? "Service"
-          : ""}{" "}
+            ? "Service"
+            : ""}{" "}
         Instructional Materials found.
       </div>
     );
@@ -125,6 +125,8 @@ export default function IMTable(
         </thead>
         <tbody>
           {data.map((im) => {
+            const resolvedImId = Number(im.im_id ?? im.id);
+            const rowKey = `${im.id}-${String(im.im_type || type).toLowerCase()}-${Number.isFinite(resolvedImId) ? resolvedImId : "na"}`;
             const subjectName =
               im.subject_name ||
               im.subject?.name ||
@@ -143,15 +145,15 @@ export default function IMTable(
                 String(depId || "");
             }
             return (
-              <tr key={im.id} className="border-t hover:bg-gray-50">
+              <tr key={rowKey} className="border-t hover:bg-gray-50">
                 <td className="px-3 py-2 font-mono text-xs">{im.id}</td>
                 <td className="px-3 py-2">
                   {im.im_type ||
                     (type === "service"
                       ? "Service"
                       : type === "university"
-                      ? "University"
-                      : "-")}
+                        ? "University"
+                        : "-")}
                 </td>
                 {type !== "service" && (
                   <td className="px-3 py-2">
@@ -167,7 +169,7 @@ export default function IMTable(
                 <td className="px-3 py-2">{im.validity || "-"}</td>
                 <td className="px-3 py-2">{im.version || "-"}</td>
                 <td className="px-3 py-2">
-                  {authorsStaffIdsByIm[Number(im.id)] || (token ? "…" : "-")}
+                  {authorsStaffIdsByIm[resolvedImId] || (token ? "…" : "-")}
                 </td>
                 <td className="px-3 py-2">{im.updated_by || "-"}</td>
                 <td className="px-3 py-2 text-xs whitespace-nowrap">
@@ -177,7 +179,7 @@ export default function IMTable(
                 </td>
                 <td className="px-3 py-2">
                   <div className="min-w-[14rem] flex items-center justify-center gap-2 text-center">
-                    {canActByIm[Number(im.id)] ? (
+                    {canActByIm[resolvedImId] ? (
                       <>
                         {
                           // compute im's college for this row so we can decide

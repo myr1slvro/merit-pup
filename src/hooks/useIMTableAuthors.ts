@@ -31,11 +31,13 @@ export function useIMTableAuthors(
   const userCache = useRef<Map<number, any>>(new Map());
   const seqRef = useRef(0);
 
+  const resolveImId = (row: any): number => Number(row?.im_id ?? row?.id);
+
   useEffect(() => {
     if (!data?.length || !token) return;
     const seq = ++seqRef.current;
     const imIds = Array.from(
-      new Set(data.map((d) => Number(d.id)).filter(Boolean)),
+      new Set(data.map((d) => resolveImId(d)).filter(Boolean)),
     );
     let cancelled = false;
 
@@ -46,7 +48,9 @@ export function useIMTableAuthors(
             try {
               const uids = await getAllUsersForIM(imId, token);
               const unique = Array.from(
-                new Set((uids || []).map((x: any) => Number(x)).filter(Boolean)),
+                new Set(
+                  (uids || []).map((x: any) => Number(x)).filter(Boolean),
+                ),
               );
               return [imId, unique] as [number, number[]];
             } catch {
@@ -107,7 +111,7 @@ export function useIMTableAuthors(
                 .filter(Boolean),
             );
 
-            const row = data.find((d) => Number(d.id) === imId);
+            const row = data.find((d) => resolveImId(d) === imId);
             let imCollegeId: number | undefined = undefined;
             if (row) {
               imCollegeId =
@@ -167,7 +171,14 @@ export function useIMTableAuthors(
     return () => {
       cancelled = true;
     };
-  }, [data, token, currentUser?.id, userCollegeIds, actionsRole, currentUser?.role]);
+  }, [
+    data,
+    token,
+    currentUser?.id,
+    userCollegeIds,
+    actionsRole,
+    currentUser?.role,
+  ]);
 
   return { authorsStaffIdsByIm, canActByIm };
 }

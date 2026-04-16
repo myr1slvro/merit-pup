@@ -170,7 +170,7 @@ export function filterByFacultyStatuses(rows: any[]): any[] {
 export function deduplicateById(rows: any[]): any[] {
   const seen = new Set<string>();
   return rows.filter((row) => {
-    const key = `${row.id}-${row.im_type}`;
+    const key = `${row.id}-${String(row.im_type || "").toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
