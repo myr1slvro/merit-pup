@@ -57,6 +57,7 @@ const ROLE_TABS: Record<UserRole, NavItem[]> = {
         { label: "User Management", to: "/technical-admin" },
         { label: "College Management", to: "/technical-admin/colleges" },
         { label: "Subject Management", to: "/technical-admin/subjects" },
+        { label: "Audit Logs", to: "/technical-admin/audit-logs" },
       ],
     },
   ],

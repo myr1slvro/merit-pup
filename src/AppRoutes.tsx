@@ -13,6 +13,7 @@ import CertificationPage from "./components/utldo-admin/certification/Certificat
 import UserManagement from "./components/technical-admin/user-management/UserManagement";
 import SubjectManagement from "./components/technical-admin/subject-management/SubjectManagement";
 import CollegeManagement from "./components/technical-admin/college-management/CollegeManagement";
+import AuditLogsPage from "./components/technical-admin/audit-logs/AuditLogsPage";
 import SettingsPage from "./components/navigation/settings/SettingsPage";
 import MyCertificatesPage from "./components/faculty/MyCertificatesPage";
 
@@ -171,6 +172,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["Technical Admin"]}>
             <SubjectManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical-admin/audit-logs"
+        element={
+          <ProtectedRoute allowedRoles={["Technical Admin"]}>
+            <AuditLogsPage />
           </ProtectedRoute>
         }
       />
