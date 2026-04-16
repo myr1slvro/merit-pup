@@ -278,6 +278,8 @@ export default function FacultyDirectory() {
               statusList={[
                 "All",
                 "Assigned to Faculty",
+                "For PIMEC Evaluation",
+                "For UTLDO Evaluation",
                 "For Resubmission",
                 "For Certification",
                 "Certified",

@@ -150,6 +150,7 @@ export function applyDepartmentFilter(
 export function filterByFacultyStatuses(rows: any[]): any[] {
   const ALLOWED_FACULTY_STATUSES = [
     "-",
+    "for pimec evaluation",
     "for utldo evaluation",
     "assigned to faculty",
     "for resubmission",
