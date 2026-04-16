@@ -181,39 +181,13 @@ export default function IMTable(
                   <div className="min-w-[14rem] flex items-center justify-center gap-2 text-center">
                     {canActByIm[resolvedImId] ? (
                       <>
-                        {
-                          // compute im's college for this row so we can decide
-                          // whether to temporarily elevate PIMEC to Technical Admin
-                        }
                         {(() => {
-                          let imCollegeId: number | undefined = undefined;
-                          imCollegeId =
-                            Number(im.college_id || im.college?.id) ||
-                            undefined;
-                          const depId = im.department_id || im.department?.id;
-                          if (!imCollegeId && depId) {
-                            const depCache = getDepartmentCacheEntry(depId);
-                            if (depCache?.college_id)
-                              imCollegeId = Number(depCache.college_id);
-                          }
-                          const rawRole = (
+                          const roleForRow = (
                             actionsRole ||
                             currentUser?.role ||
                             (window as any)?.currentUserRole ||
-                            ""
+                            "Faculty"
                           ).toString();
-                          const isPimec = rawRole
-                            .toLowerCase()
-                            .includes("pimec");
-                          const roleForRow =
-                            isPimec &&
-                            imCollegeId &&
-                            userCollegeIds.includes(imCollegeId)
-                              ? "Technical Admin"
-                              : actionsRole ||
-                                currentUser?.role ||
-                                (window as any)?.currentUserRole ||
-                                "Faculty";
 
                           return (
                             <>
