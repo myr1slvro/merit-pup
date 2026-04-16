@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import {
   downloadInstructionalMaterial,
   deleteInstructionalMaterial,
+  getDeletedInstructionalMaterials,
+  restoreInstructionalMaterial,
   generateCertificateForUser,
 } from "../../api/instructionalmaterial";
 import { getAllUsersForIM, getAuthorsForIM } from "../../api/author";
@@ -35,6 +37,13 @@ const EVALUABLE_STATUSES = [
   STATUS_PUBLISHED.toLowerCase(),
 ];
 
+function resolveInstructionalMaterialId(row: any): number | null {
+  const hasImIdField = Object.prototype.hasOwnProperty.call(row || {}, "im_id");
+  const candidate = hasImIdField ? row?.im_id : row?.id;
+  const parsed = Number(candidate);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export default function IMRowActions({
   row,
   onChanged,
@@ -55,13 +64,17 @@ export default function IMRowActions({
   // Data States
   const [authorIds, setAuthorIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const roleNorm = (role || "").toLowerCase();
   const statusNorm = String(row.status || "").toLowerCase();
+  const imId = resolveInstructionalMaterialId(row);
+  const hasImRecord = imId !== null;
 
   // Permission checks
   const permissions = {
     canUploadRevision:
+      hasImRecord &&
       !disabled &&
       statusNorm === STATUS_FOR_RESUBMISSION.toLowerCase() &&
       roleNorm === "faculty",
@@ -69,30 +82,44 @@ export default function IMRowActions({
     // row.im_id is null when enrichBaseIMs found no InstructionalMaterial record yet —
     // in that case the PIMEC hasn't assigned the IM so the upload button must be hidden.
     canInitialUpload:
-      !disabled && !row.s3_link && roleNorm === "faculty" && row.im_id !== null,
+      hasImRecord &&
+      !disabled &&
+      !row.s3_link &&
+      roleNorm === "faculty" &&
+      row.im_id !== null,
 
     canAdminUpload:
+      hasImRecord &&
       !disabled &&
       !row.s3_link &&
       (roleNorm === "pimec" || roleNorm === "technical admin"),
 
-    canDownload: !!row.s3_link || !!row.id,
+    canDownload: hasImRecord && (!!row.s3_link || !!row.id),
 
     canEvaluate:
+      hasImRecord &&
       showEvaluate &&
       (roleNorm === "pimec" || roleNorm === "technical admin") &&
       EVALUABLE_STATUSES.includes(statusNorm),
 
     canEditAuthors:
-      roleNorm === "pimec" ||
-      roleNorm === "technical admin" ||
-      roleNorm === "utldo admin",
+      hasImRecord &&
+      (roleNorm === "pimec" ||
+        roleNorm === "technical admin" ||
+        roleNorm === "utldo admin"),
 
-    canDelete: roleNorm === "technical admin",
+    canDelete: hasImRecord && roleNorm === "technical admin",
 
     canSendCertificate:
+      hasImRecord &&
       !disabled &&
       statusNorm === STATUS_PUBLISHED.toLowerCase() &&
+      (roleNorm === "pimec" ||
+        roleNorm === "utldo admin" ||
+        roleNorm === "technical admin"),
+
+    canRestoreMissingIm:
+      !hasImRecord &&
       (roleNorm === "pimec" ||
         roleNorm === "utldo admin" ||
         roleNorm === "technical admin"),
@@ -105,13 +132,13 @@ export default function IMRowActions({
 
   // Fetch author IDs when modal opens
   useEffect(() => {
-    if (!showAuthorsModal || !authToken) return;
+    if (!showAuthorsModal || !authToken || !imId) return;
 
     let cancelled = false;
 
     (async () => {
       try {
-        const ids = await getAllUsersForIM(row.im_id ?? row.id, authToken);
+        const ids = await getAllUsersForIM(imId, authToken);
         if (!cancelled) setAuthorIds(ids);
       } catch {
         if (!cancelled) setAuthorIds([]);
@@ -121,17 +148,14 @@ export default function IMRowActions({
     return () => {
       cancelled = true;
     };
-  }, [showAuthorsModal, authToken, row.im_id, row.id]);
+  }, [showAuthorsModal, authToken, imId]);
 
   async function handleDelete() {
-    if (!authToken) return;
+    if (!authToken || !imId) return;
 
     setDeleting(true);
     try {
-      const res = await deleteInstructionalMaterial(
-        row.im_id ?? row.id,
-        authToken,
-      );
+      const res = await deleteInstructionalMaterial(imId, authToken);
       if (res?.error) throw new Error(res.error);
       setShowDeleteConfirm(false);
       onChanged();
@@ -143,7 +167,10 @@ export default function IMRowActions({
   }
 
   async function handleDownload() {
-    if (!authToken) return;
+    if (!authToken || !imId) {
+      alert("No active instructional material record. Restore it first.");
+      return;
+    }
 
     try {
       // Prefer direct S3 link if bucket env provided
@@ -156,10 +183,7 @@ export default function IMRowActions({
         }
       }
 
-      const res = await downloadInstructionalMaterial(
-        row.im_id ?? row.id,
-        authToken,
-      );
+      const res = await downloadInstructionalMaterial(imId, authToken);
       if (res?.file_path) {
         alert(`Downloaded on server: ${res.file_name || res.file_path}`);
       } else if (res?.error) {
@@ -173,7 +197,11 @@ export default function IMRowActions({
   }
 
   function handleEvaluate() {
-    navigate(`/pimec/evaluate/${row.im_id ?? row.id}`, {
+    if (!imId) {
+      alert("No active instructional material record. Restore it first.");
+      return;
+    }
+    navigate(`/pimec/evaluate/${imId}`, {
       state: { s3_link: row.s3_link },
     });
   }
@@ -184,8 +212,87 @@ export default function IMRowActions({
     return "Upload PDF";
   }
 
+  async function handleRestoreMissingIm() {
+    if (!authToken) return;
+
+    setRestoring(true);
+    try {
+      const targetType = String(row?.im_type || "").toLowerCase();
+      const baseId = Number(row?.id);
+
+      if (!targetType || !Number.isFinite(baseId) || baseId <= 0) {
+        throw new Error("Unable to identify base IM row for restore.");
+      }
+
+      let page = 1;
+      let totalPages = 1;
+      let deletedMatch: any = null;
+
+      while (page <= totalPages && !deletedMatch) {
+        const res = await getDeletedInstructionalMaterials(authToken, page);
+        if (res?.error) throw new Error(res.error);
+
+        const list = Array.isArray(res)
+          ? res
+          : res?.instructional_materials || [];
+        totalPages = Number(res?.pages || 1);
+
+        deletedMatch = list.find((im: any) => {
+          const imType = String(im?.im_type || "").toLowerCase();
+          if (imType !== targetType) return false;
+
+          if (imType === "university") {
+            return Number(im?.university_im_id) === baseId;
+          }
+
+          if (imType === "service") {
+            return Number(im?.service_im_id) === baseId;
+          }
+
+          return false;
+        });
+
+        page += 1;
+      }
+
+      if (!deletedMatch?.id) {
+        throw new Error(
+          "No deleted instructional material found for this row. Create a new assignment first.",
+        );
+      }
+
+      const restored = await restoreInstructionalMaterial(
+        Number(deletedMatch.id),
+        authToken,
+        { reset_to_assignment: true },
+      );
+
+      if (restored?.error) throw new Error(restored.error);
+
+      alert(
+        "Instructional Material restored and reset to Assigned to Faculty.",
+      );
+      onChanged();
+    } catch (e: any) {
+      alert(e.message || "Failed to restore instructional material.");
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   return (
     <div className="flex items-center gap-2">
+      {permissions.canRestoreMissingIm && (
+        <button
+          type="button"
+          onClick={handleRestoreMissingIm}
+          disabled={restoring}
+          className="text-xs px-2 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 whitespace-nowrap disabled:opacity-50"
+        >
+          {restoring ? "Restoring..." : "Restore IM"}
+        </button>
+      )}
+
       {canShowUpload && (
         <button
           type="button"
@@ -247,22 +354,26 @@ export default function IMRowActions({
       )}
 
       {/* Modals */}
-      <UploadIMModal
-        isOpen={openUpload}
-        onClose={() => setOpenUpload(false)}
-        onUploaded={onChanged}
-        imId={row.im_id ?? row.id}
-        canInitialUpload={permissions.canInitialUpload}
-      />
+      {imId !== null && (
+        <UploadIMModal
+          isOpen={openUpload}
+          onClose={() => setOpenUpload(false)}
+          onUploaded={onChanged}
+          imId={imId}
+          canInitialUpload={permissions.canInitialUpload}
+        />
+      )}
 
-      <EditAuthorsModal
-        imId={row.im_id ?? row.id}
-        departmentId={row.department_id || row.department?.id}
-        collegeId={row.college_id || row.university_im?.college_id || null}
-        isOpen={showAuthorsModal}
-        onClose={() => setShowAuthorsModal(false)}
-        onSaved={onChanged}
-      />
+      {imId !== null && (
+        <EditAuthorsModal
+          imId={imId}
+          departmentId={row.department_id || row.department?.id}
+          collegeId={row.college_id || row.university_im?.college_id || null}
+          isOpen={showAuthorsModal}
+          onClose={() => setShowAuthorsModal(false)}
+          onSaved={onChanged}
+        />
+      )}
 
       <DeleteIMModal
         isOpen={showDeleteConfirm}
@@ -271,12 +382,16 @@ export default function IMRowActions({
         onConfirm={handleDelete}
       />
 
-      {showSendCertModal && (
+      {showSendCertModal && imId !== null && (
         <SendCertificateModal
-          imId={row.im_id ?? row.id}
+          imId={imId}
           authToken={authToken!}
           onClose={() => setShowSendCertModal(false)}
         />
+      )}
+
+      {!hasImRecord && !permissions.canRestoreMissingIm && (
+        <span className="text-xs text-amber-700">No active IM record.</span>
       )}
     </div>
   );

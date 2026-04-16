@@ -137,8 +137,15 @@ export async function getDeletedInstructionalMaterials(
 export async function restoreInstructionalMaterial(
   imId: number,
   token: string,
+  opts?: { reset_to_assignment?: boolean },
 ) {
-  const res = await fetch(`${API_URL}/${imId}/restore`, {
+  const reset = opts?.reset_to_assignment;
+  const query =
+    typeof reset === "boolean"
+      ? `?reset_to_assignment=${reset ? "true" : "false"}`
+      : "";
+
+  const res = await fetch(`${API_URL}/${imId}/restore${query}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

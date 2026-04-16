@@ -31,13 +31,27 @@ export function useIMTableAuthors(
   const userCache = useRef<Map<number, any>>(new Map());
   const seqRef = useRef(0);
 
-  const resolveImId = (row: any): number => Number(row?.im_id ?? row?.id);
+  const resolveImId = (row: any): number | null => {
+    const hasImIdField = Object.prototype.hasOwnProperty.call(
+      row || {},
+      "im_id",
+    );
+    const candidate = hasImIdField ? row?.im_id : row?.id;
+    const parsed = Number(candidate);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  };
 
   useEffect(() => {
     if (!data?.length || !token) return;
     const seq = ++seqRef.current;
     const imIds = Array.from(
-      new Set(data.map((d) => resolveImId(d)).filter(Boolean)),
+      new Set(
+        data
+          .map((d) => resolveImId(d))
+          .filter(
+            (id) => typeof id === "number" && Number.isFinite(id) && id > 0,
+          ) as number[],
+      ),
     );
     let cancelled = false;
 

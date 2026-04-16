@@ -125,8 +125,15 @@ export default function IMTable(
         </thead>
         <tbody>
           {data.map((im) => {
-            const resolvedImId = Number(im.im_id ?? im.id);
-            const rowKey = `${im.id}-${String(im.im_type || type).toLowerCase()}-${Number.isFinite(resolvedImId) ? resolvedImId : "na"}`;
+            const hasImIdField = Object.prototype.hasOwnProperty.call(
+              im || {},
+              "im_id",
+            );
+            const parsedImId = Number(hasImIdField ? im.im_id : im.id);
+            const resolvedImId =
+              Number.isFinite(parsedImId) && parsedImId > 0 ? parsedImId : null;
+            const hasActiveImRecord = !hasImIdField || resolvedImId !== null;
+            const rowKey = `${im.id}-${String(im.im_type || type).toLowerCase()}-${resolvedImId ?? "na"}`;
             const subjectName =
               im.subject_name ||
               im.subject?.name ||
@@ -169,7 +176,9 @@ export default function IMTable(
                 <td className="px-3 py-2">{im.validity || "-"}</td>
                 <td className="px-3 py-2">{im.version || "-"}</td>
                 <td className="px-3 py-2">
-                  {authorsStaffIdsByIm[resolvedImId] || (token ? "…" : "-")}
+                  {resolvedImId
+                    ? authorsStaffIdsByIm[resolvedImId] || (token ? "…" : "-")
+                    : "-"}
                 </td>
                 <td className="px-3 py-2">{im.updated_by || "-"}</td>
                 <td className="px-3 py-2 text-xs whitespace-nowrap">
@@ -179,7 +188,10 @@ export default function IMTable(
                 </td>
                 <td className="px-3 py-2">
                   <div className="min-w-[14rem] flex items-center justify-center gap-2 text-center">
-                    {canActByIm[resolvedImId] ? (
+                    {(hasActiveImRecord &&
+                      resolvedImId &&
+                      canActByIm[resolvedImId]) ||
+                    !hasActiveImRecord ? (
                       <>
                         {(() => {
                           const roleForRow = (
